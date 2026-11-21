@@ -1,0 +1,97 @@
+# MyBuddy build contract (internal, for the build agents)
+
+MyBuddy is written from scratch. Do NOT copy code, text or design from github.com/bhusingh/saathi
+or bhupendrasingh.com/saathi. We only share the *idea*: a self-hosted agent that collects news on a
+schedule, has an AI summarise it with source links, and delivers it privately.
+
+Runtime target: Oracle Always Free VM.Standard.E2.1.Micro (1 GB RAM, x86_64), Ubuntu 24.04,
+Python 3.12, timezone Asia/Kolkata. Keep memory small: stdlib + feedparser + PyYAML only at runtime.
+Dev machine has Python 3.14 — code must work on 3.12 and 3.14.
+
+## Shared types
+`src/mybuddy/models.py` (owned by the coordinator — do not change signatures; ask if needed):
+`Item`, `ReportItem`, `Report`, `HttpClient`, `Clock`, `Source`.
+
+## Module ownership
+| Owner | Files |
+| --- | --- |
+| Sources agent | `src/mybuddy/sources/**`, `tests/test_sources_*.py`, `tests/fixtures/**` |
+| Engine agent | `src/mybuddy/{config,http,store,summarize,deliver,engine,schedule,export,cli}.py`, `src/mybuddy/prompts/**`, `config/topics.yaml`, `tests/test_engine*.py`, `tests/test_config.py`, `tests/test_store.py`, `tests/test_summarize.py`, `tests/test_deliver.py`, `tests/test_schedule.py`, `tests/test_export.py`, `tests/test_cli.py`, `tests/conftest.py`, `.github/workflows/ci.yml` |
+| Website agent | `site/**` |
+| Coordinator | `models.py`, `pyproject.toml`, `deploy/**`, `README.md`, `CONTRACT.md` |
+
+Agents must not edit files they don't own, must not `git commit`, and must not push anywhere.
+
+## Sources API (sources agent)
+`src/mybuddy/sources/__init__.py` exposes:
+
+```python
+SOURCE_TYPES: dict[str, SourceBuilder]
+def build_source(spec: dict[str, Any], http: HttpClient, clock: Clock) -> Source
+```
+`spec` is one entry from `config/topics.yaml` `sources:` list, always with `type` and `name`.
+Source types (all free, no API keys):
+
+| type | spec keys | notes |
+| --- | --- | --- |
+| `rss` | `url`, optional `max_age_hours` (default 48), `limit` (default 10) | RSS/Atom via feedparser; strip HTML from snippet |
+| `google_news` | `query`, optional `limit` | builds https://news.google.com/rss/search?q=...&hl=en-IN&gl=IN&ceid=IN:en |
+| `hackernews` | `keywords` (list), optional `min_score` (default 50), `limit` | Firebase API topstories + item |
+| `reddit` | `subreddit`, optional `limit` | https://www.reddit.com/r/<sub>/top.json?t=day ; tolerate 403/429 by raising |
+| `github_trending` | `topics` (list), optional `limit` | GitHub search API (unauthenticated). Rank by stars gained since the previous snapshot; needs a snapshot store: builder receives it via `spec["_state"]` (a `dict[str, int]`-like mapping repo->stars supplied by the engine, mutated in place). First run: rank by total stars of repos pushed in last 7 days. `extra={"stars": n, "stars_gained": d}` |
+| `arxiv` | `query`, optional `limit` | export.arxiv.org API (Atom), newest first |
+| `hf_papers` | optional `limit` | https://huggingface.co/api/daily_papers |
+| `hf_models` | optional `limit` | Hugging Face models API sorted by trending |
+| `cisa_kev` | optional `days` (default 2) | CISA Known Exploited Vulnerabilities JSON; only entries with dateAdded within `days`; title "CVE-x: vendor product — name", url to NVD |
+
+Every source returns `Item`s with absolute https URLs. Verify each endpoint with `curl` first.
+
+## Engine (engine agent)
+* `config.py`: load `config/topics.yaml` (topics list: `id`, `title`, `emoji`, `description`, `schedule` {`time`: "HH:MM", `days`: list of mon..sun or "daily"} or {`every_minutes`: N}, `ai`: bool, `prompt`: file name in `src/mybuddy/prompts/`, `rotation` optional (weekday -> {title, sources}), `sources`: list). Settings from env: `GROQ_API_KEY`, `GROQ_MODEL`, `GEMINI_API_KEY` (optional fallback), `DISCORD_WEBHOOK_URL`, `MYBUDDY_DATA_DIR` (default `~/.local/share/mybuddy`), `MYBUDDY_FAKE=1` (fake AI + fake Discord: write to files, no network).
+* `http.py`: urllib client implementing `HttpClient`; https only (also after redirects), timeout 20 s, 5 MB cap, User-Agent "MyBuddy/0.1 (+personal news reader)".
+* `store.py`: SQLite in data dir: seen item URLs per topic (dedupe), github star snapshots, saved reports.
+* `summarize.py`: OpenAI-compatible chat completions to Groq (`https://api.groq.com/openai/v1/chat/completions`), Gemini fallback (`https://generativelanguage.googleapis.com/v1beta/openai/chat/completions`), JSON output {headline, summary, blurbs[]}; validate; on any failure fall back to a no-AI report built from snippets. Never invent links — URLs always come from collected items. Cap input items (~12) to stay inside free token limits.
+* `deliver.py`: Discord webhook, split at 2000 chars, format with topic emoji + headline + items as `[title](<url>)` lines; fake mode writes to data dir `outbox/`.
+* `engine.py`: run one topic: build sources, collect each in isolation (log failures), dedupe, summarise, deliver, save report, export.
+* `schedule.py`: tiny in-process scheduler (no APScheduler): computes next run for each topic in Asia/Kolkata; `mybuddy serve` loops and sleeps.
+* `export.py`: writes `site/data/reports.json` (path configurable) in the format below.
+* `cli.py`: `mybuddy run <topic|all> [--dry-run]`, `mybuddy list`, `mybuddy serve`, `mybuddy check` (config + env + connectivity), `mybuddy export`.
+
+## The 7 topics (exactly these; nothing else)
+| id | title | when (IST) | ai |
+| --- | --- | --- | --- |
+| `ai_news` | AI news | daily 06:30 | yes |
+| `security` | Cybersecurity alerts | daily 07:00 | yes |
+| `kev_alerts` | Actively exploited vulnerabilities (part of cybersecurity) | every 60 min | no |
+| `github_trending` | Trending GitHub repos | daily 07:15 | yes |
+| `deep_dive` | One deep AI topic a day | mon-fri 07:30 (Mon RAG, Tue agents, Wed training & fine-tuning, Thu audio & video, Fri evaluation) | yes |
+| `research_papers` | AI research papers | daily 07:45 | yes |
+| `startups` | Startup & product launches | daily 08:00 | yes |
+| `ai_models` | New open-source AI models | daily 08:15 | yes |
+
+(`kev_alerts` is the hourly sub-alert of the cybersecurity topic, not an extra topic.)
+
+## Website data contract: `site/data/reports.json`
+```json
+{
+  "generated_at": "2026-11-23T08:15:02+05:30",
+  "topics": [
+    {
+      "id": "ai_news",
+      "title": "AI news",
+      "emoji": "🧠",
+      "description": "Models, labs, funding, policy and open source.",
+      "schedule": "Daily · 06:30 IST",
+      "report": {
+        "created_at": "2026-11-23T06:30:11+05:30",
+        "headline": "One sentence takeaway.",
+        "summary": "Two to four plain sentences.",
+        "items": [
+          {"title": "…", "url": "https://…", "source": "…", "blurb": "…", "published": "2026-11-23T01:02:03+00:00"}
+        ]
+      }
+    }
+  ]
+}
+```
+`report` may be `null` when a topic has not run yet. The website must handle that.

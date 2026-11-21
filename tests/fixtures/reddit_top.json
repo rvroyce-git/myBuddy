@@ -1,0 +1,13 @@
+{
+ "kind": "Listing",
+ "data": {
+  "after": "t3_1p2zz9c",
+  "children": [
+   {"kind": "t3", "data": {"title": "Daily discussion thread", "permalink": "/r/LocalLLaMA/comments/1p2aa01/daily_discussion_thread/", "url": "https://www.reddit.com/r/LocalLLaMA/comments/1p2aa01/daily_discussion_thread/", "created_utc": 1795305600.0, "selftext": "", "score": 12, "num_comments": 40, "stickied": true, "over_18": false}},
+   {"kind": "t3", "data": {"title": "Inkling-2-Mini runs at 40 tok/s on a single 3090", "permalink": "/r/LocalLLaMA/comments/1p2bb02/inkling2mini_runs_at_40_toks_on_a_single_3090/", "url": "https://i.redd.it/abc123.png", "created_utc": 1795262400.0, "selftext": "Quantised to **4-bit** with &amp; llama.cpp. Details in comments.", "score": 1830, "num_comments": 211, "stickied": false, "over_18": false}},
+   {"kind": "t3", "data": {"title": "New open-weights 70B model beats last month's frontier on coding evals", "permalink": "/r/LocalLLaMA/comments/1p2cc03/new_openweights_70b_model/", "url": "https://huggingface.co/example/model-70b", "created_utc": 1795291200.0, "selftext": "", "score": 1204, "num_comments": 330, "stickied": false, "over_18": false}},
+   {"kind": "t3", "data": {"title": "", "permalink": "/r/LocalLLaMA/comments/1p2dd04/x/", "url": "https://example.com", "created_utc": 1795280000.0, "selftext": "", "score": 50, "num_comments": 1, "stickied": false, "over_18": false}},
+   {"kind": "t3", "data": {"title": "Benchmarking speculative decoding on Apple silicon", "permalink": "/r/LocalLLaMA/comments/1p2ee05/benchmarking_speculative_decoding/", "url": "https://www.reddit.com/r/LocalLLaMA/comments/1p2ee05/benchmarking_speculative_decoding/", "created_utc": 1795240800.0, "selftext": "I tested three draft models on an M4 Max.", "score": 640, "num_comments": 88, "stickied": false, "over_18": false}}
+  ]
+ }
+}

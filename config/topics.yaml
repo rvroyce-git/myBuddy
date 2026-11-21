@@ -1,0 +1,121 @@
+# MyBuddy topics. Times are Asia/Kolkata (IST). Validate with: mybuddy check
+topics:
+  - id: ai_news
+    title: AI news
+    emoji: "🧠"
+    description: The day's AI news in plain words — models, labs, funding, policy and open source.
+    schedule: {time: "06:30", days: daily}
+    ai: true
+    prompt: ai_news.md
+    sources:
+      - {type: rss, name: OpenAI News, url: "https://openai.com/news/rss.xml", max_age_hours: 72}
+      - {type: rss, name: Google AI Blog, url: "https://blog.google/technology/ai/rss/", max_age_hours: 72}
+      - {type: google_news, name: Google News AI, query: "artificial intelligence"}
+      - type: hackernews
+        name: Hacker News
+        keywords: [AI, LLM, GPT, OpenAI, Anthropic, model]
+        min_score: 100
+
+  - id: security
+    title: Cybersecurity alerts
+    emoji: "🛡️"
+    description: Fresh security advisories and breaches, with what they mean and what to do.
+    schedule: {time: "07:00", days: daily}
+    ai: true
+    prompt: security.md
+    sources:
+      - {type: rss, name: The Hacker News, url: "https://feeds.feedburner.com/TheHackersNews"}
+      - {type: rss, name: BleepingComputer, url: "https://www.bleepingcomputer.com/feed/"}
+      - {type: rss, name: CISA Advisories, url: "https://www.cisa.gov/cybersecurity-advisories/all.xml"}
+
+  - id: kev_alerts
+    title: Actively exploited vulnerabilities
+    emoji: "🚨"
+    description: A quick heads-up whenever CISA adds a vulnerability that attackers are already using.
+    schedule: {every_minutes: 60}
+    ai: false
+    max_items: 25
+    sources:
+      - {type: cisa_kev, name: CISA KEV, days: 1}
+
+  - id: github_trending
+    title: Trending GitHub repos
+    emoji: "⭐"
+    description: AI projects on GitHub that are picking up stars fastest right now.
+    schedule: {time: "07:15", days: daily}
+    ai: true
+    prompt: github_trending.md
+    sources:
+      - type: github_trending
+        name: GitHub Trending
+        topics: [llm, ai-agents, machine-learning]
+        limit: 10
+        rate_delay_seconds: 7
+
+  - id: deep_dive
+    title: Deep dive
+    emoji: "🔬"
+    description: One AI subject a weekday, explained simply with the latest papers.
+    schedule: {time: "07:30", days: [mon, tue, wed, thu, fri]}
+    ai: true
+    prompt: deep_dive.md
+    rotation:
+      mon:
+        title: RAG (retrieval-augmented generation)
+        sources:
+          - {type: arxiv, name: arXiv RAG, query: 'all:"retrieval augmented generation"', limit: 8}
+          - {type: google_news, name: Google News RAG, query: '"retrieval augmented generation"', limit: 4}
+      tue:
+        title: AI agents
+        sources:
+          - {type: arxiv, name: arXiv agents, query: 'all:"LLM agents" OR all:"agentic"', limit: 8}
+          - {type: google_news, name: Google News agents, query: '"AI agents"', limit: 4}
+      wed:
+        title: Training & fine-tuning
+        sources:
+          - {type: arxiv, name: arXiv fine-tuning, query: 'all:"fine-tuning" AND all:"language model"', limit: 8}
+          - {type: google_news, name: Google News fine-tuning, query: '"fine-tuning" LLM', limit: 4}
+      thu:
+        title: Audio & video AI
+        sources:
+          - {type: arxiv, name: arXiv audio & video, query: 'cat:eess.AS OR cat:cs.SD OR all:"video generation"', limit: 8}
+          - {type: google_news, name: Google News audio & video, query: 'AI voice OR "video generation" model', limit: 4}
+      fri:
+        title: Evaluation & benchmarks
+        sources:
+          - {type: arxiv, name: arXiv evaluation, query: 'all:"benchmark" AND all:"language models"', limit: 8}
+          - {type: google_news, name: Google News evals, query: 'AI benchmark evaluation', limit: 4}
+
+  - id: research_papers
+    title: AI research papers
+    emoji: "📄"
+    description: Today's notable AI papers, each boiled down to its key idea.
+    schedule: {time: "07:45", days: daily}
+    ai: true
+    prompt: research_papers.md
+    sources:
+      - {type: hf_papers, name: Hugging Face Daily Papers, limit: 8}
+      - {type: arxiv, name: arXiv AI/CL/LG, query: "cat:cs.CL OR cat:cs.LG OR cat:cs.AI", limit: 8}
+
+  - id: startups
+    title: Startup & product launches
+    emoji: "🚀"
+    description: New products and startup funding news — what it is and who it's for.
+    schedule: {time: "08:00", days: daily}
+    ai: true
+    prompt: startups.md
+    sources:
+      - {type: rss, name: Product Hunt, url: "https://www.producthunt.com/feed", max_age_hours: 72}
+      - {type: rss, name: TechCrunch Startups, url: "https://techcrunch.com/category/startups/feed/", max_age_hours: 72}
+      - {type: google_news, name: Google News Startups, query: "startup funding round"}
+
+  - id: ai_models
+    title: New open-source AI models
+    emoji: "🤖"
+    description: Open models trending on Hugging Face, with what they're good for.
+    schedule: {time: "08:15", days: daily}
+    ai: true
+    prompt: ai_models.md
+    sources:
+      - {type: hf_models, name: Hugging Face Trending, limit: 10}
+      - {type: rss, name: Hugging Face Blog, url: "https://huggingface.co/blog/feed.xml", max_age_hours: 72}

@@ -1,0 +1,101 @@
+{
+ "total_count": 23004,
+ "incomplete_results": false,
+ "items": [
+  {
+   "full_name": "affaan-m/ECC",
+   "html_url": "https://github.com/affaan-m/ECC",
+   "description": "The agent harness performance optimization system. Skills, instincts, memory, security, and research-first development for Claude Code, Codex, Opencode, Cursor and beyond.",
+   "stargazers_count": 308333,
+   "pushed_at": "2026-11-20T01:13:45Z",
+   "created_at": "2026-01-18T00:51:51Z",
+   "language": "JavaScript",
+   "topics": [
+    "ai-agents",
+    "anthropic",
+    "claude",
+    "claude-code",
+    "developer-tools",
+    "llm",
+    "mcp",
+    "productivity"
+   ]
+  },
+  {
+   "full_name": "NousResearch/hermes-agent",
+   "html_url": "https://github.com/NousResearch/hermes-agent",
+   "description": "The agent that grows with you",
+   "stargazers_count": 265186,
+   "pushed_at": "2026-11-21T22:15:31Z",
+   "created_at": "2025-07-22T22:22:28Z",
+   "language": "Python",
+   "topics": [
+    "ai",
+    "ai-agent",
+    "ai-agents",
+    "anthropic",
+    "chatgpt",
+    "claude",
+    "claude-code",
+    "codex",
+    "hermes",
+    "hermes-agent",
+    "llm",
+    "nous-research",
+    "openai"
+   ]
+  },
+  {
+   "full_name": "firecrawl/firecrawl",
+   "html_url": "https://github.com/firecrawl/firecrawl",
+   "description": "Knowledge infrastructure to make your agents smarter. Search, scrape and access 550+ data providers through one API.",
+   "stargazers_count": 206109,
+   "pushed_at": "2026-11-21T20:10:00Z",
+   "created_at": "2024-04-15T21:02:29Z",
+   "language": "TypeScript",
+   "topics": [
+    "ai",
+    "ai-agents",
+    "ai-crawler",
+    "ai-scraping",
+    "ai-search",
+    "crawler",
+    "data-extraction",
+    "html-to-markdown",
+    "llm",
+    "markdown",
+    "scraper",
+    "scraping",
+    "web-crawler",
+    "web-data",
+    "web-data-extraction",
+    "web-scraper",
+    "web-scraping",
+    "web-search",
+    "webscraping"
+   ]
+  },
+  {
+   "full_name": "Significant-Gravitas/AutoGPT",
+   "html_url": "https://github.com/Significant-Gravitas/AutoGPT",
+   "description": "AutoGPT is the vision of accessible AI for everyone, to use and to build on. Our mission is to provide the tools, so that you can focus on what matters.",
+   "stargazers_count": 188127,
+   "pushed_at": "2026-11-21T22:13:33Z",
+   "created_at": "2023-03-16T09:21:07Z",
+   "language": "Python",
+   "topics": [
+    "agentic-ai",
+    "agents",
+    "ai",
+    "artificial-intelligence",
+    "autonomous-agents",
+    "claude",
+    "gpt",
+    "llama-api",
+    "llm",
+    "openai",
+    "python"
+   ]
+  }
+ ]
+}

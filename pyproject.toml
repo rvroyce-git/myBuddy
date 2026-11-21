@@ -1,0 +1,50 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "mybuddy"
+version = "0.1.0"
+description = "MyBuddy: a self-hosted AI news companion that runs on a free Oracle Cloud VM."
+readme = "README.md"
+requires-python = ">=3.12"
+license = { text = "MIT" }
+dependencies = [
+  "feedparser>=6.0.11",
+  "PyYAML>=6.0.2",
+]
+
+[project.optional-dependencies]
+dev = [
+  "pytest>=8.3",
+  "pytest-cov>=5.0",
+  "ruff>=0.8",
+  "mypy>=1.13",
+  "types-PyYAML",
+]
+
+[project.scripts]
+mybuddy = "mybuddy.cli:main"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/mybuddy"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-q"
+
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "B", "UP", "SIM"]
+
+[tool.mypy]
+python_version = "3.12"
+strict = true
+files = ["src"]
+
+[[tool.mypy.overrides]]
+module = ["feedparser"]
+ignore_missing_imports = true

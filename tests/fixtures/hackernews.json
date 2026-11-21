@@ -1,0 +1,52 @@
+{
+ "topstories": [
+  50582069,
+  50591853,
+  50589618,
+  50588982,
+  50532613,
+  50583028
+ ],
+ "items": {
+  "50588982": {
+   "by": "beginning_end",
+   "descendants": 300,
+   "id": 50588982,
+   "score": 457,
+   "time": 1795267394,
+   "title": "Detonating a pile of lead azide",
+   "type": "story",
+   "url": "https://www.science.org/content/blog-post/detonating-huge-pile-lead-azide-really"
+  },
+  "50591853": {
+   "by": "k__",
+   "descendants": 56,
+   "id": 50591853,
+   "score": 277,
+   "time": 1795284139,
+   "title": "Inkling-2-Mini in 5.4 GB Memory",
+   "type": "story",
+   "url": "https://github.com/ShinMegamiBoson/lookatmyquant"
+  },
+  "50582069": {
+   "by": "rafaelc",
+   "descendants": 85,
+   "id": 50582069,
+   "score": 290,
+   "time": 1795208592,
+   "title": "Pill to treat pancreatic cancer hailed as 'biggest breakthrough in decades'",
+   "type": "story",
+   "url": "https://www.theguardian.com/society/2026/nov/20/pill-pancreatic-cancer-breakthrough-daraxonrasib"
+  },
+  "50589618": {
+   "by": "g-b-r",
+   "descendants": 548,
+   "id": 50589618,
+   "score": 689,
+   "time": 1795271805,
+   "title": "Lean verification of the Riemann Hypothesis",
+   "type": "story",
+   "url": "https://leanprover-community.github.io/blog/posts/riemann-hypothesis/"
+  }
+ }
+}
