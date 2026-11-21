@@ -81,7 +81,7 @@
       <div class="widgets" id="widgets" aria-live="polite">
         <p class="loading">Fetching the morning papers…</p>
       </div>
-      <p class="hint">Tip: hover, tap or tab onto a card and the bear will hand it to you.</p>
+      <p class="hint">Tip: hover, tap or tab onto a card and the bear will hand it to you. Open it for every link and note.</p>
     </section>
 
     <!-- Morning timeline -->
@@ -229,6 +229,23 @@ mybuddy serve</code></pre>
       <p><a href="#">Source on GitHub</a> · MIT licence · Made with Python</p>
     </div>
   </footer>
+
+  <!-- Full report: native modal dialog (focus stays inside; Esc, the close button or the backdrop close it). -->
+  <dialog class="dlg" id="reportDlg" aria-labelledby="dlgTitle">
+    <div class="dlg-panel">
+      <header class="dlg-head">
+        <span class="emoji" id="dlgEmoji" aria-hidden="true"></span>
+        <div class="dlg-id">
+          <h2 id="dlgTitle">Report</h2>
+          <p class="sched" id="dlgSched"></p>
+        </div>
+        <button class="dlg-close" type="button" aria-label="Close full report">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>
+        </button>
+      </header>
+      <div class="dlg-body" id="dlgBody"></div>
+    </div>
+  </dialog>
 
   <!-- Bear that peeks over a widget. Back layer = head (behind the card), front layer = paws (over the card edge). -->
   <template id="peekBear">

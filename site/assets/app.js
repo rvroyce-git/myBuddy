@@ -15,7 +15,7 @@
   const ACCENTS = { ai_news: "teal", security: "blue", github_trending: "sage", deep_dive: "lav", research_papers: "blue", startups: "sage", ai_models: "lav" };
   const ACCENT_CYCLE = ["teal", "blue", "sage", "lav"];
   const BUBBLES = { ai_news: "Fresh AI news!", security: "Patch time!", github_trending: "Rising stars!", deep_dive: "Let's go deep!", research_papers: "New papers!", startups: "Shiny launches!", ai_models: "New models!" };
-  const VISIBLE_ITEMS = 2;
+  const VISIBLE_ITEMS = 3; // compact cards show the top three; the dialog shows all
 
   // Schedule shown in the "morning" timeline (IST). Mirrors the topics in config.
   const DEEP_DIVE = { 1: "RAG", 2: "Agents", 3: "Training & fine-tuning", 4: "Audio & video", 5: "Evaluation" };
@@ -150,6 +150,7 @@
   /* ---------- widgets ---------- */
   const widgetsBox = $("#widgets");
   const chipsBox = $("#chips");
+  const topicsById = new Map();
   let generatedAt = null;
   let currentStamp = null;
 
@@ -174,23 +175,39 @@
     const cut = title.lastIndexOf(" ");
     const head = cut > 0 ? title.slice(0, cut + 1) : "";
     const tail = cut > 0 ? title.slice(cut + 1) : title;
+    if (tail.length > 24) return [document.createTextNode(title), extIcon()]; // long unbroken word: let it wrap
     return [document.createTextNode(head), el("span", { cls: "nowrap" }, [document.createTextNode(tail), extIcon()])];
   }
+  const newTab = () => el("span", { cls: "sr-only", text: " (opens in a new tab)" });
+  const linkAttrs = (url, extra = {}) => ({ href: url, target: "_blank", rel: "noopener noreferrer", ...extra });
 
-  function renderItem(item) {
+  // One-line item for the compact card: title (ellipsis) + small source chip.
+  function renderMiniItem(item) {
     const title = str(item && item.title) || "Untitled";
     const url = safeUrl(item && item.url);
-    let head;
-    if (url) {
-      head = el("a", { attrs: { href: url, target: "_blank", rel: "noopener noreferrer" } }, [
-        ...titleWithIcon(title), el("span", { cls: "sr-only", text: " (opens in a new tab)" }),
-      ]);
-    } else {
-      head = el("span", { cls: "item-title", text: title });
-    }
-    const li = el("li", { cls: "item" }, [head]);
+    const head = url
+      ? el("a", { cls: "mini-title", attrs: linkAttrs(url, { title }) }, [document.createTextNode(title), newTab()])
+      : el("span", { cls: "mini-title", text: title, attrs: { title } });
+    const li = el("li", { cls: "mini" }, [head]);
     const source = str(item && item.source);
-    if (source) li.append(el("div", {}, [el("span", { cls: "src", text: source })]));
+    if (source) li.append(el("span", { cls: "src", text: source, attrs: { title: source } }));
+    return li;
+  }
+
+  // Full item for the report dialog: title link, source, time and blurb.
+  function renderFullItem(item) {
+    const title = str(item && item.title) || "Untitled";
+    const url = safeUrl(item && item.url);
+    const head = url
+      ? el("a", { cls: "item-title", attrs: linkAttrs(url) }, [...titleWithIcon(title), newTab()])
+      : el("span", { cls: "item-title", text: title });
+    const li = el("li", { cls: "item" }, [el("h3", { cls: "item-h" }, [head])]);
+    const meta = el("p", { cls: "item-meta" });
+    const source = str(item && item.source);
+    if (source) meta.append(el("span", { cls: "src", text: source }));
+    const pub = parseDate(item && item.published);
+    if (pub) meta.append(el("time", { cls: "pub", text: relTime(pub), attrs: { datetime: pub.toISOString(), title: fmtFull(pub) } }));
+    if (meta.childNodes.length) li.append(meta);
     const blurb = str(item && item.blurb);
     if (blurb) li.append(el("p", { cls: "blurb", text: blurb }));
     return li;
@@ -201,6 +218,22 @@
     return m ? `${m[1]} IST` : null;
   }
 
+  function schedLine(schedule, report) {
+    const sched = el("p", { cls: "sched" }, [el("span", { text: schedule || "Schedule not set" })]);
+    const created = report ? parseDate(report.created_at) : null;
+    if (created) {
+      sched.append(el("time", { cls: "ago", text: relTime(created), attrs: { datetime: created.toISOString(), title: fmtFull(created), "data-rel": "" } }));
+    }
+    return sched;
+  }
+
+  function addPeek(host, bubbleText) {
+    const peek = $("#peekBear").content.firstElementChild.cloneNode(true);
+    $(".peek-bubble", peek).textContent = bubbleText;
+    host.prepend($(".peek-back", peek));
+    host.append($(".peek-front", peek));
+  }
+
   function renderWidget(topic, idx) {
     const id = str(topic.id) || `topic-${idx}`;
     const title = str(topic.title) || "Untitled topic";
@@ -208,84 +241,75 @@
     const report = topic.report && typeof topic.report === "object" ? topic.report : null;
     const accent = ACCENTS[id] || ACCENT_CYCLE[idx % ACCENT_CYCLE.length];
     const titleId = `w-${idx}-title`;
+    topicsById.set(id, { topic, accent });
 
     const widget = el("div", { cls: `widget acc-${accent}`, attrs: { "data-topic": id } });
     widget.style.animationDelay = reduceMotion.matches ? "0s" : `${Math.min(idx, 8) * 70}ms`;
 
-    const peek = $("#peekBear").content.firstElementChild.cloneNode(true);
-    $(".peek-bubble", peek).textContent = report ? (BUBBLES[id] || "For you!") : "Coming soon!";
-
-    const card = el("article", { cls: "card", attrs: { tabindex: "0", "aria-labelledby": titleId } });
-    const sched = el("p", { cls: "sched" }, [el("span", { text: schedule || "Schedule not set" })]);
-    const created = report ? parseDate(report.created_at) : null;
-    if (created) {
-      sched.append(el("time", { cls: "ago", text: relTime(created), attrs: { datetime: created.toISOString(), title: fmtFull(created), "data-rel": "" } }));
-    }
+    const card = el("article", { cls: `card${report ? " has-report" : ""}`, attrs: { tabindex: "0", "aria-labelledby": titleId } });
     card.append(el("div", { cls: "card-top" }, [
       el("span", { cls: "emoji", text: str(topic.emoji) || "📰", attrs: { "aria-hidden": "true" } }),
-      el("div", {}, [el("h3", { cls: "card-title", text: title, attrs: { id: titleId } }), sched]),
+      el("div", { cls: "card-id" }, [el("h3", { cls: "card-title", text: title, attrs: { id: titleId } }), schedLine(schedule, report)]),
     ]));
 
     if (!report) {
       const when = firstTime(schedule);
-      const p = el("p");
+      const p = el("p", { cls: "empty-when" });
       if (when) p.append("First report arrives at ", el("strong", { text: when }), ".");
       else p.append("The first report is on its way.");
       const box = el("div", { cls: "empty" }, [el("span", { cls: "zz", text: "💤", attrs: { "aria-hidden": "true" } }), p]);
       const desc = str(topic.description);
-      if (desc) box.append(el("p", { cls: "summary", text: desc }));
+      if (desc) box.append(el("p", { cls: "empty-desc", text: desc }));
       card.append(box);
     } else {
       const headline = str(report.headline);
       const summary = str(report.summary);
-      if (headline) card.append(el("p", { cls: "headline", text: headline }));
-      if (summary) card.append(el("p", { cls: "summary", text: summary }));
+      if (headline) card.append(el("p", { cls: "headline clamp", text: headline }));
+      if (summary) card.append(el("p", { cls: "summary clamp", text: summary }));
       const items = Array.isArray(report.items) ? report.items : [];
-      if (items.length === 0) {
-        card.append(el("p", { cls: "summary", text: "Nothing new made the cut this time." }));
+      if (items.length) {
+        card.append(el("ul", { cls: "mini-list", attrs: { "aria-label": `Top ${Math.min(items.length, VISIBLE_ITEMS)} of ${items.length} items` } }, items.slice(0, VISIBLE_ITEMS).map(renderMiniItem)));
       } else {
-        card.append(el("ul", { cls: "items", attrs: { "aria-label": `${title} sources` } }, items.slice(0, VISIBLE_ITEMS).map(renderItem)));
-        const rest = items.slice(VISIBLE_ITEMS);
-        if (rest.length) {
-          const moreId = `w-${idx}-more`;
-          const more = el("div", { cls: "more", attrs: { id: moreId } }, [el("ul", { cls: "items" }, rest.map(renderItem))]);
-          more.inert = true;
-          more.setAttribute("aria-hidden", "true");
-          const label = el("span", { text: `Show ${rest.length} more` });
-          const btn = el("button", { cls: "more-btn", attrs: { type: "button", "aria-expanded": "false", "aria-controls": moreId } }, [
-            label, el("span", { cls: "chev", text: "⌄", attrs: { "aria-hidden": "true" } }),
-          ]);
-          btn.addEventListener("click", () => {
-            const open = btn.getAttribute("aria-expanded") !== "true";
-            btn.setAttribute("aria-expanded", String(open));
-            more.classList.toggle("open", open);
-            more.inert = !open;
-            more.setAttribute("aria-hidden", String(!open));
-            label.textContent = open ? "Show fewer" : `Show ${rest.length} more`;
-          });
-          card.append(more, btn);
-        }
+        card.append(el("p", { cls: "summary", text: "Nothing new made the cut this time." }));
       }
+      const btn = el("button", { cls: "open-btn", attrs: { type: "button", "aria-haspopup": "dialog", "aria-label": `Open full ${title} report` } }, [
+        el("span", { text: "Open full report" }),
+        el("span", { cls: "count", text: items.length ? `${items.length} item${items.length === 1 ? "" : "s"}` : "" }),
+        el("span", { cls: "arrow", text: "→", attrs: { "aria-hidden": "true" } }),
+      ]);
+      btn.addEventListener("click", () => openReport(id, btn));
+      card.append(el("div", { cls: "card-foot" }, [btn]));
+      // The whole card is a shortcut to the full report (links and buttons keep their own job).
+      card.addEventListener("click", (e) => {
+        if (e.target.closest("a, button") || String(window.getSelection() || "").length) return;
+        openReport(id, card);
+      });
+      card.addEventListener("keydown", (e) => {
+        if (e.target === card && (e.key === "Enter" || e.key === " ")) { e.preventDefault(); openReport(id, card); }
+      });
     }
 
-    // Layering: bear head (behind card) -> card -> paws (in front of the card's top edge).
-    widget.append($(".peek-back", peek), card, $(".peek-front", peek));
+    widget.append(card);
+    addPeek(widget, report ? (BUBBLES[id] || "For you!") : "Coming soon!");
     bindHold(widget);
     return widget;
   }
 
   function renderChips(topics) {
     chipsBox.replaceChildren();
-    const make = (id, text) => {
-      const b = el("button", { cls: "chip", text, attrs: { type: "button", "aria-pressed": id === "all" ? "true" : "false", "data-filter": id } });
+    const make = (id, text, emoji) => {
+      const b = el("button", { cls: "chip", attrs: { type: "button", "aria-pressed": id === "all" ? "true" : "false", "data-filter": id } }, [
+        emoji ? el("span", { cls: "chip-emoji", text: emoji, attrs: { "aria-hidden": "true" } }) : null, document.createTextNode(text),
+      ]);
       b.addEventListener("click", () => applyFilter(id));
       return b;
     };
     chipsBox.append(make("all", "All topics"));
-    topics.forEach((t) => chipsBox.append(make(str(t.id), `${str(t.emoji)} ${str(t.title)}`.trim())));
+    topics.forEach((t) => chipsBox.append(make(str(t.id), str(t.title), str(t.emoji))));
   }
 
   function applyFilter(id) {
+    if (held) release(held);
     chipsBox.querySelectorAll(".chip").forEach((c) => c.setAttribute("aria-pressed", String(c.dataset.filter === id)));
     widgetsBox.querySelectorAll(".widget").forEach((w) => { w.hidden = !(id === "all" || w.dataset.topic === id); });
   }
@@ -309,6 +333,8 @@
     const topics = data.topics.filter((t) => t && typeof t === "object");
     generatedAt = parseDate(data.generated_at);
     currentStamp = str(data.generated_at);
+    held = null;
+    topicsById.clear();
     renderChips(topics);
     widgetsBox.replaceChildren(...topics.map(renderWidget));
     updateTimes();
@@ -322,39 +348,90 @@
     } else if (currentStamp !== null) {
       txt.textContent = "Update time unknown";
     }
-    widgetsBox.querySelectorAll("time[data-rel]").forEach((t) => {
+    document.querySelectorAll("time[data-rel]").forEach((t) => {
       const d = parseDate(t.getAttribute("datetime"));
       if (d) t.textContent = relTime(d);
     });
   }
 
-  /* ---------- bear "holding" a widget ---------- */
+  /* ---------- the bear "holding" a widget ----------
+     The bear peeks over the card's top edge. If there isn't room between the sticky header and the
+     card (or the card's top is under the header), it holds the card up from the bottom edge instead. */
+  const topbar = $(".topbar");
+  const TUCK = 10; // px of the bear's head hidden behind the card edge (matches --tuck in CSS)
   let held = null;
-  function hold(w) {
+  let placeFrame = 0;
+
+  const headerBottom = () => Math.max(0, topbar.getBoundingClientRect().bottom);
+  function bearRoom(host) {
+    const back = $(".peek-back", host);
+    return (back ? back.offsetHeight : 100) - TUCK + 10;
+  }
+
+  function placeBear(w) {
+    const card = $(".card", w);
+    if (!card) return;
+    const r = card.getBoundingClientRect();
+    const hb = headerBottom();
+    const need = bearRoom(w);
+    const lift = w.classList.contains("is-held") ? 0 : 8; // the held card is already lifted
+    const topOK = r.top - lift - need >= hb + 4;
+    const bottomOK = r.bottom - lift + need <= window.innerHeight - 4;
+    let below;
+    if (w.classList.contains("below") && bottomOK) below = true; // stay put while it still fits
+    else if (topOK) below = false;
+    else if (bottomOK) below = true;
+    else below = (r.top - hb) < (window.innerHeight - r.bottom); // neither fits: pick the roomier side
+    w.classList.toggle("below", below);
+  }
+
+  // If the card's top is hidden under the sticky header, nudge the page so the whole card shows.
+  // The bear holds it from below, so it stays visible right under the header.
+  function revealCard(w) {
+    if (held !== w) return;
+    const r = $(".card", w).getBoundingClientRect();
+    const hb = headerBottom();
+    if (r.top < hb + 8) {
+      w.classList.add("below");
+      window.scrollBy({ top: r.top - hb - 16, behavior: reduceMotion.matches ? "auto" : "smooth" });
+    }
+  }
+  let revealTimer = 0;
+
+  // `dwell`: for a mouse just passing over a card we wait a moment before scrolling anything,
+  // so sweeping the pointer across the page never makes it jump.
+  function hold(w, dwell = false) {
     if (held === w) return;
     if (held) release(held);
     held = w;
+    w.classList.remove("below");
+    placeBear(w);
     w.classList.add("is-held");
+    clearTimeout(revealTimer);
+    if (dwell) revealTimer = setTimeout(() => revealCard(w), 450);
+    else revealCard(w);
   }
   function release(w) {
+    clearTimeout(revealTimer);
     w.classList.remove("is-held");
     w.style.removeProperty("--rx");
     w.style.removeProperty("--ry");
     if (held === w) held = null;
   }
   function bindHold(w) {
-    w.addEventListener("pointerenter", (e) => { if (e.pointerType === "mouse") hold(w); });
+    w.addEventListener("pointerenter", (e) => { if (e.pointerType === "mouse") hold(w, true); });
     w.addEventListener("pointerleave", (e) => {
-      if (e.pointerType === "mouse" && !w.contains(document.activeElement)) release(w);
-      else if (e.pointerType === "mouse") { w.style.removeProperty("--rx"); w.style.removeProperty("--ry"); }
+      if (e.pointerType !== "mouse") return;
+      if (!w.contains(document.activeElement)) release(w);
+      else { w.style.removeProperty("--rx"); w.style.removeProperty("--ry"); }
     });
     w.addEventListener("pointermove", (e) => {
       if (e.pointerType !== "mouse" || reduceMotion.matches || held !== w) return;
       const r = w.getBoundingClientRect();
       const x = (e.clientX - r.left) / r.width - 0.5;
       const y = (e.clientY - r.top) / r.height - 0.5;
-      w.style.setProperty("--ry", `${(x * 5).toFixed(2)}deg`);
-      w.style.setProperty("--rx", `${(-y * 4).toFixed(2)}deg`);
+      w.style.setProperty("--ry", `${(x * 4).toFixed(2)}deg`);
+      w.style.setProperty("--rx", `${(-y * 3).toFixed(2)}deg`);
     });
     w.addEventListener("pointerdown", (e) => { if (e.pointerType !== "mouse") hold(w); });
     w.addEventListener("focusin", () => hold(w));
@@ -365,7 +442,82 @@
   document.addEventListener("pointerdown", (e) => {
     if (held && e.pointerType !== "mouse" && !held.contains(e.target)) release(held);
   });
-  document.addEventListener("keydown", (e) => { if (e.key === "Escape" && held) release(held); });
+  document.addEventListener("keydown", (e) => { if (e.key === "Escape" && held && !dlg.open) release(held); });
+  const schedulePlace = () => {
+    if (!held || placeFrame) return;
+    placeFrame = requestAnimationFrame(() => { placeFrame = 0; if (held) placeBear(held); });
+  };
+  window.addEventListener("scroll", schedulePlace, { passive: true });
+  window.addEventListener("resize", schedulePlace);
+
+  /* ---------- full report dialog ---------- */
+  const dlg = $("#reportDlg");
+  let dlgTrigger = null;
+  let dlgClosing = false;
+  addPeek(dlg, "Here's everything!");
+
+  function openReport(id, trigger) {
+    const entry = topicsById.get(id);
+    if (!entry || !dlg) return;
+    const { topic, accent } = entry;
+    const report = topic.report && typeof topic.report === "object" ? topic.report : null;
+    if (!report) return;
+    dlgTrigger = trigger || document.activeElement;
+    if (held) release(held);
+
+    dlg.className = `dlg acc-${accent}`;
+    $("#dlgEmoji").textContent = str(topic.emoji) || "📰";
+    $("#dlgTitle").textContent = str(topic.title) || "Report";
+    $("#dlgSched").replaceWith(Object.assign(schedLine(str(topic.schedule), report), { id: "dlgSched" }));
+    const body = $("#dlgBody");
+    const items = Array.isArray(report.items) ? report.items : [];
+    const parts = [];
+    if (str(report.headline)) parts.push(el("p", { cls: "dlg-headline", text: str(report.headline) }));
+    if (str(report.summary)) parts.push(el("p", { cls: "dlg-summary", text: str(report.summary) }));
+    parts.push(el("h3", { cls: "dlg-sub", text: items.length ? `All ${items.length} item${items.length === 1 ? "" : "s"}` : "No items this time" }));
+    if (items.length) parts.push(el("ol", { cls: "items" }, items.map(renderFullItem)));
+    parts.push(el("p", { cls: "dlg-note", text: "Every link opens the original source in a new tab. Summaries are written by a free AI model from these items only." }));
+    body.replaceChildren(...parts);
+    body.scrollTop = 0;
+
+    dlgClosing = false;
+    dlg.showModal();
+    document.body.classList.add("dlg-open");
+    $(".dlg-close", dlg).focus();
+    setTimeout(() => { if (dlg.open && !dlgClosing) dlg.classList.add("is-held"); }, reduceMotion.matches ? 0 : 260);
+  }
+
+  function finishClose() {
+    if (!dlg.open) return;
+    dlg.close();
+  }
+  function closeReport() {
+    if (!dlg.open || dlgClosing) return;
+    dlgClosing = true;
+    dlg.classList.remove("is-held");
+    if (reduceMotion.matches) { finishClose(); return; }
+    dlg.classList.add("closing");
+    const t = setTimeout(finishClose, 400);
+    dlg.addEventListener("animationend", function onEnd(e) {
+      if (e.target !== dlg) return;
+      dlg.removeEventListener("animationend", onEnd);
+      clearTimeout(t);
+      finishClose();
+    });
+  }
+  if (dlg) {
+    dlg.addEventListener("cancel", (e) => { e.preventDefault(); closeReport(); });
+    dlg.addEventListener("click", (e) => { if (e.target === dlg) closeReport(); }); // backdrop
+    $(".dlg-close", dlg).addEventListener("click", closeReport);
+    dlg.addEventListener("close", () => {
+      dlgClosing = false;
+      dlg.classList.remove("closing", "is-held");
+      document.body.classList.remove("dlg-open");
+      const t = dlgTrigger;
+      dlgTrigger = null;
+      if (t && document.contains(t)) t.focus({ preventScroll: true });
+    });
+  }
 
   /* ---------- morning timeline ---------- */
   function istNow() {

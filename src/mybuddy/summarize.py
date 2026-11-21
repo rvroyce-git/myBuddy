@@ -24,15 +24,25 @@ GEMINI_URL = "https://generativelanguage.googleapis.com/v1beta/openai/chat/compl
 MAX_AI_ITEMS = 12
 SNIPPET_CHARS = 280
 TEMPERATURE = 0.3
-MAX_TOKENS = 700
+MAX_TOKENS = 500
 RETRY_429_MAX_SECONDS = 8.0
 
-HEADLINE_MAX = 220
-SUMMARY_MAX = 900
-BLURB_MAX = 300
+# Short by design: the website widgets and Discord posts stay small and scannable.
+HEADLINE_MAX = 110
+SUMMARY_MAX = 220
+SUMMARY_SENTENCES = 2
+BLURB_MAX = 120
+REPORT_ITEMS_MAX = 6
 
 _URL_RE = re.compile(r"(https?://|www\.)\S+", re.IGNORECASE)
 _WS_RE = re.compile(r"\s+")
+_SENTENCE_END_RE = re.compile(r"(?<=[.!?])\s+(?=[A-Z0-9\"'(])")
+# Feed boilerplate that adds length but no meaning.
+_SNIPPET_NOISE_RE = re.compile(
+    r"\\?\[(?:\.\.\.|…)\\?\]|\s*(?:…|\.\.\.)\s*$"
+    r"|The post .+? appeared first on .+?\.|\b(?:Read more|Continue reading)\b.*$",
+    re.IGNORECASE,
+)
 
 
 class SummaryError(Exception):
@@ -55,6 +65,12 @@ def clean_text(text: str, limit: int) -> str:
         cut = text[: limit - 1].rsplit(" ", 1)[0].rstrip(" ,;:")
         text = (cut or text[: limit - 1]) + "…"
     return text
+
+
+def first_sentences(text: str, count: int) -> str:
+    """Keep only the first ``count`` sentences of ``text``."""
+    parts = _SENTENCE_END_RE.split(_WS_RE.sub(" ", text).strip())
+    return " ".join(parts[:count])
 
 
 def _truncate(text: str, limit: int) -> str:
@@ -83,7 +99,11 @@ def _report_item(item: Item, blurb: str) -> ReportItem:
 
 
 def snippet_blurb(item: Item) -> str:
-    return _truncate(item.snippet, BLURB_MAX) if item.snippet else ""
+    """A short blurb from a feed snippet: boilerplate removed, first sentence, capped."""
+    if not item.snippet:
+        return ""
+    text = _SNIPPET_NOISE_RE.sub("", item.snippet).strip()
+    return clean_text(first_sentences(text, 1), BLURB_MAX)
 
 
 def plain_report(topic_id: str, title: str, items: Sequence[Item], clock: Clock) -> Report:
@@ -106,8 +126,8 @@ def fallback_report(topic_id: str, title: str, items: Sequence[Item], clock: Clo
         title=title,
         created_at=clock.now(),
         headline=f"Today's top items from {_source_names(items)}",
-        summary="The AI summary was unavailable, so here are the items as published.",
-        items=tuple(_report_item(i, snippet_blurb(i)) for i in items),
+        summary="AI summary unavailable today; here are the top items as published.",
+        items=tuple(_report_item(i, snippet_blurb(i)) for i in items[:REPORT_ITEMS_MAX]),
     )
 
 
@@ -189,8 +209,10 @@ class Summarizer:
         lines += [
             "",
             "Reply with only a JSON object of this exact shape:",
-            '{"headline": "one sentence", "summary": "2-4 short sentences", '
-            '"blurbs": [{"index": 1, "text": "one plain sentence about item 1"}]}',
+            '{"headline": "one sentence, max 14 words", '
+            '"summary": "1-2 short sentences, max 35 words in total", '
+            '"blurbs": [{"index": 1, "text": "max 16 words about item 1"}]}',
+            f"Include at most {REPORT_ITEMS_MAX} blurbs, most important first.",
         ]
         return [
             {"role": "system", "content": system},
@@ -250,6 +272,7 @@ class Summarizer:
             ]
         else:
             chosen = [_report_item(i, snippet_blurb(i)) for i in items]
+        chosen = chosen[:REPORT_ITEMS_MAX]
         headline = clean_text(data["headline"], HEADLINE_MAX)
         if not headline:
             raise SummaryError("headline empty after cleaning")
@@ -258,7 +281,7 @@ class Summarizer:
             title=title,
             created_at=self.clock.now(),
             headline=headline,
-            summary=clean_text(data["summary"], SUMMARY_MAX),
+            summary=clean_text(first_sentences(data["summary"], SUMMARY_SENTENCES), SUMMARY_MAX),
             items=tuple(chosen),
         )
 
@@ -273,7 +296,7 @@ class Summarizer:
             summary=f"Fake summary of {n} items from {_source_names(items)}. No AI was called.",
             items=tuple(
                 _report_item(i, snippet_blurb(i) or f"Item {k} from {i.source}.")
-                for k, i in enumerate(items, start=1)
+                for k, i in enumerate(items[:REPORT_ITEMS_MAX], start=1)
             ),
         )
 
