@@ -11,7 +11,7 @@ ROOT=$(cd "$(dirname "$0")/.." && pwd)
 echo "==> Copying code to mybuddy@$HOST:~/app"
 rsync -az --delete -e "ssh -i $KEY -o BatchMode=yes" \
   --exclude .venv --exclude .git --exclude '__pycache__' --exclude '.*_cache' \
-  --exclude data --exclude site/data/reports.json \
+  --exclude /data --exclude /site/data/reports.json \
   "$ROOT"/ "mybuddy@$HOST:app/"
 
 echo "==> Installing Python package on the VM"
@@ -20,7 +20,7 @@ set -euo pipefail
 cd ~/app
 [ -d .venv ] || python3 -m venv .venv
 .venv/bin/pip install -q --upgrade pip
-.venv/bin/pip install -q .
+.venv/bin/pip install -q -e .
 install -d -m 700 ~/.local/share/mybuddy ~/.config/mybuddy
 [ -f site/data/reports.json ] || cp site/data/reports.sample.json site/data/reports.json
 .venv/bin/mybuddy list
