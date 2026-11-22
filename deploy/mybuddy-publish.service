@@ -1,0 +1,15 @@
+[Unit]
+Description=Push MyBuddy reports.json to GitHub (GitHub Pages republishes the website)
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+User=mybuddy
+Group=mybuddy
+# Let a burst of reports settle, then publish them in one commit.
+ExecStartPre=/bin/sleep 20
+ExecStart=/bin/bash /home/mybuddy/app/deploy/publish-reports.sh
+TimeoutStartSec=180
+NoNewPrivileges=true
+PrivateTmp=true

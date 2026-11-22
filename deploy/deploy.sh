@@ -30,8 +30,14 @@ echo "==> Installing and restarting the systemd service (admin user)"
 "${SSH[@]}" "ubuntu@$HOST" bash -s <<'EOF'
 set -euo pipefail
 sudo install -m 644 /home/mybuddy/app/deploy/mybuddy.service /etc/systemd/system/mybuddy.service
+sudo install -m 644 /home/mybuddy/app/deploy/mybuddy-publish.service /etc/systemd/system/mybuddy-publish.service
+sudo install -m 644 /home/mybuddy/app/deploy/mybuddy-publish.path /etc/systemd/system/mybuddy-publish.path
 sudo systemctl daemon-reload
 sudo systemctl enable --now mybuddy
+# Publishing to GitHub Pages needs the server's deploy key added on GitHub first.
+if sudo test -f /home/mybuddy/.ssh/github_deploy; then
+  sudo systemctl enable --now mybuddy-publish.path
+fi
 sudo systemctl restart mybuddy
 sleep 3
 systemctl --no-pager --lines=5 status mybuddy || true
