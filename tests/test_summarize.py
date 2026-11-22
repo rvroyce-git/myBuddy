@@ -43,7 +43,7 @@ def test_valid_json_builds_report(settings: Settings, http: FakeHttp, clock: Fix
     assert url == GROQ_URL
     assert headers == {"Authorization": "Bearer gsk_test"}
     assert payload["response_format"] == {"type": "json_object"}
-    assert payload["temperature"] == 0.3 and payload["model"] == "llama-3.3-70b-versatile"
+    assert payload["temperature"] == 0.3 and payload["model"] == "openai/gpt-oss-120b"
     system, user = payload["messages"]
     assert "never invent" in system["content"].lower()
     assert "[3] Story 3" in user["content"] and "Snippet for story 3." in user["content"]
@@ -148,3 +148,19 @@ def test_fake_mode_is_deterministic_and_offline(
 def test_parse_model_json_accepts_code_fence() -> None:
     data = parse_model_json('```json\n{"headline": "h", "summary": "s", "blurbs": []}\n```')
     assert data["headline"] == "h"
+
+
+def test_provider_error_body_is_logged(
+    settings: Settings, http: FakeHttp, clock: FixedClock
+) -> None:
+    import io
+
+    log = io.StringIO()
+    http.post_responses = [
+        HttpError("HTTP 400", status=400, body='{"error": "json_validate_failed"}')
+    ]
+    s = Summarizer(settings, http, clock, sleep=lambda s: None, log=log)
+    report = s.summarize(make_topic(), [make_item(1)])
+    assert "json_validate_failed" in log.getvalue()
+    assert report.headline.startswith("Today's top items from")
+    assert http.posts[0][2]["max_tokens"] >= 1500  # room for reasoning models

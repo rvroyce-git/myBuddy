@@ -143,7 +143,7 @@ def test_invalid_yaml_and_missing_file(tmp_path: Path) -> None:
 
 def test_settings_from_env_defaults_and_values(tmp_path: Path) -> None:
     s = Settings.from_env({})
-    assert s.groq_model == "llama-3.3-70b-versatile"
+    assert s.groq_model == "openai/gpt-oss-120b"
     assert s.gemini_model == "gemini-2.5-flash"
     assert s.data_dir == Path("~/.local/share/mybuddy").expanduser()
     assert s.site_data.name == "reports.json" and s.fake is False

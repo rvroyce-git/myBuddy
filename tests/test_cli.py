@@ -104,7 +104,7 @@ def test_check_ok_hides_secrets(
     env: dict[str, Any], monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
 ) -> None:
     monkeypatch.setenv("GROQ_API_KEY", "gsk_supersecret")
-    env["http"].get_responses[cli.GROQ_MODELS_URL] = {"data": [{"id": "llama-3.3-70b-versatile"}]}
+    env["http"].get_responses[cli.GROQ_MODELS_URL] = {"data": [{"id": "openai/gpt-oss-120b"}]}
     assert cli.main([*env["argv"], "check"]) == 0
     out = capsys.readouterr().out
     assert "gsk_supersecret" not in out

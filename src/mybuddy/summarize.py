@@ -24,7 +24,8 @@ GEMINI_URL = "https://generativelanguage.googleapis.com/v1beta/openai/chat/compl
 MAX_AI_ITEMS = 12
 SNIPPET_CHARS = 280
 TEMPERATURE = 0.3
-MAX_TOKENS = 500
+# Reasoning models (e.g. gpt-oss) spend part of this budget thinking before the JSON answer.
+MAX_TOKENS = 2000
 RETRY_429_MAX_SECONDS = 8.0
 
 # Short by design: the website widgets and Discord posts stay small and scannable.
@@ -239,7 +240,8 @@ class Summarizer:
                     self._log(f"{provider.name} rate limited; retrying in {wait:.0f}s")
                     self.sleep(wait)
                     continue
-                raise SummaryError(f"{provider.name}: {exc}") from None
+                detail = f" ({exc.body.strip()[:200]})" if exc.body else ""
+                raise SummaryError(f"{provider.name}: {exc}{detail}") from None
         try:
             content = resp["choices"][0]["message"]["content"]
         except (KeyError, IndexError, TypeError):

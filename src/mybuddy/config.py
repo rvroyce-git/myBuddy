@@ -81,7 +81,7 @@ class Topic:
 @dataclass(frozen=True)
 class Settings:
     groq_api_key: str | None = None
-    groq_model: str = "llama-3.3-70b-versatile"
+    groq_model: str = "openai/gpt-oss-120b"
     gemini_api_key: str | None = None
     gemini_model: str = "gemini-2.5-flash"
     discord_webhook_url: str | None = None
@@ -104,7 +104,7 @@ class Settings:
         )
         return cls(
             groq_api_key=get("GROQ_API_KEY"),
-            groq_model=get("GROQ_MODEL") or "llama-3.3-70b-versatile",
+            groq_model=get("GROQ_MODEL") or "openai/gpt-oss-120b",
             gemini_api_key=get("GEMINI_API_KEY"),
             gemini_model=get("GEMINI_MODEL") or "gemini-2.5-flash",
             discord_webhook_url=get("DISCORD_WEBHOOK_URL"),
