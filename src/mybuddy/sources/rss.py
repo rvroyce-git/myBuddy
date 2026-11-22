@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from dataclasses import replace
 from datetime import timedelta
 from typing import Any
 from urllib.parse import urlencode
@@ -84,6 +85,22 @@ class RssSource:
         return newest_first(items)[: self.limit]
 
 
+class GoogleNewsSource(RssSource):
+    """Google News search. Its titles end with " - Publisher"; show that publisher as the
+    source and keep the title clean."""
+
+    def collect(self) -> list[Item]:
+        return [split_publisher(item) for item in super().collect()]
+
+
+def split_publisher(item: Item) -> Item:
+    head, sep, publisher = item.title.rpartition(" - ")
+    publisher = publisher.strip()
+    if not sep or not head.strip() or not publisher or len(publisher) > 60:
+        return item
+    return replace(item, title=head.strip(), source=publisher)
+
+
 def google_news_url(query: str) -> str:
     params = {"q": query, "hl": "en-IN", "gl": "IN", "ceid": "IN:en"}
     return "https://news.google.com/rss/search?" + urlencode(params)
@@ -101,7 +118,7 @@ def build_rss(spec: dict[str, Any], http: HttpClient, clock: Clock) -> RssSource
 
 
 def build_google_news(spec: dict[str, Any], http: HttpClient, clock: Clock) -> RssSource:
-    return RssSource(
+    return GoogleNewsSource(
         spec_str(spec, "name"),
         google_news_url(spec_str(spec, "query")),
         http,

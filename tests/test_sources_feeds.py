@@ -150,3 +150,25 @@ def test_arxiv_upgrades_http_links() -> None:
     spec = {"type": "arxiv", "name": "a", "query": "q"}
     items = build_source(spec, FakeHttp(routes), FixedClock()).collect()
     assert [it.url for it in items] == ["https://arxiv.org/abs/1"]
+
+
+def test_google_news_title_publisher_split() -> None:
+    from datetime import UTC, datetime
+
+    from mybuddy.models import Item
+    from mybuddy.sources.rss import split_publisher
+
+    when = datetime(2026, 11, 22, tzinfo=UTC)
+    item = Item(
+        "Alumnus pledges funds for AI research - Telegraph India",
+        "https://n.example/1",
+        "Google News AI",
+        when,
+    )
+    out = split_publisher(item)
+    assert out.title == "Alumnus pledges funds for AI research"
+    assert out.source == "Telegraph India"
+    plain = Item("No publisher suffix here", "https://n.example/2", "Google News AI", when)
+    assert split_publisher(plain) == plain
+    dashy = Item("A - B - The Verge", "https://n.example/3", "Google News AI", when)
+    assert split_publisher(dashy).title == "A - B" and split_publisher(dashy).source == "The Verge"
