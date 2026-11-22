@@ -4,12 +4,24 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>MyBuddy · your own AI news buddy</title>
-  <meta name="description" content="MyBuddy is a self-hosted AI news companion. It reads the news on 7 topics every morning, writes a short summary where every claim links to its source, and sends it to your Discord. Runs on Oracle Cloud Always Free for $0.">
+  <meta name="description" content="MyBuddy is a self-hosted AI news companion. It reads the news on 7 topics every morning, writes a short summary where every claim links to its source, and sends it to you on Telegram. Runs on Oracle Cloud Always Free for $0.">
   <meta name="color-scheme" content="light dark">
+  <meta name="theme-color" content="#F6F1E8" media="(prefers-color-scheme: light)">
+  <meta name="theme-color" content="#1C1B19" media="(prefers-color-scheme: dark)">
+  <link rel="canonical" href="https://rvroyce-git.github.io/myBuddy/">
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="MyBuddy">
+  <meta property="og:title" content="MyBuddy · your own AI news buddy">
+  <meta property="og:description" content="A self-hosted AI news companion. Short, cited summaries of 7 topics every morning, sent to your Telegram. Runs on Oracle Cloud Always Free for $0.">
+  <meta property="og:url" content="https://rvroyce-git.github.io/myBuddy/">
+  <meta name="twitter:card" content="summary">
+  <!-- Apply a saved theme before first paint so there's no flash. -->
+  <script>try{var t=localStorage.getItem("mybuddy-theme");if(t==="light"||t==="dark")document.documentElement.dataset.theme=t}catch(e){}</script>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600&family=Nunito:ital,wght@0,400;0,600;0,700;1,400&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="assets/styles.css">
+  <noscript><style>.updated, .chips, .widgets, .hint, .clock, .timeline, .theme-btn { display: none; }</style></noscript>
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ccircle cx='24' cy='26' r='16' fill='%23B88A63'/%3E%3Ccircle cx='76' cy='26' r='16' fill='%23B88A63'/%3E%3Ccircle cx='50' cy='56' r='38' fill='%23B88A63'/%3E%3Cellipse cx='50' cy='68' rx='16' ry='12' fill='%23EED9BE'/%3E%3Ccircle cx='36' cy='50' r='4.5' fill='%23392C24'/%3E%3Ccircle cx='64' cy='50' r='4.5' fill='%23392C24'/%3E%3Cellipse cx='50' cy='63' rx='6' ry='4.5' fill='%23392C24'/%3E%3C/svg%3E">
 </head>
 <body>
@@ -48,7 +60,7 @@
       <div class="hero-copy">
         <p class="eyebrow">A tiny news companion you host yourself</p>
         <h1 id="hero-title">Your own AI news buddy.<br><span class="soft">On your server. For $0.</span></h1>
-        <p class="lede">While you sleep, MyBuddy reads the news on seven topics you care about. By breakfast it has written a short, calm summary where every claim links back to its source, and dropped it quietly into your Discord.</p>
+        <p class="lede">While you sleep, MyBuddy reads the news on seven topics you care about. By breakfast it has written a short, calm summary where every claim links back to its source, and dropped it quietly into your Telegram, and onto this page.</p>
         <div class="hero-actions">
           <a class="btn btn-primary" href="#reports">See this morning's reports</a>
           <a class="btn btn-ghost" href="#build">Run your own</a>
@@ -62,7 +74,43 @@
       </div>
       <div class="hero-art">
         <div class="hero-halo" aria-hidden="true"></div>
-        <div class="hero-bear" data-bear="full" role="img" aria-label="A friendly teddy bear waving hello while holding a folded newspaper"></div>
+        <div class="hero-bear" data-bear="full" role="img" aria-label="A friendly teddy bear waving hello while holding a folded newspaper">
+          <svg viewBox="0 0 240 262" xmlns="http://www.w3.org/2000/svg">
+            <g class="wave-arm">
+              <ellipse cx="192" cy="118" rx="19" ry="36" transform="rotate(28 192 118)" class="fur"/>
+              <circle cx="208" cy="86" r="19" class="fur"/>
+              <ellipse cx="208" cy="88" rx="10" ry="8" class="inner"/>
+            </g>
+            <ellipse cx="78" cy="244" rx="30" ry="17" class="fur"/>
+            <ellipse cx="162" cy="244" rx="30" ry="17" class="fur"/>
+            <ellipse cx="78" cy="245" rx="15" ry="9" class="inner"/>
+            <ellipse cx="162" cy="245" rx="15" ry="9" class="inner"/>
+            <ellipse cx="120" cy="190" rx="72" ry="62" class="fur"/>
+            <ellipse cx="120" cy="202" rx="44" ry="38" class="muzzle"/>
+            <g transform="rotate(-9 74 178)">
+              <rect x="34" y="150" width="78" height="58" rx="8" class="paper"/>
+              <line x1="46" y1="166" x2="88" y2="166" class="paper-line t"/>
+              <line x1="46" y1="180" x2="100" y2="180" class="paper-line"/>
+              <line x1="46" y1="192" x2="94" y2="192" class="paper-line"/>
+            </g>
+            <ellipse cx="66" cy="196" rx="21" ry="16" class="fur"/>
+            <ellipse cx="64" cy="198" rx="10" ry="7" class="inner"/>
+            <g>
+              <circle cx="66" cy="46" r="25" class="fur"/><circle cx="66" cy="46" r="13" class="inner"/>
+              <circle cx="174" cy="46" r="25" class="fur"/><circle cx="174" cy="46" r="13" class="inner"/>
+              <ellipse cx="120" cy="94" rx="66" ry="58" class="fur"/>
+              <ellipse cx="120" cy="114" rx="28" ry="21" class="muzzle"/>
+              <ellipse cx="80" cy="108" rx="10" ry="6.5" class="cheek"/>
+              <ellipse cx="160" cy="108" rx="10" ry="6.5" class="cheek"/>
+              <g class="eyes">
+                <circle cx="96" cy="88" r="7.5" class="eye"/><circle cx="144" cy="88" r="7.5" class="eye"/>
+                <circle cx="98.5" cy="85.5" r="2.5" class="shine"/><circle cx="146.5" cy="85.5" r="2.5" class="shine"/>
+              </g>
+              <ellipse cx="120" cy="105" rx="9.5" ry="7" class="nose"/>
+              <path d="M120 112v6M109 120c5 5 17 5 22 0" class="mouth"/>
+            </g>
+          </svg>
+        </div>
         <p class="hero-bubble" aria-hidden="true">Morning! ☕ Your news is ready.</p>
       </div>
     </section>
@@ -74,14 +122,16 @@
           <p class="eyebrow">Fresh from the server</p>
           <h2 id="reports-title">This morning's reports</h2>
         </div>
-        <p class="updated" id="updated" aria-live="polite"><span class="pulse" aria-hidden="true"></span><span id="updatedText">Loading the latest reports…</span></p>
+        <p class="updated" id="updated"><span class="pulse" aria-hidden="true"></span><span id="updatedText">Loading the latest reports…</span></p>
       </div>
       <p class="notice" id="notice" role="status" hidden></p>
-      <div class="chips" role="toolbar" aria-label="Filter reports by topic" id="chips"></div>
-      <div class="widgets" id="widgets" aria-live="polite">
+      <p class="sr-only" id="srStatus" role="status"></p>
+      <noscript><p class="notice">The reports load with JavaScript. Turn it on to see this morning's summaries, or read them in your Telegram.</p></noscript>
+      <div class="chips" role="group" aria-label="Filter reports by topic" id="chips"></div>
+      <div class="widgets" id="widgets">
         <p class="loading">Fetching the morning papers…</p>
       </div>
-      <p class="hint">Tip: hover, tap or tab onto a card and the bear will hand it to you. Open it for every link and note.</p>
+      <p class="hint" id="hint">Tip: hover or tab onto a card and the bear will hand it to you. Click or tap it for every link and note.</p>
     </section>
 
     <!-- Morning timeline -->
@@ -123,8 +173,8 @@
         </li>
         <li class="flow-step">
           <span class="flow-icon" aria-hidden="true">💬</span>
-          <h3>Your Discord</h3>
-          <p>The report lands in your private channel, ready with your first cup of tea.</p>
+          <h3>Your Telegram</h3>
+          <p>The report lands in a private chat with your own bot, ready with your first cup of tea.</p>
         </li>
       </ol>
     </section>
@@ -150,7 +200,7 @@
           <h3><span aria-hidden="true">✉️</span> Steps outside</h3>
           <ul>
             <li>Each prompt goes to the AI provider. Free providers may log prompts, so MyBuddy only ever sends public news.</li>
-            <li>Finished reports go to your own Discord channel.</li>
+            <li>Finished reports go to your own private Telegram chat and this public page.</li>
           </ul>
         </article>
       </div>
@@ -168,13 +218,13 @@
       <div class="build">
         <ol class="build-steps">
           <li><h3>Get a free server</h3><p>Create an Oracle Cloud Always Free VM. The smallest one is plenty.</p></li>
-          <li><h3>Grab two free keys</h3><p>A Groq API key for the AI, and a Discord webhook URL for your channel.</p></li>
+          <li><h3>Grab two free keys</h3><p>A Groq API key for the AI, and a Telegram bot token from @BotFather.</p></li>
           <li><h3>Install and check</h3><p>Clone the repo, install it with Python, and let <code>mybuddy check</code> confirm everything is wired up.</p></li>
           <li><h3>Let it run</h3><p>Start <code>mybuddy serve</code> as a service and forget about it. Tomorrow's news will find you.</p></li>
         </ol>
-        <div class="terminal" role="group" aria-label="Example commands">
+        <div class="terminal">
           <div class="terminal-bar" aria-hidden="true"><span></span><span></span><span></span></div>
-<pre><code><span class="c"># on your Oracle VM</span>
+<pre tabindex="0" aria-label="Example commands"><code><span class="c"># on your Oracle VM</span>
 git clone https://github.com/rvroyce-git/myBuddy.git mybuddy
 cd mybuddy && python3 -m venv .venv
 . .venv/bin/activate && pip install -e .
@@ -200,15 +250,15 @@ mybuddy serve</code></pre>
       <div class="faq">
         <details>
           <summary>Is it really free?</summary>
-          <div class="faq-body"><p>Yes. Oracle's Always Free tier gives you a small server at no cost, Groq has a free tier for its models, Discord webhooks are free, and every news source is public. Nothing in MyBuddy needs a credit card to run day to day.</p></div>
+          <div class="faq-body"><p>Yes. Oracle's Always Free tier gives you a small server at no cost, Groq has a free tier for its models, Telegram bots are free, and every news source is public. Nothing in MyBuddy needs a credit card to run day to day.</p></div>
         </details>
         <details>
           <summary>Can the AI make things up?</summary>
           <div class="faq-body"><p>It's asked to tie every claim to one of the collected links, and anything it can't cite is thrown away. Links always come from the collected news, never from the model. If the AI fails completely, you still get a plain list of the day's items.</p></div>
         </details>
         <details>
-          <summary>Why Discord?</summary>
-          <div class="faq-body"><p>A webhook into your own private channel is free, works on every phone and laptop, and needs no app of its own. Your reports sit in one tidy place you can search later.</p></div>
+          <summary>Why Telegram?</summary>
+          <div class="faq-body"><p>A Telegram bot is free, takes two minutes to create, and works on every phone and laptop. Your reports sit in one private chat you can search later, and urgent security alerts arrive as a normal notification. (Discord webhooks work too, if you prefer.)</p></div>
         </details>
         <details>
           <summary>Can I change the topics or the times?</summary>

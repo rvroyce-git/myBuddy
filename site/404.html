@@ -1,0 +1,65 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Page not found · MyBuddy</title>
+  <meta name="robots" content="noindex">
+  <meta name="color-scheme" content="light dark">
+  <meta name="theme-color" content="#F6F1E8" media="(prefers-color-scheme: light)">
+  <meta name="theme-color" content="#1C1B19" media="(prefers-color-scheme: dark)">
+  <script>try{var t=localStorage.getItem("mybuddy-theme");if(t==="light"||t==="dark")document.documentElement.dataset.theme=t}catch(e){}</script>
+  <!-- Minimal fallback so the page still looks right if the shared stylesheet can't load; the stylesheet below wins when it does. -->
+  <style>
+    :root { --bg: #F6F1E8; --card: #FFFCF6; --ink: #34302B; --ink-2: #5F574E; --line: #E2D9CA; --teal: #2F6B65; --primary: #2F6B65; --primary-ink: #FFFFFF; --focus: #435F7C;
+      --fur: #B88A63; --fur-inner: #E6C7A6; --muzzle: #F0DDC4; --bear-ink: #392C24; --cheek: #E8B9A6; color-scheme: light; }
+    @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --bg: #1C1B19; --card: #2A2825; --ink: #EDE7DD; --ink-2: #C3BAAD; --line: #3D3934; --teal: #8CC6BF; --primary: #8CC6BF; --primary-ink: #18302D; --focus: #A2BCD8; --fur: #A87D59; --fur-inner: #D4B391; --muzzle: #E5CFB3; --bear-ink: #2A201A; --cheek: #D19E8B; color-scheme: dark; } }
+    :root[data-theme="dark"] { --bg: #1C1B19; --card: #2A2825; --ink: #EDE7DD; --ink-2: #C3BAAD; --line: #3D3934; --teal: #8CC6BF; --primary: #8CC6BF; --primary-ink: #18302D; --focus: #A2BCD8; --fur: #A87D59; --fur-inner: #D4B391; --muzzle: #E5CFB3; --bear-ink: #2A201A; --cheek: #D19E8B; color-scheme: dark; }
+    body { margin: 0; background: var(--bg); color: var(--ink); font-family: "Nunito", ui-rounded, system-ui, -apple-system, "Segoe UI", sans-serif; line-height: 1.6; }
+    .fur { fill: var(--fur); } .inner { fill: var(--fur-inner); } .muzzle { fill: var(--muzzle); } .eye, .nose { fill: var(--bear-ink); } .shine { fill: #fff; } .cheek { fill: var(--cheek); opacity: .7; }
+    .mouth { fill: none; stroke: var(--bear-ink); stroke-width: 2.2; stroke-linecap: round; }
+  </style>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
+  <!-- Absolute path: GitHub Pages serves this file for any missing URL under /myBuddy/. -->
+  <link rel="stylesheet" href="/myBuddy/assets/styles.css">
+  <style>
+    /* 404 layout: a card with the bear peeking over its top edge. */
+    .lost { min-height: 100vh; min-height: 100dvh; display: grid; place-items: center; padding: 96px 16px 32px; box-sizing: border-box; }
+    .lost-card { position: relative; width: min(460px, 100%); box-sizing: border-box; padding: 2rem 1.6rem 1.8rem; border-radius: 22px; background: var(--card); border: 1px solid var(--line); text-align: center; box-shadow: 0 10px 28px rgb(46 36 24 / .08); }
+    .lost-bear { position: absolute; left: 50%; bottom: calc(100% - 10px); width: 128px; transform: translateX(-50%); z-index: -1; }
+    .lost-bear svg { display: block; width: 100%; height: auto; }
+    .lost-card h1 { font-family: "Fredoka", "Nunito", ui-rounded, system-ui, sans-serif; font-weight: 600; font-size: clamp(1.6rem, 6vw, 2.1rem); line-height: 1.15; margin: 0; }
+    .lost-card p { margin: .8rem 0 0; color: var(--ink-2); }
+    .lost-card .lost-code { font-weight: 700; font-size: .82rem; letter-spacing: .09em; text-transform: uppercase; color: var(--teal); margin: 0 0 .5rem; }
+    .lost-home { display: inline-block; margin-top: 1.4rem; padding: .75rem 1.3rem; border-radius: 999px; background: var(--primary); color: var(--primary-ink); font-weight: 700; text-decoration: none; }
+    .lost-home:hover { text-decoration: underline; }
+    .lost-home:focus-visible { outline: 3px solid var(--focus); outline-offset: 3px; }
+  </style>
+</head>
+<body>
+  <main class="lost">
+    <div class="lost-card">
+      <div class="lost-bear" aria-hidden="true">
+        <svg viewBox="0 0 120 92">
+          <circle cx="24" cy="26" r="17" class="fur"/><circle cx="24" cy="26" r="9" class="inner"/>
+          <circle cx="96" cy="26" r="17" class="fur"/><circle cx="96" cy="26" r="9" class="inner"/>
+          <ellipse cx="60" cy="60" rx="44" ry="40" class="fur"/>
+          <ellipse cx="60" cy="72" rx="19" ry="14" class="muzzle"/>
+          <ellipse cx="34" cy="66" rx="7" ry="4.5" class="cheek"/>
+          <ellipse cx="86" cy="66" rx="7" ry="4.5" class="cheek"/>
+          <circle cx="44" cy="54" r="5" class="eye"/><circle cx="76" cy="54" r="5" class="eye"/>
+          <circle cx="45.6" cy="52.4" r="1.7" class="shine"/><circle cx="77.6" cy="52.4" r="1.7" class="shine"/>
+          <ellipse cx="60" cy="66" rx="6.5" ry="4.8" class="nose"/>
+          <path d="M60 70.5v4.5M52.5 76c3.5 3 11.5 3 15 0" class="mouth"/>
+        </svg>
+      </div>
+      <p class="lost-code">Error 404</p>
+      <h1>This page wandered off</h1>
+      <p>The bear looked everywhere, but there's nothing at this address. It may have moved, or the link has a typo.</p>
+      <a class="lost-home" href="/myBuddy/">Back to this morning's reports</a>
+    </div>
+  </main>
+</body>
+</html>

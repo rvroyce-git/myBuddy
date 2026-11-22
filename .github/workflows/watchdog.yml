@@ -1,0 +1,32 @@
+name: Watchdog
+
+# Every morning after the reports are due, check that the live website got fresh data.
+# If the Oracle VM stopped (e.g. Always Free idle reclamation) or a run failed, this job
+# fails and GitHub emails the repository owner.
+on:
+  schedule:
+    - cron: "0 4 * * *" # 04:00 UTC = 09:30 IST
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  freshness:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Live reports were updated in the last 26 hours
+        run: |
+          python3 - <<'EOF'
+          import json, sys, time, urllib.request
+          from datetime import datetime, timezone
+          url = "https://rvroyce-git.github.io/myBuddy/data/reports.json?t=%d" % time.time()
+          data = json.load(urllib.request.urlopen(url, timeout=30))
+          generated = datetime.fromisoformat(data["generated_at"])
+          age_h = (datetime.now(timezone.utc) - generated).total_seconds() / 3600
+          print(f"reports.json generated {data['generated_at']} ({age_h:.1f} h ago)")
+          if age_h > 26:
+              print("::error::No fresh MyBuddy reports for over 26 hours. Check the Oracle VM "
+                    "(Compute > Instances > mybuddy: is it Running?) and `systemctl status mybuddy`.")
+              sys.exit(1)
+          EOF
