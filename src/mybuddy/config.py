@@ -85,6 +85,8 @@ class Settings:
     gemini_api_key: str | None = None
     gemini_model: str = "gemini-2.5-flash"
     discord_webhook_url: str | None = None
+    telegram_bot_token: str | None = None
+    telegram_chat_id: str | None = None
     data_dir: Path = field(default_factory=lambda: Path("~/.local/share/mybuddy").expanduser())
     site_data: Path = field(default_factory=lambda: REPO_ROOT / "site" / "data" / "reports.json")
     fake: bool = False
@@ -108,6 +110,8 @@ class Settings:
             gemini_api_key=get("GEMINI_API_KEY"),
             gemini_model=get("GEMINI_MODEL") or "gemini-2.5-flash",
             discord_webhook_url=get("DISCORD_WEBHOOK_URL"),
+            telegram_bot_token=get("TELEGRAM_BOT_TOKEN"),
+            telegram_chat_id=get("TELEGRAM_CHAT_ID"),
             data_dir=data_dir,
             site_data=site_data,
             fake=(get("MYBUDDY_FAKE") or "").lower() in {"1", "true", "yes", "on"},
@@ -121,6 +125,8 @@ SETTING_ENV_VARS: tuple[tuple[str, bool], ...] = (
     ("GEMINI_API_KEY", True),
     ("GEMINI_MODEL", False),
     ("DISCORD_WEBHOOK_URL", True),
+    ("TELEGRAM_BOT_TOKEN", True),
+    ("TELEGRAM_CHAT_ID", False),
     ("MYBUDDY_DATA_DIR", False),
     ("MYBUDDY_SITE_DATA", False),
     ("MYBUDDY_FAKE", False),

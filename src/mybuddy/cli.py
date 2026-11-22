@@ -1,4 +1,5 @@
-"""Command line: mybuddy list | run <topic|all> [--dry-run] | serve | check | export."""
+"""Command line: mybuddy list | run <topic|all> [--dry-run] | serve | check | export |
+telegram-setup [--save]."""
 
 from __future__ import annotations
 
@@ -20,7 +21,7 @@ from mybuddy.config import (
     load_env_file,
     load_topics,
 )
-from mybuddy.deliver import make_deliverer
+from mybuddy.deliver import TELEGRAM_API, make_deliverer
 from mybuddy.engine import Deps, RunResult, run_topic
 from mybuddy.export import export, schedule_label
 from mybuddy.http import HttpError, UrllibHttpClient
@@ -61,6 +62,10 @@ def _parser() -> argparse.ArgumentParser:
     sub.add_parser("serve", help="run forever, each topic at its scheduled time (IST)")
     sub.add_parser("check", help="validate config, env and connectivity")
     sub.add_parser("export", help="rewrite the website reports.json from saved reports")
+    tg = sub.add_parser(
+        "telegram-setup", help="find your Telegram chat id (send your bot a message first)"
+    )
+    tg.add_argument("--save", action="store_true", help="write TELEGRAM_CHAT_ID to the env file")
     return p
 
 
@@ -194,8 +199,11 @@ def cmd_check(config_path: Path, settings: Settings, clock: Clock) -> int:
     else:
         if not settings.groq_api_key and not settings.gemini_api_key:
             print("  warning: no AI key set; reports will use the plain fallback")
-        if not settings.discord_webhook_url:
-            print("  warning: DISCORD_WEBHOOK_URL not set; reports go to the outbox folder")
+        has_telegram = bool(settings.telegram_bot_token and settings.telegram_chat_id)
+        if not settings.discord_webhook_url and not has_telegram:
+            print("  warning: no Discord or Telegram set; reports go to the outbox folder")
+        if settings.telegram_bot_token and not settings.telegram_chat_id:
+            print("  warning: TELEGRAM_CHAT_ID not set; run 'mybuddy telegram-setup --save'")
     if settings.discord_webhook_url and not settings.discord_webhook_url.startswith("https://"):
         problems.append("DISCORD_WEBHOOK_URL must start with https://")
 
@@ -217,6 +225,12 @@ def cmd_check(config_path: Path, settings: Settings, clock: Clock) -> int:
                 problems.append(f"GROQ_MODEL {settings.groq_model!r} not offered by Groq")
         except (HttpError, AttributeError, TypeError) as exc:
             problems.append(f"Groq check failed: {exc}")
+    if settings.telegram_bot_token and not settings.fake:
+        bot_name = _telegram_bot_name(settings.telegram_bot_token)
+        if bot_name:
+            print(f"  ok: Telegram bot @{bot_name}")
+        else:
+            problems.append("Telegram check failed: token rejected or Telegram unreachable")
 
     if problems:
         print("problems:")
@@ -224,6 +238,63 @@ def cmd_check(config_path: Path, settings: Settings, clock: Clock) -> int:
             print(f"  - {p}")
         return 1
     print("all good")
+    return 0
+
+
+def _telegram_get(token: str, method: str) -> Any:
+    """Call a Telegram Bot API method. Errors are reported without the URL (it holds the token)."""
+    try:
+        return make_http().get_json(f"{TELEGRAM_API}/bot{token}/{method}")
+    except HttpError as exc:
+        raise RuntimeError(f"Telegram {method} failed: HTTP {exc.status}") from None
+
+
+def _telegram_bot_name(token: str) -> str | None:
+    try:
+        data = _telegram_get(token, "getMe")
+    except RuntimeError:
+        return None
+    result = data.get("result") if isinstance(data, dict) else None
+    return str(result.get("username")) if isinstance(result, dict) else None
+
+
+def cmd_telegram_setup(settings: Settings, env_file: Path, save: bool) -> int:
+    token = settings.telegram_bot_token
+    if not token:
+        _err("TELEGRAM_BOT_TOKEN is not set (run deploy/set-secrets.sh on your laptop)")
+        return 1
+    try:
+        data = _telegram_get(token, "getUpdates")
+    except RuntimeError as exc:
+        _err(str(exc))
+        return 1
+    chats: dict[str, str] = {}
+    for update in data.get("result", []) if isinstance(data, dict) else []:
+        msg = update.get("message") if isinstance(update, dict) else None
+        chat = msg.get("chat") if isinstance(msg, dict) else None
+        if isinstance(chat, dict) and chat.get("type") == "private" and "id" in chat:
+            who = chat.get("first_name") or chat.get("username") or "?"
+            chats[str(chat["id"])] = str(who)
+    if not chats:
+        _err("No messages found. Open your bot in Telegram, tap Start, send 'hi', then retry.")
+        return 1
+    for chat_id, who in chats.items():
+        print(f"  chat {chat_id}  ({who})")
+    if len(chats) > 1:
+        _err("More than one person messaged the bot; set TELEGRAM_CHAT_ID by hand.")
+        return 1
+    chat_id = next(iter(chats))
+    if not save:
+        print(f"Run again with --save to store TELEGRAM_CHAT_ID={chat_id}")
+        return 0
+    path = env_file.expanduser()
+    lines = path.read_text(encoding="utf-8").splitlines() if path.exists() else []
+    lines = [ln for ln in lines if not ln.startswith("TELEGRAM_CHAT_ID=")]
+    lines.append(f"TELEGRAM_CHAT_ID={chat_id}")
+    path.parent.mkdir(parents=True, exist_ok=True, mode=0o700)
+    path.write_text("\n".join(lines) + "\n", encoding="utf-8")
+    path.chmod(0o600)
+    print(f"saved TELEGRAM_CHAT_ID to {path}")
     return 0
 
 
@@ -240,6 +311,8 @@ def main(argv: Sequence[str] | None = None) -> int:
 
     if args.command == "check":
         return cmd_check(config_path, settings, clock)
+    if args.command == "telegram-setup":
+        return cmd_telegram_setup(settings, args.env_file or DEFAULT_ENV_FILE, args.save)
     try:
         topics = load_topics(config_path)
     except ConfigError as exc:
