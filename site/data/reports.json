@@ -1,0 +1,342 @@
+{
+  "generated_at": "2026-11-22T13:21:29+05:30",
+  "topics": [
+    {
+      "id": "ai_news",
+      "title": "AI news",
+      "emoji": "🧠",
+      "description": "The day's AI news in plain words — models, labs, funding, policy and open source.",
+      "schedule": "Daily · 06:30 IST",
+      "report": {
+        "created_at": "2026-11-22T13:19:04+05:30",
+        "headline": "OpenAI adds safeguards while Google adds tool retrieval, boosting AI safety and usability",
+        "summary": "OpenAI unveiled a layered defense against adversarial attacks, and Google introduced tool retrieval in Gemini’s API. Meanwhile, Hebbia reports gains with GPT‑6 Astra and AI shows promise in drug discovery.",
+        "items": [
+          {
+            "title": "Combatting adversarial distillation",
+            "url": "https://openai.com/index/combatting-adversarial-distillation",
+            "source": "OpenAI News",
+            "blurb": "OpenAI adds layered safeguards to block adversarial distillation and protect model capabilities.",
+            "published": "2026-11-20T10:00:00+00:00"
+          },
+          {
+            "title": "Introducing Tool Retrieval in the Gemini API",
+            "url": "https://blog.google/innovation-and-ai/technology/developers-tools/gemini-api-tool-retrieval/",
+            "source": "Google AI Blog",
+            "blurb": "Google’s Gemini API now supports tool retrieval, letting apps fetch external resources automatically.",
+            "published": "2026-11-19T18:00:00+00:00"
+          },
+          {
+            "title": "Hebbia sees improvements in financial research with GPT-6 Astra",
+            "url": "https://openai.com/business/customer-stories/hebbia",
+            "source": "OpenAI News",
+            "blurb": "Hebbia’s tests show GPT‑6 Astra improves source coverage and citation relevance for finance research.",
+            "published": "2026-11-20T00:00:00+00:00"
+          },
+          {
+            "title": "Can AI help scientists identify promising drug candidates?",
+            "url": "https://openai.com/index/introducing-medchembench",
+            "source": "OpenAI News",
+            "blurb": "MedChemBench evaluates AI models for early‑stage drug discovery, assessing structure interpretation and compound…",
+            "published": "2026-11-20T00:00:00+00:00"
+          },
+          {
+            "title": "How OpenAI’s Performance Factory keeps ChatGPT fast",
+            "url": "https://openai.com/index/how-openai-performance-factory-keeps-chatgpt-fast",
+            "source": "OpenAI News",
+            "blurb": "OpenAI’s Performance Factory uses Codex workflows to find and fix ChatGPT speed issues.",
+            "published": "2026-11-19T08:00:00+00:00"
+          },
+          {
+            "title": "Alumnus pledges Rs 46.34 crore for research on applied artificial intelligence at IIT - Telegraph India",
+            "url": "https://news.google.com/rss/articles/CBMihwJBVV95cUxNb0szNnhNQVlRRUgwUnhoUFA4MmR2eDNMaXMwOFQ2Qi00aS1lVHh1djJoMVU0bjc0VlRVSnRvT1FVWEdGTHlwWE5uV0VNNHE4Tmw3T3lsUTFHVUx0eXNlRVNFdlA0ZE9jcXlWcTNrNk56UGtQQmFSdWNmd2RBSUVfczNuZm1LNVNLaldsSEVUM215WmVvWjhTbWN6cDRFVnluQWJWTVkxSHFiNU9PRG5hOGZ2ZVlpTW1GMHFMQWt6Q0JYVVJmem9WN0pLeGN3c01VUk9kOVFUdmM3Qmk5dkhnOFBBQ3VOLWhEVjh1NUY1cTdRVE1YQ3BDTUJsdGExdGlDcUdJUl9OMNIBjAJBVV95cUxOQXNZM3hUVEJlMFI3SFZsLV9OaGNDSzctYmJKYTZ5cF9sTEFQeVNuclNqTkl1cHVuRG9oMnpZdmlLa0FzLWhQb21MRW5ZWEtuZEQyekZKTVJjNzFKNDJjR2FpLWdTWmd0a2ZzTmRZdVdMTWpoWGJBLUV2ZWsydTZaR0dFb3pTV3RGR2x2MHRHOFljZy1nd2c1bmhHd0E1blU2U3RoUUpJNWVQMlBGVWFuSTh1X1hYbEJOdnAzZDB3dF9VNkpXUmRaTWh1LWEtNmctUWFBMlQ2eVdBUFJBZkNhcTVMcDIwbmNmSEZUU1VJNldON1FGTGp5YzVjTmhWdklkb3oxaTJsYTZZZmx3?oc=5",
+            "source": "Google News AI",
+            "blurb": "An alumnus pledges 46.34 crore rupees to fund applied AI research at IIT.",
+            "published": "2026-11-22T01:08:01+00:00"
+          }
+        ]
+      }
+    },
+    {
+      "id": "security",
+      "title": "Cybersecurity alerts",
+      "emoji": "🛡️",
+      "description": "Fresh security advisories and breaches, with what they mean and what to do.",
+      "schedule": "Daily · 07:00 IST",
+      "report": {
+        "created_at": "2026-11-22T13:19:32+05:30",
+        "headline": "Multiple active exploits hit major software; patch now to protect your systems",
+        "summary": "CISA listed four actively exploited CVEs, including SAP and Cisco products. Critical bugs in Ghostscript, GnuPG, Microsoft Entra Connect Health, and a Rackspace breach also demand immediate updates and credential checks.",
+        "items": [
+          {
+            "title": "CISA Adds Four Known Exploited Vulnerabilities to Catalog",
+            "url": "https://www.cisa.gov/news-events/alerts/2026/11/20/cisa-adds-four-known-exploited-vulnerabilities-catalog",
+            "source": "CISA Advisories",
+            "blurb": "CISA adds four actively exploited CVEs (e.g., SAP NetWeaver, Cisco Expressway); apply vendor patches ASAP.",
+            "published": "2026-11-20T12:00:00+00:00"
+          },
+          {
+            "title": "Researchers Demonstrate Ghostscript Sandbox-Escape RCE via Crafted File Uploads in Popular Apps",
+            "url": "https://thehackernews.com/2026/11/researchers-demonstrate-ghostscript.html",
+            "source": "The Hacker News",
+            "blurb": "Ghostscript sandbox‑escape RCE patched; update Ghostscript immediately to stop remote code execution.",
+            "published": "2026-11-22T05:03:41+00:00"
+          },
+          {
+            "title": "GnuPG Warns Critical GPGME Flaw Could Expose App Data via Malicious OpenPGP Keys",
+            "url": "https://thehackernews.com/2026/11/gnupg-warns-critical-gpgme-flaw-could.html",
+            "source": "The Hacker News",
+            "blurb": "Critical GPGME memory bug can steal data via malicious OpenPGP keys; upgrade GnuPG/GPGME now.",
+            "published": "2026-11-21T11:05:53+00:00"
+          },
+          {
+            "title": "Microsoft Entra Connect Health flaw exploited to steal tenant data",
+            "url": "https://www.bleepingcomputer.com/news/security/microsoft-entra-connect-health-flaw-exploited-to-steal-tenant-data/",
+            "source": "BleepingComputer",
+            "blurb": "Microsoft Entra Connect Health flaw exploited to steal admin emails; apply updates and review access.",
+            "published": "2026-11-21T18:01:58+00:00"
+          },
+          {
+            "title": "Rackspace Spot breach let hackers access customer Kubernetes secrets",
+            "url": "https://www.bleepingcomputer.com/news/security/rackspace-spot-breach-let-hackers-access-customer-kubernetes-secrets/",
+            "source": "BleepingComputer",
+            "blurb": "Rackspace Spot breach used stolen credentials to access Kubernetes secrets; rotate keys and monitor workloads.",
+            "published": "2026-11-21T22:59:58+00:00"
+          },
+          {
+            "title": "BADBOX botnet returns with record-breaking 40 billion daily ad requests",
+            "url": "https://www.bleepingcomputer.com/news/security/badbox-30-botnet-returns-with-record-breaking-40-billion-daily-ad-requests/",
+            "source": "BleepingComputer",
+            "blurb": "BADBOX botnet resurfaces in Android TV boxes, flooding ads; secure devices and remove unknown apps.",
+            "published": "2026-11-21T15:17:27+00:00"
+          }
+        ]
+      }
+    },
+    {
+      "id": "github_trending",
+      "title": "Trending GitHub repos",
+      "emoji": "⭐",
+      "description": "AI projects on GitHub that are picking up stars fastest right now.",
+      "schedule": "Daily · 07:15 IST",
+      "report": {
+        "created_at": "2026-11-22T13:20:12+05:30",
+        "headline": "Top AI GitHub repos dominate with hundreds of thousands of stars, offering powerful tools",
+        "summary": "The most starred projects span agents, plugins, data scraping, and core ML frameworks. Their massive star counts reflect strong community interest and practical value.",
+        "items": [
+          {
+            "title": "affaan-m/ECC",
+            "url": "https://github.com/affaan-m/ECC",
+            "source": "GitHub Trending",
+            "blurb": "ECC optimizes AI agent performance for Claude, Codex, Cursor; 308k stars show strong interest.",
+            "published": "2026-11-20T01:13:45+00:00"
+          },
+          {
+            "title": "deepseek-ai/deepseek-harness",
+            "url": "https://github.com/deepseek-ai/deepseek-harness",
+            "source": "GitHub Trending",
+            "blurb": "DeepSeek Harness makes any tool a plugin in TypeScript; 285k stars indicate wide adoption.",
+            "published": "2026-11-22T03:18:55+00:00"
+          },
+          {
+            "title": "NousResearch/hermes-agent",
+            "url": "https://github.com/NousResearch/hermes-agent",
+            "source": "GitHub Trending",
+            "blurb": "Hermes Agent grows with you, written in Python; 265k stars reflect developer enthusiasm.",
+            "published": "2026-11-22T07:42:05+00:00"
+          },
+          {
+            "title": "firecrawl/firecrawl",
+            "url": "https://github.com/firecrawl/firecrawl",
+            "source": "GitHub Trending",
+            "blurb": "Firecrawl provides one API to search and scrape 550+ sources; 206k stars show demand.",
+            "published": "2026-11-22T06:23:11+00:00"
+          },
+          {
+            "title": "tensorflow/tensorflow",
+            "url": "https://github.com/tensorflow/tensorflow",
+            "source": "GitHub Trending",
+            "blurb": "TensorFlow is a C++ machine‑learning framework for all; 201k stars prove lasting popularity.",
+            "published": "2026-11-22T07:40:02+00:00"
+          },
+          {
+            "title": "DietrichGebert/ponytail",
+            "url": "https://github.com/DietrichGebert/ponytail",
+            "source": "GitHub Trending",
+            "blurb": "Ponytail makes AI agents code lazily like senior devs; 196k stars suggest curiosity.",
+            "published": "2026-11-22T02:31:58+00:00"
+          }
+        ]
+      }
+    },
+    {
+      "id": "deep_dive",
+      "title": "Deep dive",
+      "emoji": "🔬",
+      "description": "One AI subject a weekday, explained simply with the latest papers.",
+      "schedule": "Mon–Fri · 07:30 IST",
+      "report": null
+    },
+    {
+      "id": "research_papers",
+      "title": "AI research papers",
+      "emoji": "📄",
+      "description": "Today's notable AI papers, each boiled down to its key idea.",
+      "schedule": "Daily · 07:45 IST",
+      "report": {
+        "created_at": "2026-11-22T13:20:38+05:30",
+        "headline": "New AI papers boost robot reasoning, video models, and efficient LLM serving",
+        "summary": "Researchers introduce a robot reasoning benchmark, improve diffusion models with RL, launch large video understanding models, and propose faster LLM serving. Additional work explores game design automation and robot…",
+        "items": [
+          {
+            "title": "RL Post-Training in Diffusion Transformers Is Activation Steering",
+            "url": "https://arxiv.org/abs/2611.26627v1",
+            "source": "arXiv AI/CL/LG",
+            "blurb": "RL post‑training boosts diffusion transformer image quality, text rendering, and compositional accuracy, authors report.",
+            "published": "2026-11-19T18:59:53+00:00"
+          },
+          {
+            "title": "TideCache: Efficient Hybrid LLM Serving with Transparent Cache Management and Layer-Wise Streaming",
+            "url": "https://arxiv.org/abs/2611.26619v1",
+            "source": "arXiv AI/CL/LG",
+            "blurb": "TideCache system speeds hybrid LLM serving with transparent cache management and layer‑wise streaming.",
+            "published": "2026-11-19T18:58:31+00:00"
+          },
+          {
+            "title": "Mind2Act World: A Diagnostic Benchmark for Embodied Mind, Physical Action, and Mind-Action Composition in Robotic Manipulation",
+            "url": "https://huggingface.co/papers/2611.26444",
+            "source": "Hugging Face Daily Papers",
+            "blurb": "Mind2Act World provides a benchmark to test robot reasoning, action execution, and their integration.",
+            "published": "2026-11-18T19:00:00+00:00"
+          },
+          {
+            "title": "WeMM-Video: Pushing the Frontiers of Open-Source Omni-Modal Video Understanding",
+            "url": "https://huggingface.co/papers/2611.26409",
+            "source": "Hugging Face Daily Papers",
+            "blurb": "WeMM‑Video releases Chinese‑English omni‑modal video models up to 35B parameters for multimodal tasks.",
+            "published": "2026-11-18T19:00:00+00:00"
+          },
+          {
+            "title": "PlayCraft: Designing Engaging Games from Agent Play Experience",
+            "url": "https://arxiv.org/abs/2611.26624v1",
+            "source": "arXiv AI/CL/LG",
+            "blurb": "PlayCraft uses a vision agent to automatically design games that prioritize player mastery.",
+            "published": "2026-11-19T18:59:34+00:00"
+          },
+          {
+            "title": "AgentRoboCritic: Understanding the Capability of Frontier Agents on Direct Robot Control",
+            "url": "https://arxiv.org/abs/2611.26613v1",
+            "source": "arXiv AI/CL/LG",
+            "blurb": "AgentRoboCritic evaluates frontier language agents' low‑level robot control beyond simple success rates.",
+            "published": "2026-11-19T18:57:25+00:00"
+          }
+        ]
+      }
+    },
+    {
+      "id": "startups",
+      "title": "Startup & product launches",
+      "emoji": "🚀",
+      "description": "New products and startup funding news — what it is and who it's for.",
+      "schedule": "Daily · 08:00 IST",
+      "report": {
+        "created_at": "2026-11-22T13:21:03+05:30",
+        "headline": "Major funding and AI tools reshape startups this week",
+        "summary": "Harbinger raises $240M for practical EVs, while AI‑driven tools like Stitch Loop, WaitFeed, Smorza and gitroots launch, and fusion startup Europa Fusion gains backing.",
+        "items": [
+          {
+            "title": "Harbinger Lands $240M for Unsexy EVs That Actually Matter - The Tech Buzz",
+            "url": "https://news.google.com/rss/articles/CBMikwFBVV95cUxPMFZYVjc4LWpkUlBSY2xFTUw0cEJpLXVPN1lVSDA2ck1YTFlVQzMwblZHS0ZHSFNuNzVkNDRrcWdiYXBXZktRTWZMSWpTeHNVblJHSkxoOXZWVlBfa2Mxd2I2R3F0RHJjdHZiazlPMlk4UzROS3ZyVUpiUkQyMVpTcGFiZ0QzNW5FVmx6dm94R21OTU0?oc=5",
+            "source": "Google News Startups",
+            "blurb": "Harbinger secures $240M to build practical, unglamorous electric vehicles for everyday drivers.",
+            "published": "2026-11-21T13:02:26+00:00"
+          },
+          {
+            "title": "Daniel Ek backs AI researcher’s fusion power startup. Here’s what they’re building.",
+            "url": "https://techcrunch.com/2026/11/20/daniel-ek-backs-ai-researchers-fusion-power-startup-heres-what-theyre-building/",
+            "source": "TechCrunch Startups",
+            "blurb": "Europa Fusion, an AI‑researcher‑led startup, receives backing from Spotify founder Daniel Ek to develop fusion power.",
+            "published": "2026-11-20T19:53:41+00:00"
+          },
+          {
+            "title": "Stitch Loop",
+            "url": "https://www.producthunt.com/products/stitch-loop",
+            "source": "Product Hunt",
+            "blurb": "Stitch Loop is Google’s AI agent that automatically deploys fixes and monitors performance metrics.",
+            "published": "2026-11-20T19:38:38+00:00"
+          },
+          {
+            "title": "WaitFeed",
+            "url": "https://www.producthunt.com/products/waitfeed-2",
+            "source": "Product Hunt",
+            "blurb": "WaitFeed offers a tech news feed that appears while users wait for AI agents to respond.",
+            "published": "2026-11-20T20:01:06+00:00"
+          },
+          {
+            "title": "Smorza",
+            "url": "https://www.producthunt.com/products/smorza",
+            "source": "Product Hunt",
+            "blurb": "Smorza lets each Mac app have its own volume and output controls for better audio management.",
+            "published": "2026-11-20T19:28:10+00:00"
+          },
+          {
+            "title": "gitroots",
+            "url": "https://www.producthunt.com/products/gitroots",
+            "source": "Product Hunt",
+            "blurb": "gitroots provides path‑level GitHub access, enabling developers and AI agents to work on specific code sections.",
+            "published": "2026-11-20T13:22:16+00:00"
+          }
+        ]
+      }
+    },
+    {
+      "id": "ai_models",
+      "title": "New open-source AI models",
+      "emoji": "🤖",
+      "description": "Open models trending on Hugging Face, with what they're good for.",
+      "schedule": "Daily · 08:15 IST",
+      "report": {
+        "created_at": "2026-11-22T13:21:29+05:30",
+        "headline": "Top trending open-source AI models span image-text, audio, and video capabilities",
+        "summary": "Qwen3.8-27B leads with massive downloads, while lightweight Inkling-2-Mini variants and new audio tools expand local AI options.",
+        "items": [
+          {
+            "title": "Qwen/Qwen3.8-27B",
+            "url": "https://huggingface.co/Qwen/Qwen3.8-27B",
+            "source": "Hugging Face Trending",
+            "blurb": "Qwen3.8-27B (Qwen) – image-text model, huge community interest with over 6 M downloads",
+            "published": "2026-08-05T08:22:59+00:00"
+          },
+          {
+            "title": "thinkingmachines/Inkling-2-Mini",
+            "url": "https://huggingface.co/thinkingmachines/Inkling-2-Mini",
+            "source": "Hugging Face Trending",
+            "blurb": "Inkling-2-Mini (thinkingmachines) – image-text model, lightweight for local setups, trending on Hugging Face",
+            "published": "2026-11-17T00:26:57+00:00"
+          },
+          {
+            "title": "unsloth/Inkling-2-Mini-GGUF",
+            "url": "https://huggingface.co/unsloth/Inkling-2-Mini-GGUF",
+            "source": "Hugging Face Trending",
+            "blurb": "Inkling-2-Mini-GGUF (unsloth) – optimized GGUF version, image-text, many downloads, good for local inference",
+            "published": "2026-11-20T13:09:48+00:00"
+          },
+          {
+            "title": "tencent/Hy4-flash",
+            "url": "https://huggingface.co/tencent/Hy4-flash",
+            "source": "Hugging Face Trending",
+            "blurb": "Hy4-flash (tencent) – image-text model, new release, modest downloads indicating early interest",
+            "published": "2026-11-17T03:44:46+00:00"
+          },
+          {
+            "title": "inworld/voice-isolator",
+            "url": "https://huggingface.co/inworld/voice-isolator",
+            "source": "Hugging Face Trending",
+            "blurb": "voice-isolator (inworld) – audio-to-audio tool, isolates speech, zero downloads but many likes, potential",
+            "published": "2026-11-14T02:14:35+00:00"
+          }
+        ]
+      }
+    }
+  ]
+}

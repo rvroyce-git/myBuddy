@@ -175,13 +175,12 @@
         <div class="terminal" role="group" aria-label="Example commands">
           <div class="terminal-bar" aria-hidden="true"><span></span><span></span><span></span></div>
 <pre><code><span class="c"># on your Oracle VM</span>
-git clone &lt;your-fork-url&gt; mybuddy
+git clone https://github.com/rvroyce-git/myBuddy.git mybuddy
 cd mybuddy && python3 -m venv .venv
-. .venv/bin/activate && pip install .
+. .venv/bin/activate && pip install -e .
 
-<span class="c"># keys stay in a private env file</span>
-export GROQ_API_KEY=…
-export DISCORD_WEBHOOK_URL=…
+<span class="c"># keys stay in a private env file (mode 600)</span>
+nano ~/.config/mybuddy/env   <span class="c"># GROQ_API_KEY=…</span>
 
 mybuddy check
 mybuddy run all --dry-run
@@ -226,7 +225,7 @@ mybuddy serve</code></pre>
   <footer class="footer">
     <div class="wrap footer-inner">
       <p>© 2026 MyBuddy · Self-hosted on Oracle Cloud Always Free</p>
-      <p><a href="#">Source on GitHub</a> · MIT licence · Made with Python</p>
+      <p><a href="https://github.com/rvroyce-git/myBuddy" rel="noopener noreferrer">Source on GitHub</a> · MIT licence · Made with Python</p>
     </div>
   </footer>
 
