@@ -1,28 +1,19 @@
-# MyBuddy build contract (internal, for the build agents)
+# MyBuddy design notes
 
-MyBuddy is written from scratch. Do NOT copy code, text or design from github.com/bhusingh/saathi
-or bhupendrasingh.com/saathi. We only share the *idea*: a self-hosted agent that collects news on a
-schedule, has an AI summarise it with source links, and delivers it privately.
+How the parts of MyBuddy fit together: module responsibilities, data formats and the rules each
+part relies on. MyBuddy is written from scratch; it is inspired by the idea behind
+[Saathi](https://bhupendrasingh.com/saathi/) — a self-hosted agent that collects news on a schedule,
+has an AI summarise it with source links, and delivers it privately.
 
 Runtime target: Oracle Always Free VM.Standard.E2.1.Micro (1 GB RAM, x86_64), Ubuntu 24.04,
 Python 3.12, timezone Asia/Kolkata. Keep memory small: stdlib + feedparser + PyYAML only at runtime.
 Dev machine has Python 3.14 — code must work on 3.12 and 3.14.
 
 ## Shared types
-`src/mybuddy/models.py` (owned by the coordinator — do not change signatures; ask if needed):
+`src/mybuddy/models.py` (keep these signatures stable; every module depends on them):
 `Item`, `ReportItem`, `Report`, `HttpClient`, `Clock`, `Source`.
 
-## Module ownership
-| Owner | Files |
-| --- | --- |
-| Sources agent | `src/mybuddy/sources/**`, `tests/test_sources_*.py`, `tests/fixtures/**` |
-| Engine agent | `src/mybuddy/{config,http,store,summarize,deliver,engine,schedule,export,cli}.py`, `src/mybuddy/prompts/**`, `config/topics.yaml`, `tests/test_engine*.py`, `tests/test_config.py`, `tests/test_store.py`, `tests/test_summarize.py`, `tests/test_deliver.py`, `tests/test_schedule.py`, `tests/test_export.py`, `tests/test_cli.py`, `tests/conftest.py`, `.github/workflows/ci.yml` |
-| Website agent | `site/**` |
-| Coordinator | `models.py`, `pyproject.toml`, `deploy/**`, `README.md`, `CONTRACT.md` |
-
-Agents must not edit files they don't own, must not `git commit`, and must not push anywhere.
-
-## Sources API (sources agent)
+## Sources API
 `src/mybuddy/sources/__init__.py` exposes:
 
 ```python
@@ -46,16 +37,16 @@ Source types (all free, no API keys):
 
 Every source returns `Item`s with absolute https URLs. Verify each endpoint with `curl` first.
 
-## Engine (engine agent)
-* `config.py`: load `config/topics.yaml` (topics list: `id`, `title`, `emoji`, `description`, `schedule` {`time`: "HH:MM", `days`: list of mon..sun or "daily"} or {`every_minutes`: N}, `ai`: bool, `prompt`: file name in `src/mybuddy/prompts/`, `rotation` optional (weekday -> {title, sources}), `sources`: list). Settings from env: `GROQ_API_KEY`, `GROQ_MODEL`, `GEMINI_API_KEY` (optional fallback), `DISCORD_WEBHOOK_URL`, `MYBUDDY_DATA_DIR` (default `~/.local/share/mybuddy`), `MYBUDDY_FAKE=1` (fake AI + fake Discord: write to files, no network).
+## Engine
+* `config.py`: load `config/topics.yaml` (topics list: `id`, `title`, `emoji`, `description`, `schedule` {`time`: "HH:MM", `days`: list of mon..sun or "daily"} or {`every_minutes`: N}, `ai`: bool, `prompt`: file name in `src/mybuddy/prompts/`, `rotation` optional (weekday -> {title, sources}), `sources`: list). Settings from env: `GROQ_API_KEY`, `GROQ_MODEL` (default `openai/gpt-oss-120b`), `GEMINI_API_KEY` (optional fallback), `DISCORD_WEBHOOK_URL`, `TELEGRAM_BOT_TOKEN`, `TELEGRAM_CHAT_ID`, `MYBUDDY_DATA_DIR` (default `~/.local/share/mybuddy`), `MYBUDDY_FAKE=1` (fake AI + fake delivery: write to files, no network).
 * `http.py`: urllib client implementing `HttpClient`; https only (also after redirects), timeout 20 s, 5 MB cap, User-Agent "MyBuddy/0.1 (+personal news reader)".
-* `store.py`: SQLite in data dir: seen item URLs per topic (dedupe), github star snapshots, saved reports.
+* `store.py`: SQLite in data dir: seen item URLs per topic (dedupe), GitHub star snapshots, saved reports.
 * `summarize.py`: OpenAI-compatible chat completions to Groq (`https://api.groq.com/openai/v1/chat/completions`), Gemini fallback (`https://generativelanguage.googleapis.com/v1beta/openai/chat/completions`), JSON output {headline, summary, blurbs[]}; validate; on any failure fall back to a no-AI report built from snippets. Never invent links — URLs always come from collected items. Cap input items (~12) to stay inside free token limits.
-* `deliver.py`: Discord webhook, split at 2000 chars, format with topic emoji + headline + items as `[title](<url>)` lines; fake mode writes to data dir `outbox/`.
+* `deliver.py`: Discord webhook (split at 2000 chars) and/or Telegram bot (4096 chars); format with topic emoji + headline + items as `[title](<url>)` lines; fake mode writes to data dir `outbox/`.
 * `engine.py`: run one topic: build sources, collect each in isolation (log failures), dedupe, summarise, deliver, save report, export.
 * `schedule.py`: tiny in-process scheduler (no APScheduler): computes next run for each topic in Asia/Kolkata; `mybuddy serve` loops and sleeps.
 * `export.py`: writes `site/data/reports.json` (path configurable) in the format below.
-* `cli.py`: `mybuddy run <topic|all> [--dry-run]`, `mybuddy list`, `mybuddy serve`, `mybuddy check` (config + env + connectivity), `mybuddy export`.
+* `cli.py`: `mybuddy run <topic|all> [--dry-run]`, `mybuddy list`, `mybuddy serve`, `mybuddy check` (config + env + connectivity), `mybuddy export`, `mybuddy telegram-setup`, `mybuddy bot`, `mybuddy subscribers`.
 
 ## The 7 topics (exactly these; nothing else)
 | id | title | when (IST) | ai |
@@ -84,7 +75,7 @@ Every source returns `Item`s with absolute https URLs. Verify each endpoint with
       "schedule": "Daily · 06:30 IST",
       "report": {
         "created_at": "2026-11-23T06:30:11+05:30",
-        "headline": "One sentence takeaway.",
+        "headline": "One-sentence takeaway.",
         "summary": "Two to four plain sentences.",
         "items": [
           {"title": "…", "url": "https://…", "source": "…", "blurb": "…", "published": "2026-11-23T01:02:03+00:00"}
@@ -122,4 +113,4 @@ Visitors pick topics on the website and subscribe to the existing bot `@myBuddy_
 * **Storage**: SQLite `subscribers(chat_id, topics, active, created_at, updated_at)`. Only the
   Telegram chat id and topic ids are stored — no names, usernames or phone numbers.
 * **Limit**: `MYBUDDY_MAX_SUBSCRIBERS` (default 100) active subscribers; new ones beyond that get a
-  polite "full" message. Per-chat flood guard: ignore more than 10 commands per minute.
+  polite "full" message. Per-chat flood guard: ignore more than 10 commands (or 40 picker taps) per minute.

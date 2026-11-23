@@ -48,7 +48,7 @@ def test_renders_every_topic_from_data(ui):
         when = local_stamp(f"{DAY}T{hm}:11+05:30")  # visitor's zone (Los Angeles), no label
         expect(item.locator(".hl-when")).to_have_text(when)
         expect(item.locator(".hl-text")).to_have_text(headline(k))
-        expect(item).to_have_attribute("aria-label", f"{title}: {headline(k)}. Open story")
+        expect(item).to_have_attribute("aria-label", f"{title}: {headline(k)} Open story")
 
         card = page.locator(f"#deck .card[data-i='{k}']")
         expect(card.locator(".tag-name")).to_have_text(title)

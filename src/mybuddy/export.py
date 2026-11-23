@@ -76,9 +76,10 @@ def _contract_report(data: dict[str, Any] | None) -> dict[str, Any] | None:
     if not data:
         return None
     out = {k: data.get(k) for k in _REPORT_KEYS}
+    items = data.get("items")
     out["items"] = [
         {k: item.get(k) for k in _ITEM_KEYS}
-        for item in (data.get("items") or [])
+        for item in (items if isinstance(items, list) else [])
         if isinstance(item, dict)
     ]
     return out

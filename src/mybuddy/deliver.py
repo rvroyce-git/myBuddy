@@ -168,7 +168,7 @@ class OutboxWriter:
 def format_telegram(report: Report, emoji: str) -> str:
     """Telegram HTML. Every line closes its own tags, so splitting on lines stays valid."""
     esc = html.escape
-    lines = [f"{emoji} <b>{esc(report.title)}</b>"]
+    lines = [f"{esc(emoji)} <b>{esc(report.title)}</b>"]
     if report.headline:
         lines.append(f"<b>{esc(report.headline)}</b>")
     if report.summary:

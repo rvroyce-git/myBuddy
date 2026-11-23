@@ -1,62 +1,85 @@
 # MyBuddy
 
-Your own AI news buddy, self-hosted on an Oracle Cloud Always Free VM for $0.
+A self-hosted AI news buddy: a small Python app that runs for $0 on an Oracle Cloud Always Free
+VM.
 
-Every morning MyBuddy collects public news on 7 topics, asks a free AI model (Groq) for a short
-summary in which every item links to its source, and sends it to you on Telegram (or Discord). A
-static website (`site/`) shows the latest reports as widgets.
+Every morning MyBuddy collects public news on 7 topics, asks a free AI model on Groq
+(`openai/gpt-oss-120b` by default; Gemini is an optional fallback) to summarise it, and sends
+each report on Telegram (and optionally Discord). Every item links to its source. The website at
+<https://rvroyce-git.github.io/myBuddy/> (GitHub Pages, from `site/`) shows the latest reports.
 
 | Topic | When (IST) |
 | --- | --- |
 | AI news | Daily 06:30 |
-| Cybersecurity alerts | Daily 07:00 (+ hourly ping for actively exploited CVEs) |
+| Cybersecurity alerts | Daily 07:00 (+ hourly alerts for actively exploited CVEs) |
 | Trending GitHub repos | Daily 07:15 |
-| One deep AI topic | Mon–Fri 07:30 |
+| Deep dive (one AI topic a day) | Mon–Fri 07:30 |
 | AI research papers | Daily 07:45 |
 | Startup & product launches | Daily 08:00 |
 | New open-source AI models | Daily 08:15 |
 
 ## Public subscriptions (Telegram)
 
-Visitors pick topics on the website and open
+Anyone can subscribe through the bot [@myBuddy_update_bot](https://t.me/myBuddy_update_bot).
+Visitors pick topics on the website, which opens
 `https://t.me/myBuddy_update_bot?start=<payload>`; the bot subscribes them when they tap Start.
-The payload is `t` + a lowercase hex bitmask of each topic's permanent `bit:` in
-`config/topics.yaml` (also exported as `"bit"` in `reports.json`): 0 = AI news, 1 = security,
-2 = GitHub, 3 = deep dive, 4 = papers, 5 = startups, 6 = models. Never change or reuse a bit;
-reordering or removing topics then never breaks old links. All seven = `t7f`; AI news + security = `t3`. A missing or
-invalid payload shows a topic picker instead.
 
-* `mybuddy bot` runs the bot (systemd unit `mybuddy-bot`, long polling, no open ports).
-  Commands: `/start`, `/topics` (tap-to-toggle picker + Save), `/stop`, `/help`. Private chats
-  only; at most 10 commands and 40 button taps a minute per chat; `MYBUDDY_MAX_SUBSCRIBERS` (default 100) caps
-  active subscribers (the owner is always allowed).
+* Commands: `/start`, `/topics` (tap-to-toggle picker + Save), `/stop`, `/help`. Private chats
+  only; at most 10 commands and 40 button taps per minute per chat.
+* `MYBUDDY_MAX_SUBSCRIBERS` (default 100) caps active subscribers; the owner is always allowed.
+* The payload is `t` + a lowercase hex bitmask of each topic's permanent `bit:` in
+  `config/topics.yaml` (also exported as `"bit"` in `reports.json`): 0 = AI news, 1 = security,
+  2 = GitHub, 3 = deep dive, 4 = papers, 5 = startups, 6 = models. All seven = `t7f`; AI news +
+  security = `t3`. Never change or reuse a bit, so old links keep working. A missing or invalid
+  payload shows the topic picker instead.
 * Each report goes to the owner (`TELEGRAM_CHAT_ID`, every topic) first, then to that topic's
-  subscribers (~25 messages/s, at most 120 s per report, stops after 5 network errors in a
-  row). Hourly KEV alerts go to `security` subscribers
-  (`audience: security` in `topics.yaml`). Subscriber errors never fail a run; people who
-  blocked the bot are marked inactive. Fake mode writes `*-subscribers.md` to the outbox.
-* `mybuddy subscribers` prints counts per topic; `mybuddy check` shows the active total.
-* Privacy: only the Telegram chat id and topic ids are stored (SQLite, mode 600) — no names,
-  usernames or phone numbers. Logs show only the last 3 digits of a chat id, never messages.
-  `/stop` turns delivery off at once.
+  subscribers (~25 messages/s, at most 120 s per report, stopping after 5 network errors in a
+  row). Hourly CVE alerts go to `security` subscribers. Subscriber errors never fail a run;
+  people who blocked the bot are marked inactive.
+* `mybuddy bot` runs the bot (systemd unit `mybuddy-bot`, long polling, no open ports).
+  `mybuddy subscribers` prints counts per topic; `mybuddy check` shows the active total.
 * `mybuddy telegram-setup` and the bot both read updates, so stop `mybuddy-bot` before running
   it.
 
-## Develop
+## Develop and test
 
 ```bash
 python3 -m venv .venv && .venv/bin/pip install -e '.[dev]'
-.venv/bin/pytest            # offline unit tests
+.venv/bin/pytest                                      # offline unit tests
 .venv/bin/ruff check . && .venv/bin/mypy
-MYBUDDY_FAKE=1 .venv/bin/mybuddy run all --dry-run   # real feeds, fake AI + Discord
+MYBUDDY_FAKE=1 .venv/bin/mybuddy run all --dry-run    # real feeds, no AI, no delivery
+```
+
+Optional browser tests for the website (`tests/ui`):
+
+```bash
+.venv/bin/pip install -e '.[ui]'
+.venv/bin/python -m playwright install chromium
+.venv/bin/pytest tests/ui
 ```
 
 ## Deploy
 
 ```bash
 MYBUDDY_HOST=<vm-ip> bash deploy/deploy.sh       # copy, install, start mybuddy + mybuddy-bot
-MYBUDDY_HOST=<vm-ip> bash deploy/set-secrets.sh  # run yourself: hidden prompt for keys
+MYBUDDY_HOST=<vm-ip> bash deploy/set-secrets.sh  # run yourself: hidden prompts for keys
 ssh mybuddy@<vm-ip> 'cd app && .venv/bin/mybuddy telegram-setup --save'  # after messaging the bot
 ```
 
-Secrets live only in `~/.config/mybuddy/env` (mode 600) on the VM. Never commit them.
+`mybuddy-publish.path` pushes each new `site/data/reports.json` to GitHub with a deploy key
+limited to this repository; GitHub Pages then republishes the website. The `Watchdog` workflow
+fails (and GitHub emails the owner) if the live reports are more than 26 hours old.
+
+## Security and privacy
+
+* Secrets (`GROQ_API_KEY`, `TELEGRAM_BOT_TOKEN`, optional `DISCORD_WEBHOOK_URL` and
+  `GEMINI_API_KEY`) live only in `~/.config/mybuddy/env` (mode 600) on the VM. Never commit them.
+* Subscribers: only the Telegram chat id and topic ids are stored (SQLite, mode 600) — no names,
+  usernames or phone numbers. Logs show only the last 3 digits of a chat id, never message text.
+  `/stop` turns delivery off at once.
+* The services run as an unprivileged `mybuddy` user with systemd hardening. The app opens no
+  inbound ports (the bot uses long polling).
+
+## License
+
+MIT — see [LICENSE](LICENSE).

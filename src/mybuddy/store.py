@@ -154,7 +154,7 @@ class Store:
             return {}
         try:
             data = json.loads(row[0])
-        except ValueError:
+        except (ValueError, RecursionError):
             return {}
         return data if isinstance(data, dict) else {}
 
@@ -185,7 +185,10 @@ class Store:
         ).fetchone()
         if row is None:
             return None
-        data = json.loads(row[0])
+        try:
+            data = json.loads(row[0])
+        except (ValueError, RecursionError):  # a damaged row must not break export
+            return None
         return data if isinstance(data, dict) else None
 
     def count_reports(self, topic_id: str) -> int:

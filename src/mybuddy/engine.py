@@ -2,11 +2,13 @@
 
 from __future__ import annotations
 
+import re
 import sys
 from collections.abc import Callable, Sequence
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any, TextIO
+from urllib.parse import urlsplit
 
 from mybuddy.config import Topic
 from mybuddy.deliver import Deliverer, format_report
@@ -19,6 +21,31 @@ from mybuddy.summarize import Summarizer, plain_report
 SourceBuilder = Callable[[dict[str, Any], HttpClient, Clock], Source]
 
 STATEFUL_SOURCE_TYPES = frozenset({"github_trending"})
+MAX_URL_LENGTH = 2048
+_URL_BAD_CHARS = re.compile(r"[\s\x00-\x1f\x7f]")
+
+
+def deliverable_url(url: object) -> bool:
+    """True for a short, clean https URL with a host. Anything else could break a message
+    (a newline inside a Telegram link, a line too long to send) and block the topic."""
+    if not isinstance(url, str) or len(url) > MAX_URL_LENGTH or not url.startswith("https://"):
+        return False
+    if _URL_BAD_CHARS.search(url):
+        return False
+    try:
+        return bool(urlsplit(url).hostname)
+    except ValueError:
+        return False
+
+
+def _usable(item: object) -> bool:
+    return (
+        isinstance(item, Item)
+        and isinstance(item.title, str)
+        and isinstance(item.source, str)
+        and isinstance(item.snippet, str)
+        and deliverable_url(item.url)
+    )
 
 
 def _default_build_source(spec: dict[str, Any], http: HttpClient, clock: Clock) -> Source:
@@ -104,14 +131,14 @@ def collect(
                 snapshots[key] = state
         try:
             source = deps.build_source(spec, deps.http, deps.clock)
-            items = source.collect()
+            items = [i for i in source.collect() if _usable(i)]
         except Exception as exc:
             msg = f"{topic.id}: source {name!r} failed: {type(exc).__name__}: {exc}"
             _log(deps, msg)
             errors.append(msg)
             snapshots.pop(snapshot_key(topic.id, name), None)
             continue
-        groups.append([i for i in items if isinstance(i.url, str) and i.url.startswith("https://")])
+        groups.append(items)
     merged: list[Item] = []
     seen_hashes: set[str] = set()
     for item in _interleave(groups):

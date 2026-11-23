@@ -43,7 +43,7 @@ _REQUIRED_TOPIC_KEYS = ("id", "title", "emoji", "description", "schedule", "ai")
 _SCHEDULE_KEYS = {"time", "days", "every_minutes"}
 _ROTATION_KEYS = {"title", "sources"}
 _ID_RE = re.compile(r"^[a-z][a-z0-9_]{0,39}$")
-_TIME_RE = re.compile(r"^([01]\d|2[0-3]):([0-5]\d)$")
+_TIME_RE = re.compile(r"^([01][0-9]|2[0-3]):([0-5][0-9])$")
 
 
 class ConfigError(Exception):
@@ -93,13 +93,14 @@ class Topic:
 
 @dataclass(frozen=True)
 class Settings:
-    groq_api_key: str | None = None
+    # Secrets (and the owner's chat id) are left out of repr() so they never reach a log.
+    groq_api_key: str | None = field(default=None, repr=False)
     groq_model: str = "openai/gpt-oss-120b"
-    gemini_api_key: str | None = None
+    gemini_api_key: str | None = field(default=None, repr=False)
     gemini_model: str = "gemini-2.5-flash"
-    discord_webhook_url: str | None = None
-    telegram_bot_token: str | None = None
-    telegram_chat_id: str | None = None
+    discord_webhook_url: str | None = field(default=None, repr=False)
+    telegram_bot_token: str | None = field(default=None, repr=False)
+    telegram_chat_id: str | None = field(default=None, repr=False)
     data_dir: Path = field(default_factory=lambda: Path("~/.local/share/mybuddy").expanduser())
     site_data: Path = field(default_factory=lambda: REPO_ROOT / "site" / "data" / "reports.json")
     fake: bool = False
@@ -140,7 +141,8 @@ def parse_max_subscribers(raw: str | None) -> int:
     if raw is None or not raw.strip():
         return DEFAULT_MAX_SUBSCRIBERS
     value = raw.strip()
-    if not value.isdigit() or not 0 <= int(value) <= MAX_SUBSCRIBERS_CEILING:
+    # ASCII digits only: str.isdigit() also accepts "²", which int() rejects.
+    if not re.fullmatch(r"[0-9]{1,5}", value) or int(value) > MAX_SUBSCRIBERS_CEILING:
         raise ConfigError(
             f"MYBUDDY_MAX_SUBSCRIBERS must be a whole number 0..{MAX_SUBSCRIBERS_CEILING}, "
             f"got {value[:20]!r}"
@@ -157,7 +159,7 @@ def _max_subscribers_or_default(raw: str | None) -> int:
 
 def _bot_username_or_default(raw: str | None) -> str:
     name = (raw or "").strip().lstrip("@")
-    return name if _BOT_USERNAME_RE.match(name) else DEFAULT_BOT_USERNAME
+    return name if _BOT_USERNAME_RE.fullmatch(name) else DEFAULT_BOT_USERNAME
 
 
 SETTING_ENV_VARS: tuple[tuple[str, bool], ...] = (
@@ -185,10 +187,14 @@ def load_env_file(path: Path, environ: MutableMapping[str, str] | None = None) -
     """
     environ = os.environ if environ is None else environ
     path = path.expanduser()
-    if not path.is_file():
-        return 0
+    try:
+        if not path.is_file():
+            return 0
+        text = path.read_text(encoding="utf-8")
+    except (OSError, UnicodeDecodeError) as exc:
+        raise ConfigError(f"{path}: cannot read env file: {_reason(exc)}") from None
     count = 0
-    for lineno, raw in enumerate(path.read_text(encoding="utf-8").splitlines(), start=1):
+    for lineno, raw in enumerate(text.splitlines(), start=1):
         line = raw.strip()
         if not line or line.startswith("#"):
             continue
@@ -205,6 +211,11 @@ def load_env_file(path: Path, environ: MutableMapping[str, str] | None = None) -
             environ[key] = value
             count += 1
     return count
+
+
+def _reason(exc: Exception) -> str:
+    strerror = getattr(exc, "strerror", None)
+    return str(strerror or exc)
 
 
 # --------------------------------------------------------------------------- topics
@@ -244,7 +255,7 @@ def _parse_schedule(data: Any, where: str) -> Schedule:
     if "time" not in data:
         raise ConfigError(f"{where}: needs 'time' (HH:MM) or 'every_minutes'")
     time = data["time"]
-    if not isinstance(time, str) or not _TIME_RE.match(time):
+    if not isinstance(time, str) or not _TIME_RE.fullmatch(time):
         raise ConfigError(f"{where}.time: must be a 24-hour 'HH:MM' string, got {time!r}")
     days_raw = data.get("days", "daily")
     if days_raw == "daily" or days_raw == ["daily"]:
@@ -295,7 +306,7 @@ def _parse_topic(
         if key not in data:
             raise ConfigError(f"{where}: missing required key '{key}'")
     topic_id = _require_str(data["id"], f"{where}.id")
-    if not _ID_RE.match(topic_id):
+    if not _ID_RE.fullmatch(topic_id):
         raise ConfigError(f"{where}.id: {topic_id!r} must be lowercase letters, digits, '_'")
     where = f"{where} ({topic_id})"
     title = _require_str(data["title"], f"{where}.title")
@@ -426,8 +437,8 @@ def load_topics(
     path = (path or DEFAULT_CONFIG_PATH).expanduser()
     try:
         text = path.read_text(encoding="utf-8")
-    except OSError as exc:
-        raise ConfigError(f"{path}: cannot read config: {exc.strerror or exc}") from exc
+    except (OSError, UnicodeDecodeError) as exc:
+        raise ConfigError(f"{path}: cannot read config: {_reason(exc)}") from exc
     try:
         data = yaml.safe_load(text)
     except yaml.YAMLError as exc:

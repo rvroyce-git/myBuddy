@@ -16,17 +16,30 @@ RestartSec=30
 # Keep the tiny 1 GB VM healthy
 MemoryMax=300M
 CPUQuota=50%
-# Hardening
+# Hardening (the scheduler only needs outbound HTTPS, its SQLite file and reports.json).
+# UMask keeps new state files private; reports.json is chmod 644 explicitly by the app.
+UMask=0077
 NoNewPrivileges=true
+CapabilityBoundingSet=
 PrivateTmp=true
+PrivateDevices=true
 ProtectSystem=strict
 ProtectHome=read-only
 ReadWritePaths=/home/mybuddy/.local/share/mybuddy /home/mybuddy/app/site/data
 ProtectKernelTunables=true
 ProtectKernelModules=true
+ProtectKernelLogs=true
 ProtectControlGroups=true
+ProtectClock=true
+ProtectHostname=true
+RestrictAddressFamilies=AF_INET AF_INET6 AF_UNIX
+RestrictNamespaces=true
+RestrictRealtime=true
 RestrictSUIDSGID=true
 LockPersonality=true
+MemoryDenyWriteExecute=true
+SystemCallFilter=@system-service
+SystemCallArchitectures=native
 
 [Install]
 WantedBy=multi-user.target

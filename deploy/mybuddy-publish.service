@@ -11,5 +11,22 @@ Group=mybuddy
 ExecStartPre=/bin/sleep 20
 ExecStart=/bin/bash /home/mybuddy/app/deploy/publish-reports.sh
 TimeoutStartSec=180
+# Hardening: git and ssh need to write in the home directory (pages-repo, known_hosts),
+# so the home stays writable; the rest of the system is read-only.
+UMask=0022
 NoNewPrivileges=true
+CapabilityBoundingSet=
 PrivateTmp=true
+PrivateDevices=true
+ProtectSystem=full
+ProtectKernelTunables=true
+ProtectKernelModules=true
+ProtectKernelLogs=true
+ProtectControlGroups=true
+ProtectClock=true
+ProtectHostname=true
+RestrictAddressFamilies=AF_INET AF_INET6 AF_UNIX
+RestrictNamespaces=true
+RestrictRealtime=true
+RestrictSUIDSGID=true
+LockPersonality=true

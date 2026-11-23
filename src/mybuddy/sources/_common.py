@@ -99,7 +99,7 @@ def parse_iso(value: object) -> datetime | None:
         text = text[:-1] + "+00:00"
     try:
         return to_utc(datetime.fromisoformat(text))
-    except ValueError:
+    except (ValueError, OverflowError):  # e.g. "0001-01-01T00:00:00+05:00" overflows in UTC
         return None
 
 

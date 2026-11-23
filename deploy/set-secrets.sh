@@ -30,19 +30,21 @@ fi
 # Merge on the VM: replace keys that were entered, keep every other line as it is.
 printf '%s\n' "$UPDATES" | ssh -i "$KEY" -o BatchMode=yes "mybuddy@$HOST" '
   set -e; umask 077; install -d -m 700 ~/.config/mybuddy
-  staged=~/.config/mybuddy/.incoming; cat > "$staged"
+  staged=~/.config/mybuddy/.incoming; trap "rm -f \"$staged\"" EXIT; cat > "$staged"
   python3 - "$staged" ~/.config/mybuddy/env <<"PY"
 import os, sys
 staged, path = sys.argv[1], sys.argv[2]
 updates = dict(ln.split("=", 1) for ln in open(staged).read().splitlines() if "=" in ln)
 lines = open(path).read().splitlines() if os.path.exists(path) else []
 kept = [ln for ln in lines if ln.split("=", 1)[0] not in updates]
-with open(path, "w") as f:
+tmp = path + ".tmp"  # write then rename: a crash never leaves a half-written env file
+with open(tmp, "w") as f:
     f.write("\n".join(kept + [f"{k}={v}" for k, v in updates.items()]) + "\n")
-os.chmod(path, 0o600)
+os.chmod(tmp, 0o600)
+os.replace(tmp, path)
 print("Saved:", ", ".join(sorted(updates)), "-> ~/.config/mybuddy/env (mode 600)")
 PY
-  rm -f "$staged"'
+'
 
 unset UPDATES
-echo "Tell Claude it's done; it will finish the setup and restart MyBuddy."
+echo "Done. Restart MyBuddy so it loads the new keys: sudo systemctl restart mybuddy mybuddy-bot"

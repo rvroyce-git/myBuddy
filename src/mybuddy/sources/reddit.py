@@ -25,7 +25,7 @@ _SUBREDDIT = re.compile(r"^[A-Za-z0-9_]{2,21}$")
 class RedditSource:
     def __init__(self, name: str, subreddit: str, http: HttpClient, *, limit: int = 10) -> None:
         sub = subreddit.removeprefix("r/").removeprefix("/r/")
-        if not _SUBREDDIT.match(sub):
+        if not _SUBREDDIT.fullmatch(sub):
             raise ValueError(f"source {name!r}: invalid subreddit {subreddit!r}")
         self.name = name
         self.subreddit = sub

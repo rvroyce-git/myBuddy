@@ -50,7 +50,7 @@ class GitHubTrendingSource:
         sleep: Callable[[float], None] = time.sleep,
     ) -> None:
         for topic in topics:
-            if not _TOPIC.match(topic):
+            if not _TOPIC.fullmatch(topic):
                 raise ValueError(f"source {name!r}: invalid GitHub topic {topic!r}")
         self.name = name
         self.topics = topics
@@ -90,6 +90,8 @@ class GitHubTrendingSource:
         for full_name, repo in repos.items():
             stars = int(repo["stargazers_count"])
             previous = self.state.get(full_name)
+            if not isinstance(previous, int) or isinstance(previous, bool):
+                previous = None  # missing or damaged snapshot value: treat as a newcomer
             gained = stars - previous if previous is not None else None
             description = str(repo.get("description") or "")
             language = repo.get("language")

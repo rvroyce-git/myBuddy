@@ -11,7 +11,7 @@ import re
 import sys
 import time
 from collections.abc import Callable, Sequence
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any, TextIO
 
@@ -54,7 +54,7 @@ class SummaryError(Exception):
 class Provider:
     name: str
     url: str
-    api_key: str
+    api_key: str = field(repr=False)
     model: str
 
 
@@ -240,7 +240,9 @@ class Summarizer:
                     self._log(f"{provider.name} rate limited; retrying in {wait:.0f}s")
                     self.sleep(wait)
                     continue
-                detail = f" ({exc.body.strip()[:200]})" if exc.body else ""
+                # Provider error bodies are logged; make sure one can never echo the key.
+                body = exc.body.replace(provider.api_key, "<redacted>") if exc.body else ""
+                detail = f" ({_WS_RE.sub(' ', body).strip()[:200]})" if body.strip() else ""
                 raise SummaryError(f"{provider.name}: {exc}{detail}") from None
         try:
             content = resp["choices"][0]["message"]["content"]
@@ -318,7 +320,11 @@ class Summarizer:
         if not providers:
             self._log(f"{topic.id}: no AI key set; using plain fallback")
             return fallback_report(topic.id, title, items, self.clock)
-        messages = self.build_messages(topic, title, items)
+        try:
+            messages = self.build_messages(topic, title, items)
+        except (OSError, UnicodeDecodeError) as exc:
+            self._log(f"{topic.id}: cannot read prompt files ({exc}); using plain fallback")
+            return fallback_report(topic.id, title, items, self.clock)
         for provider in providers:
             try:
                 return self._build(topic.id, title, items, self._call(provider, messages))

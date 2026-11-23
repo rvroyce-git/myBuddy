@@ -18,7 +18,7 @@ from mybuddy.sources._common import (
 
 KEV_URL = "https://www.cisa.gov/sites/default/files/feeds/known_exploited_vulnerabilities.json"
 NVD_URL = "https://nvd.nist.gov/vuln/detail/"
-_CVE = re.compile(r"^CVE-\d{4}-\d{4,}$")
+_CVE = re.compile(r"^CVE-[0-9]{4}-[0-9]{4,}$")
 
 
 def _text(entry: dict[str, Any], key: str) -> str:
@@ -52,7 +52,7 @@ class CisaKevSource:
                 added = date.fromisoformat(_text(entry, "dateAdded"))
             except ValueError:
                 continue
-            if not _CVE.match(cve) or not earliest <= added <= today:
+            if not _CVE.fullmatch(cve) or not earliest <= added <= today:
                 continue
             found.append((added, cve, self._to_item(entry, cve, added)))
         found.sort(key=lambda f: (f[0], f[1]), reverse=True)

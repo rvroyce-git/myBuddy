@@ -14,9 +14,11 @@
   const SVGNS = 'http://www.w3.org/2000/svg';
   const STORY_MS = 12000;
 
-  const motionQuery = matchMedia('(prefers-reduced-motion: reduce)');
-  let RM = motionQuery.matches;
-  motionQuery.addEventListener?.('change', (e) => { RM = e.matches; });
+  const motionQuery = typeof matchMedia === 'function' ? matchMedia('(prefers-reduced-motion: reduce)') : null;
+  let RM = !!(motionQuery && motionQuery.matches);
+  motionQuery?.addEventListener?.('change', (e) => { RM = e.matches; });
+  /* own-property lookup: data ids like "constructor" or "__proto__" must not hit Object.prototype */
+  const own = (obj, k) => (Object.prototype.hasOwnProperty.call(obj, k) ? obj[k] : undefined);
 
   const store = {
     get(k) { try { return localStorage.getItem(k); } catch (e) { return null; } },
@@ -60,7 +62,8 @@
     research_papers: 'Papers', startups: 'Launches', ai_models: 'Models',
   };
   function iconFor(t, cls) {
-    if (ICONS[t.id]) return svgEl(ICONS[t.id], 'ico ' + (cls || ''));
+    const icon = own(ICONS, t.id);
+    if (icon) return svgEl(icon, 'ico ' + (cls || ''));
     const s = el('span', 'emoji', t.emoji || '•');
     s.setAttribute('aria-hidden', 'true');
     return s;
@@ -74,7 +77,7 @@
      The schedule is fixed in IST, but every time is shown in the visitor's own time zone,
      without a zone label. Words stay English (the page is English); only the 12/24-hour
      preference comes from the visitor's locale. IST is only used internally. */
-  const IST = 'Asia/Kolkata';
+  const IST_OFFSET_MS = 330 * 60 * 1000; // UTC+05:30, no daylight saving
   const H12 = (() => {
     try {
       const h = new Intl.DateTimeFormat(navigator.language, { hour: 'numeric' }).resolvedOptions();
@@ -86,11 +89,13 @@
     : { hour: '2-digit', minute: '2-digit', hourCycle: 'h23' });
   const fmtDate = new Intl.DateTimeFormat('en', { day: 'numeric', month: 'short' });
   const fmtWeekday = new Intl.DateTimeFormat('en', { weekday: 'long' });
-  const fmtLocalDay = new Intl.DateTimeFormat('en-CA', { year: 'numeric', month: '2-digit', day: '2-digit' });
-  const fmtDay = new Intl.DateTimeFormat('en-CA', { year: 'numeric', month: '2-digit', day: '2-digit', timeZone: IST });
+  /* Day keys are computed by hand: no dependence on a locale's date format (en-CA has changed
+     between ICU versions) or on the browser's time zone data. */
+  const istDay = (d) => new Date(d.getTime() + IST_OFFSET_MS).toISOString().slice(0, 10);
   const dayNum = (key) => Date.UTC(+key.slice(0, 4), +key.slice(5, 7) - 1, +key.slice(8, 10)) / 864e5;
   const dayKey = (n) => new Date(n * 864e5).toISOString().slice(0, 10);
-  const localGap = (d) => dayNum(fmtLocalDay.format(d)) - dayNum(fmtLocalDay.format(new Date()));
+  const localDayNum = (d) => Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()) / 864e5;
+  const localGap = (d) => localDayNum(d) - localDayNum(new Date());
   /* "5:00 PM" today, "Yesterday · 5:00 PM" or "Nov 22 · 5:00 PM" (visitor's zone).
      `mid` lowercases the word for use inside a phrase ("Updated yesterday · …"). */
   function localStamp(d, mid) {
@@ -105,7 +110,7 @@
   function istClock(hm) {
     const m = /^(\d{1,2}):(\d{2})$/.exec(hm || '');
     if (!m) return '';
-    const d = IST_AT(fmtDay.format(new Date()), m[1], m[2]);
+    const d = IST_AT(istDay(new Date()), m[1], m[2]);
     return isNaN(d) ? '' : fmtTime.format(d);
   }
   /* Schedule label from the data ("Daily · 06:30 IST", "Mon–Fri · 07:30 IST", "Sat, Sun · …")
@@ -125,7 +130,7 @@
     const m = /(\d{1,2}):(\d{2})/.exec(String(schedule || ''));
     if (!m) return '';
     const days = scheduleDays(String(schedule).split('·')[0]);
-    const now = Date.now(), base = dayNum(fmtDay.format(new Date()));
+    const now = Date.now(), base = dayNum(istDay(new Date()));
     for (let k = 0; k < 8; k++) {
       const key = dayKey(base + k);
       if (!days.includes(new Date((base + k) * 864e5).getUTCDay())) continue;
@@ -145,10 +150,21 @@
   }
 
   /* ---------- data helpers ---------- */
-  function validDate(iso) { const d = new Date(iso); return isNaN(d) ? null : d; }
+  /* Only ISO-like strings count as dates (new Date(null) would be 1970). */
+  function validDate(iso) {
+    if (typeof iso !== 'string' || !iso.trim() || iso.length > 64) return null;
+    const d = new Date(iso);
+    return isNaN(d) ? null : d;
+  }
+  /* Data text: strings (and finite numbers) only, trimmed and capped; anything else is ''. */
+  function txt(v, max) {
+    let s = typeof v === 'string' ? v : (typeof v === 'number' && isFinite(v) ? String(v) : '');
+    s = s.trim();
+    return s.length > max ? s.slice(0, max - 1).trimEnd() + '…' : s;
+  }
   /* Only absolute https: links are allowed (data contract). */
   function safeUrl(u) {
-    if (typeof u !== 'string') return null;
+    if (typeof u !== 'string' || u.length > 2048) return null;
     const s = u.trim();
     if (!/^https:\/\/[^/\\\s]/i.test(s)) return null;
     try {
@@ -156,43 +172,58 @@
       return x.protocol === 'https:' && x.hostname ? x.href : null;
     } catch (e) { return null; }
   }
+  /* The first `max` sentences. A sentence ends at . ! or ? (plus closing quotes/brackets)
+     followed by a space or the end, so "v2.5" or "example.com" never split a sentence. */
   function firstSentences(text, max) {
-    const s = String(text || '').trim();
+    const s = txt(text, 4000);
     if (!s) return '';
-    const parts = s.match(/[^.!?]+[.!?]+["')\]]*(\s+|$)|[^.!?]+$/g) || [s];
-    return parts.slice(0, max).join('').trim();
+    const re = /[.!?]+["')\]]*(?=\s|$)/g;
+    let m, k = 0, end = s.length;
+    while ((m = re.exec(s))) {
+      if (++k === max) { end = m.index + m[0].length; break; }
+    }
+    return txt(s.slice(0, end), 600);
   }
+  const MAX_TOPICS = 60;
   function normalize(raw) {
-    return (Array.isArray(raw.topics) ? raw.topics : []).filter((t) => t && t.id).map((t, k) => {
-      const id = String(t.id);
-      const r = t.report && typeof t.report === 'object' ? t.report : null;
+    const list = Array.isArray(raw.topics) ? raw.topics : [];
+    const used = new Set();
+    const out = [];
+    for (const t of list) {
+      if (out.length >= MAX_TOPICS) break;
+      if (!t || typeof t !== 'object') continue;
+      const id = txt(t.id, 64);
+      if (!id || used.has(id)) continue; // no id, or a duplicate: skip
+      used.add(id);
+      const k = out.length;
+      const r = t.report && typeof t.report === 'object' && !Array.isArray(t.report) ? t.report : null;
       const d = r ? validDate(r.created_at) : null;
-      let when = '';
-      if (d) {
-        when = localStamp(d);
-      } else {
-        when = dueText(t.schedule);
-      }
+      const when = d ? localStamp(d) : dueText(txt(t.schedule, 80));
       const items = r && Array.isArray(r.items) ? r.items : [];
-      return {
+      const title = txt(t.title, 80) || id;
+      const head = r ? txt(r.headline, 2000) : '';
+      out.push({
         id, ang: 135 + (k % 5) * 15,
         bit: t.bit, // stable subscription bit (may be missing in older data)
-        title: String(t.title || id),
-        short: SHORT[id] || String(t.title || id),
-        emoji: t.emoji ? String(t.emoji) : '',
-        ready: !!(r && r.headline),
-        headline: r && r.headline ? String(r.headline) : 'Coming soon',
+        title,
+        short: own(SHORT, id) || title,
+        emoji: txt(t.emoji, 64),
+        ready: !!head,
+        headline: head || 'Coming soon',
         summary: r ? firstSentences(r.summary, 2) : '',
-        stamp: r ? String(r.created_at || 'x') : 'none',
+        stamp: r ? txt(r.created_at, 64) || 'x' : 'none',
         when,
-        items: items.map((it) => ({
+        items: items.slice(0, 50).map((it) => ({
           url: safeUrl(it && it.url),
-          title: String((it && it.title) || ''),
-          source: String((it && it.source) || ''),
+          title: txt(it && it.title, 200),
+          source: txt(it && it.source, 60),
         })).filter((it) => it.url && it.title).slice(0, 3),
-      };
-    });
+      });
+    }
+    return out;
   }
+  /* "Headline. Open story" without doubling the headline's own full stop. */
+  const withAction = (s, action) => s + (/[.!?…]["')\]]*$/.test(s) ? ' ' : '. ') + action;
 
   /* ---------- spring easing via CSS linear() ---------- */
   function springEasing(stiffness, damping) {
@@ -329,13 +360,17 @@
   /* ---------- seen state ---------- */
   /* Seen state resets every day: it is keyed to the day of generated_at (IST). */
   const SEEN_KEY = 'mybuddy.seen.v2';
-  let seen = {};
+  let seen = Object.create(null);
   let seenDay = '';
   function loadSeen(day) {
     seenDay = day || 'unknown';
     let saved = null;
     try { saved = JSON.parse(store.get(SEEN_KEY) || 'null'); } catch (e) { saved = null; }
-    seen = saved && saved.day === seenDay && saved.ids && typeof saved.ids === 'object' ? saved.ids : {};
+    seen = Object.create(null);
+    const ids = saved && saved.day === seenDay ? saved.ids : null;
+    if (ids && typeof ids === 'object' && !Array.isArray(ids)) {
+      Object.keys(ids).forEach((k) => { if (typeof ids[k] === 'string') seen[k] = ids[k]; });
+    }
   }
   const isSeen = (t) => seen[t.id] === t.stamp;
   function markSeen(t) {
@@ -437,7 +472,7 @@
       const b = el('button', 'hl-item');
       b.type = 'button';
       paint(b, t);
-      b.setAttribute('aria-label', `${t.title}: ${t.headline}. Open story`);
+      b.setAttribute('aria-label', withAction(`${t.title}: ${t.headline}`, 'Open story'));
       const ic = el('span', 'hl-ico'); ic.appendChild(decorateIcon(iconFor(t)));
       const body = el('span', 'hl-body');
       const meta = el('span', 'hl-meta');
@@ -490,13 +525,16 @@
     const mix = (a, b, t) => a + (b - a) * t;
 
     function build() {
+      settleFly();
       deckEl.querySelectorAll('.card').forEach((c) => c.remove());
       dotsEl.textContent = '';
+      dots = [];
+      cur = 0;
       cards = topics.map((t, i) => {
         const c = el('div', 'card');
         paint(c, t);
         c.setAttribute('role', 'button');
-        c.setAttribute('aria-label', `${t.title}: ${t.headline}. Open story`);
+        c.setAttribute('aria-label', withAction(`${t.title}: ${t.headline}`, 'Open story'));
         c.dataset.i = i;
         const inner = el('div', 'card-in');
         const top = el('div', 'card-top');
@@ -986,7 +1024,8 @@
       if (e.key === 'Escape') { e.preventDefault(); close(); return; }
       if (e.key === 'ArrowRight') { e.preventDefault(); go(i + 1, 1); return; }
       if (e.key === 'ArrowLeft') { e.preventDefault(); go(i - 1, -1); return; }
-      if (e.key === ' ' && !e.target.closest('a, button')) { e.preventDefault(); pauseBtn.click(); return; }
+      const onControl = e.target instanceof Element && e.target.closest('a, button');
+      if (e.key === ' ' && !onControl) { e.preventDefault(); pauseBtn.click(); return; }
       if (e.key === 'Tab') {
         const f = Array.from(box.querySelectorAll('button, a[href]')).filter((n) => n.offsetParent !== null && !n.closest('[inert]'));
         if (!f.length) return;
@@ -1224,7 +1263,7 @@
     const qr = $('#qrSvg');
     const note = $('#subsNote');
     const web = $('#subsWeb');
-    let ids = [], bitOf = {}, chosen = new Set(), chips = [], allChip = null;
+    let ids = [], bitOf = Object.create(null), chosen = new Set(), chips = [], allChip = null;
 
     function payload(list) {
       const nib = [];
@@ -1280,7 +1319,7 @@
       if (countEl.textContent !== String(n)) { countEl.textContent = String(n); if (n) pop(countEl); }
       card.classList.toggle('has', n > 0);
       card.classList.toggle('full', n > 0 && n === ids.length);
-      note.classList.toggle('on', list.some((id) => URGENT[id]));
+      note.classList.toggle('on', list.some((id) => own(URGENT, id) === true));
       QR.draw(qr, linkFor(list));
     }
 
@@ -1307,7 +1346,7 @@
     function build(all) {
       const bits = topicBits(all);
       const list = all.filter((t, k) => bits[k] !== null);
-      bitOf = {};
+      bitOf = Object.create(null);
       all.forEach((t, k) => { if (bits[k] !== null) bitOf[t.id] = bits[k]; });
       ids = list.map((t) => t.id);
       wrap.textContent = '';
@@ -1329,7 +1368,7 @@
         paint(c.querySelector('.tc-ico'), t);
         c.dataset.id = t.id;
         c.dataset.bit = String(bitOf[t.id]);
-        if (URGENT[t.id]) {
+        if (own(URGENT, t.id) === true) {
           const z = svgEl([P('M13 2.5L5.5 13.5h5.5l-1 8 7.5-11H12z')], 'tc-bolt');
           c.appendChild(z);
           c.title = '+ urgent alerts';
@@ -1364,7 +1403,13 @@
       const onVis = () => { if (document.hidden) left = true; };
       const timer = setTimeout(() => {
         done();
-        if (!left && !document.hidden) window.open(link, '_blank', 'noopener,noreferrer');
+        if (left || document.hidden) return;
+        /* No "noopener" feature here: with it window.open always returns null, so a blocked
+           pop-up (Safari blocks pop-ups from timers) could not be told apart. The opener is
+           cut right away instead; if the pop-up was blocked, go to the web link in this tab. */
+        let w = null;
+        try { w = window.open(link, '_blank'); } catch (e) { w = null; }
+        if (w) { try { w.opener = null; } catch (e) { /* cross-origin already */ } } else window.location.assign(link);
       }, APP_WAIT);
       function done() {
         clearTimeout(timer);
@@ -1378,7 +1423,9 @@
       window.addEventListener('blur', away);
       window.addEventListener('pagehide', away);
       const ev = new CustomEvent('mybuddy:open-app', { detail: { url: app }, cancelable: true });
-      if (window.dispatchEvent(ev)) window.location.href = app;
+      if (window.dispatchEvent(ev)) {
+        try { window.location.href = app; } catch (e) { /* app scheme refused: the timer falls back */ }
+      }
     }
     btn.addEventListener('click', (e) => {
       if (!btn.hasAttribute('href')) { e.preventDefault(); nudge(); return; }
@@ -1428,18 +1475,28 @@
   const errBox = $('#loadErr');
   /* data/reports.json, or the bundled sample when it is missing/unreachable (fresh install).
      A file that exists but is broken is an error, not a reason to show sample data. */
-  async function fetchReports() {
+  const LOAD_TIMEOUT_MS = 15000; // a stalled request shows the error + Retry, not a forever skeleton
+  async function fetchReports(signal) {
+    const opts = { cache: 'no-cache', signal };
     let res = null;
-    try { res = await fetch('data/reports.json', { cache: 'no-cache' }); } catch (e) { res = null; }
-    if (!res || !res.ok) res = await fetch('data/reports.sample.json', { cache: 'no-cache' });
+    try { res = await fetch('data/reports.json', opts); } catch (e) { if (signal && signal.aborted) throw e; res = null; }
+    if (!res || !res.ok) res = await fetch('data/reports.sample.json', opts);
     if (!res.ok) throw new Error('HTTP ' + res.status);
     return res.json();
   }
+  let loading = false;
   async function load() {
+    if (loading) return; // Retry clicked twice: one load at a time
+    loading = true;
     errBox.hidden = true;
+    const ctrl = typeof AbortController === 'function' ? new AbortController() : null;
+    let timer = 0;
+    const timeout = new Promise((resolve, reject) => {
+      timer = setTimeout(() => { if (ctrl) ctrl.abort(); reject(new Error('timeout')); }, LOAD_TIMEOUT_MS);
+    });
     try {
-      const raw = await fetchReports();
-      if (!raw || typeof raw !== 'object') throw new Error('bad data');
+      const raw = await Promise.race([fetchReports(ctrl ? ctrl.signal : undefined), timeout]);
+      if (!raw || typeof raw !== 'object' || Array.isArray(raw)) throw new Error('bad data');
       const gen = validDate(raw.generated_at);
       topics = normalize(raw);
       if (!topics.length) throw new Error('no topics');
@@ -1447,7 +1504,7 @@
         $('#updatedText').textContent = 'Updated ' + localStamp(gen, true);
         $('#updated').hidden = false;
       }
-      loadSeen(gen ? fmtDay.format(gen) : '');
+      loadSeen(gen ? istDay(gen) : '');
       buildBubbles();
       Deck.build();
       buildList();
@@ -1457,6 +1514,9 @@
     } catch (err) {
       errBox.hidden = false;
       doc.querySelectorAll('.card.skeleton .shimmer').forEach((s) => s.remove());
+    } finally {
+      clearTimeout(timer);
+      loading = false;
     }
   }
   $('#retryBtn').addEventListener('click', load);

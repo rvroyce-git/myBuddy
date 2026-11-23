@@ -985,3 +985,12 @@ p { margin: 0; }
   .subs-btn[href]::after { display: none; }
   .bell-btn .i-bell { animation: none !important; }
 }
+
+/* Static markup carries no style="" attributes (the Content-Security-Policy blocks inline
+   styles), so its stagger indices and one-off styles live here. */
+.sprite { position: absolute; }
+.card.skeleton + .card.skeleton { transform: translate3d(0, 18px, 0) rotate(-5deg) scale(.935); }
+.hero-title .w:nth-child(1) > span, .subs-steps > li:nth-child(1), .subs-steps > li:nth-child(2), .steps > li:nth-child(1), .flow-list > li:nth-child(1) { --i: 0; }
+.hero-title .w:nth-child(2) > span, .subs-steps > li:nth-child(3), .subs-steps > li:nth-child(4), .steps > li:nth-child(2), .flow-list > li:nth-child(2) { --i: 1; }
+.hero-title .w:nth-child(3) > span, .subs-steps > li:nth-child(5), .steps > li:nth-child(3), .flow-list > li:nth-child(3) { --i: 2; }
+.hero-title .w:nth-child(4) > span, .steps > li:nth-child(4) { --i: 3; }

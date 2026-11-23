@@ -273,7 +273,8 @@ def test_repeated_open_close_does_not_stack_timers(ui):
 def test_body_scroll_locked_while_open(ui):
     page = ui.open(viewport={"width": 1280, "height": 700})
     page.evaluate("scrollTo(0, 300)")
-    page.wait_for_function("scrollY === 300")
+    # function form: a bare expression string would need eval(), which the CSP blocks
+    page.wait_for_function("() => scrollY === 300")
     list_item(page, 6).click()
     _showing(page, 6)
     lock = page.evaluate(
@@ -297,7 +298,7 @@ def test_body_scroll_locked_while_open(ui):
     )
     assert state == [False, "visible", 300, False]
     page.mouse.wheel(0, 200)
-    page.wait_for_function("scrollY > 300")
+    page.wait_for_function("() => scrollY > 300")
 
 
 def test_focus_is_trapped_in_dialog(ui):

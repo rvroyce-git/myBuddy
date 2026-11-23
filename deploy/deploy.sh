@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Copy MyBuddy from this laptop to the Oracle VM, install it, and (re)start the services
+# Copy MyBuddy from your machine to the Oracle VM, install it, and (re)start the services
 # (mybuddy = scheduler, mybuddy-bot = Telegram subscription bot).
 # Usage: MYBUDDY_HOST=<vm-ip> bash deploy/deploy.sh
 set -euo pipefail

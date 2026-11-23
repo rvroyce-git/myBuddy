@@ -44,7 +44,9 @@ class HfPapersSource:
             if not isinstance(paper, dict):
                 continue
             paper_id = paper.get("id")
-            if not isinstance(paper_id, str) or not _PAPER_ID.match(paper_id) or paper_id in seen:
+            if not isinstance(paper_id, str) or not _PAPER_ID.fullmatch(paper_id):
+                continue
+            if paper_id in seen:
                 continue
             title = clean_title(str(paper.get("title") or entry.get("title") or ""))
             if not title:
@@ -87,7 +89,7 @@ class HfModelsSource:
             if not isinstance(model, dict) or model.get("private") or model.get("disabled"):
                 continue
             model_id = model.get("modelId") or model.get("id")
-            if not isinstance(model_id, str) or not _MODEL_ID.match(model_id):
+            if not isinstance(model_id, str) or not _MODEL_ID.fullmatch(model_id):
                 continue
             pipeline = model.get("pipeline_tag")
             downloads = _as_int(model.get("downloads"))

@@ -4,8 +4,13 @@ telegram-setup [--save] | bot | subscribers."""
 from __future__ import annotations
 
 import argparse
+import contextlib
 import os
+import re
+import sqlite3
+import stat
 import sys
+import tempfile
 from collections.abc import Sequence
 from pathlib import Path
 from typing import Any
@@ -165,7 +170,18 @@ def cmd_export(topics: Sequence[Topic], settings: Settings, clock: Clock) -> int
     return 0
 
 
-def cmd_check(config_path: Path, settings: Settings, clock: Clock) -> int:
+def _env_file_problem(env_file: Path) -> str | None:
+    """The env file holds secrets: it must not be readable by other users."""
+    try:
+        mode = env_file.expanduser().stat().st_mode
+    except OSError:
+        return None
+    if stat.S_IMODE(mode) & 0o077:
+        return f"{env_file} is readable by other users; run: chmod 600 {env_file}"
+    return None
+
+
+def cmd_check(config_path: Path, settings: Settings, clock: Clock, env_file: Path) -> int:
     problems: list[str] = []
     print(f"config: {config_path}")
     topics: list[Topic] = []
@@ -202,9 +218,14 @@ def cmd_check(config_path: Path, settings: Settings, clock: Clock) -> int:
             shown = "not set"
         elif secret:
             shown = "set"
+        elif name == "TELEGRAM_CHAT_ID":  # personal data: masked like everywhere else
+            shown = f"set ({mask_chat_id(value)})"
         else:
-            shown = f"set ({value})"
+            shown = "set (" + "".join(c if c.isprintable() else "?" for c in value[:80]) + ")"
         print(f"  {name:<20} {shown}")
+    env_problem = _env_file_problem(env_file)
+    if env_problem:
+        problems.append(env_problem)
     print(f"  data dir: {settings.data_dir}")
     print(f"  site data: {settings.site_data}")
     if settings.fake:
@@ -244,7 +265,9 @@ def cmd_check(config_path: Path, settings: Settings, clock: Clock) -> int:
                 problems.append(f"GROQ_MODEL {settings.groq_model!r} not offered by Groq")
         except (HttpError, AttributeError, TypeError) as exc:
             problems.append(f"Groq check failed: {exc}")
-    if settings.telegram_bot_token and not settings.fake:
+    if settings.telegram_bot_token and not TOKEN_RE.fullmatch(settings.telegram_bot_token):
+        problems.append("TELEGRAM_BOT_TOKEN does not look like a bot token")
+    elif settings.telegram_bot_token and not settings.fake:
         bot_name = _telegram_bot_name(settings.telegram_bot_token)
         if bot_name:
             print(f"  ok: Telegram bot @{bot_name}")
@@ -267,6 +290,8 @@ def cmd_check(config_path: Path, settings: Settings, clock: Clock) -> int:
 
 def _telegram_get(token: str, method: str) -> Any:
     """Call a Telegram Bot API method. Errors are reported without the URL (it holds the token)."""
+    if not TOKEN_RE.fullmatch(token):
+        raise RuntimeError("TELEGRAM_BOT_TOKEN does not look like a bot token")
     try:
         return make_http().get_json(f"{TELEGRAM_API}/bot{token}/{method}")
     except HttpError as exc:
@@ -279,7 +304,8 @@ def _telegram_bot_name(token: str) -> str | None:
     except RuntimeError:
         return None
     result = data.get("result") if isinstance(data, dict) else None
-    return str(result.get("username")) if isinstance(result, dict) else None
+    name = result.get("username") if isinstance(result, dict) else None
+    return name if isinstance(name, str) and name else None
 
 
 def cmd_telegram_setup(settings: Settings, env_file: Path, save: bool) -> int:
@@ -297,8 +323,15 @@ def cmd_telegram_setup(settings: Settings, env_file: Path, save: bool) -> int:
     for update in data.get("result", []) if isinstance(data, dict) else []:
         msg = update.get("message") if isinstance(update, dict) else None
         chat = msg.get("chat") if isinstance(msg, dict) else None
-        if isinstance(chat, dict) and chat.get("type") == "private" and "id" in chat:
-            found[str(chat["id"])] = None
+        chat_id = chat.get("id") if isinstance(chat, dict) else None
+        # Only real integer ids: the value is written into the env file below.
+        if (
+            isinstance(chat, dict)
+            and chat.get("type") == "private"
+            and isinstance(chat_id, int)
+            and not isinstance(chat_id, bool)
+        ):
+            found[str(chat_id)] = None
     chats = list(found)
     if not chats:
         _err("No messages found. Open your bot in Telegram, tap Start, send 'hi', then retry.")
@@ -313,14 +346,36 @@ def cmd_telegram_setup(settings: Settings, env_file: Path, save: bool) -> int:
         print(f"Run again with --save to store chat {mask_chat_id(chat_id)} as TELEGRAM_CHAT_ID")
         return 0
     path = env_file.expanduser()
-    lines = path.read_text(encoding="utf-8").splitlines() if path.exists() else []
-    lines = [ln for ln in lines if not ln.startswith("TELEGRAM_CHAT_ID=")]
-    lines.append(f"TELEGRAM_CHAT_ID={chat_id}")
-    path.parent.mkdir(parents=True, exist_ok=True, mode=0o700)
-    path.write_text("\n".join(lines) + "\n", encoding="utf-8")
-    path.chmod(0o600)
+    try:
+        lines = path.read_text(encoding="utf-8").splitlines() if path.exists() else []
+        lines = [ln for ln in lines if not _CHAT_ID_LINE.match(ln)]
+        lines.append(f"TELEGRAM_CHAT_ID={chat_id}")
+        _write_private(path, "\n".join(lines) + "\n")
+    except (OSError, UnicodeDecodeError) as exc:
+        _err(f"could not update {path}: {exc}")
+        return 1
     print(f"saved TELEGRAM_CHAT_ID to {path}")
     return 0
+
+
+_CHAT_ID_LINE = re.compile(r"\s*(?:export\s+)?TELEGRAM_CHAT_ID\s*=")
+
+
+def _write_private(path: Path, text: str) -> None:
+    """Atomically replace `path` with a 0600 file (it holds secrets; never briefly 0644)."""
+    path.parent.mkdir(parents=True, exist_ok=True, mode=0o700)
+    fd, tmp = tempfile.mkstemp(prefix=f".{path.name}.", suffix=".tmp", dir=path.parent)
+    try:
+        with os.fdopen(fd, "w", encoding="utf-8") as fh:
+            fh.write(text)
+            fh.flush()
+            os.fsync(fh.fileno())
+        os.chmod(tmp, 0o600)
+        os.replace(tmp, path)
+    except BaseException:
+        with contextlib.suppress(OSError):
+            os.unlink(tmp)
+        raise
 
 
 def cmd_bot(topics: Sequence[Topic], settings: Settings, clock: Clock) -> int:
@@ -376,10 +431,22 @@ def main(argv: Sequence[str] | None = None) -> int:
     clock = make_clock()
     config_path = _config_path(args)
 
+    env_file = args.env_file or DEFAULT_ENV_FILE
+    try:
+        return _dispatch(args, settings, clock, config_path, env_file)
+    except (OSError, sqlite3.Error) as exc:
+        # e.g. an unwritable data dir or a locked/corrupt database: a clear message, exit 1.
+        _err(f"[mybuddy] {args.command} failed: {type(exc).__name__}: {exc}")
+        return 1
+
+
+def _dispatch(
+    args: argparse.Namespace, settings: Settings, clock: Clock, config_path: Path, env_file: Path
+) -> int:
     if args.command == "check":
-        return cmd_check(config_path, settings, clock)
+        return cmd_check(config_path, settings, clock, env_file)
     if args.command == "telegram-setup":
-        return cmd_telegram_setup(settings, args.env_file or DEFAULT_ENV_FILE, args.save)
+        return cmd_telegram_setup(settings, env_file, args.save)
     try:
         topics = load_topics(config_path)
     except ConfigError as exc:
