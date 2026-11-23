@@ -1,19 +1,29 @@
 <!doctype html>
-<html lang="en">
+<html lang="en" data-theme="dark" data-palette="periwinkle">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <title>MyBuddy · Today's stories</title>
   <meta name="description" content="MyBuddy reads seven news topics every morning and turns them into short AI stories.">
-  <meta name="theme-color" content="#FFF6EA" media="(prefers-color-scheme: light)">
-  <meta name="theme-color" content="#16110E" media="(prefers-color-scheme: dark)">
+  <meta name="color-scheme" content="dark light">
+  <meta name="theme-color" content="#0C0F1E">
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ccircle cx='24' cy='26' r='16' fill='%23F4E1C6' stroke='%23D9B88F' stroke-width='3'/%3E%3Ccircle cx='76' cy='26' r='16' fill='%23F4E1C6' stroke='%23D9B88F' stroke-width='3'/%3E%3Ccircle cx='50' cy='56' r='38' fill='%23F4E1C6' stroke='%23D9B88F' stroke-width='3'/%3E%3Cellipse cx='50' cy='68' rx='16' ry='12' fill='%23FFF8EE'/%3E%3Ccircle cx='36' cy='50' r='4.5' fill='%234A3A30'/%3E%3Ccircle cx='64' cy='50' r='4.5' fill='%234A3A30'/%3E%3Cellipse cx='50' cy='63' rx='6' ry='4.5' fill='%234A3A30'/%3E%3C/svg%3E">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Nunito:wght@500;600;700;800&display=swap">
   <script>
+    /* Pre-paint: always open dark (no saved theme), pick the palette. Keep in sync with app.js. */
     (function () {
-      try { var t = localStorage.getItem('mybuddy.theme'); if (t === 'light' || t === 'dark') document.documentElement.setAttribute('data-theme', t); } catch (e) {}
+      var DEFAULT_PALETTE = 'periwinkle', PALETTES = ['honey', 'mint', 'periwinkle'];
+      var d = document.documentElement, p = DEFAULT_PALETTE;
+      d.setAttribute('data-theme', 'dark');
+      try { localStorage.removeItem('mybuddy.theme'); } catch (e) {}
+      try {
+        var q = new URLSearchParams(location.search).get('palette');
+        q = q ? q.toLowerCase().replace(/[^a-z-]/g, '').slice(0, 32) : '';
+        if (PALETTES.indexOf(q) >= 0) p = q;
+      } catch (e) {}
+      d.setAttribute('data-palette', p);
     })();
   </script>
   <link rel="stylesheet" href="assets/styles.css">
@@ -30,7 +40,7 @@
         <span class="brand-name">MyBuddy</span>
       </a>
       <div class="nav-actions">
-        <button class="icon-btn" id="themeBtn" type="button" aria-label="Switch to dark theme">
+        <button class="icon-btn" id="themeBtn" type="button" aria-label="Switch to light theme">
           <svg class="i-sun" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4.5"/><path d="M12 2v2.5M12 19.5V22M2 12h2.5M19.5 12H22M4.9 4.9l1.8 1.8M17.3 17.3l1.8 1.8M4.9 19.1l1.8-1.8M17.3 6.7l1.8-1.8"/></svg>
           <svg class="i-moon" viewBox="0 0 24 24" aria-hidden="true"><path d="M20 14.5A8 8 0 0 1 9.5 4a8 8 0 1 0 10.5 10.5z"/></svg>
         </button>
@@ -66,7 +76,7 @@
           <span class="w"><span style="--i:2">news,</span></span>
           <span class="w"><span class="hl" style="--i:3">bear&#8209;sized.</span></span>
         </h1>
-        <p class="hero-sub"><span class="nw">Seven topics.</span> <span class="nw">Short AI summaries.</span> <span class="nw">Ready by 8:15.</span></p>
+        <p class="hero-sub"><span class="nw">Seven topics.</span> <span class="nw">Short AI summaries.</span> <span class="nw" id="readyBy">Ready every morning.</span></p>
       </section>
 
       <!-- Card deck -->
@@ -117,13 +127,55 @@
       <h2 class="how-title" id="howTitle">How it works</h2>
       <div class="steps-wrap">
       <div class="track" aria-hidden="true"><span class="runner"><i></i></span></div>
-      <ol class="steps">
-        <li style="--i:0"><span class="step-ico"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="6" cy="18" r="1.8" class="fill"/><path d="M5 11a8 8 0 0 1 8 8M5 5a14 14 0 0 1 14 14"/></svg></span><span class="step-txt">Reads sources</span></li>
-        <li style="--i:1"><span class="step-ico"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M11 3l1.8 4.7 4.7 1.8-4.7 1.8L11 16l-1.8-4.7L4.5 9.5l4.7-1.8z"/><path d="M18.5 14.5l.8 2.2 2.2.8-2.2.8-.8 2.2-.8-2.2-2.2-.8 2.2-.8z"/></svg></span><span class="step-txt">AI summarises</span></li>
-        <li style="--i:2"><span class="step-ico"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M21 4L3 11l6.5 2.5L12 20l3-5 4.5 3z"/><path d="M9.5 13.5L21 4"/></svg></span><span class="step-txt">Telegram ping</span></li>
-        <li style="--i:3"><span class="step-ico"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="4.5" width="18" height="15" rx="3"/><path d="M3 9h18M7 13h6M7 16h9"/></svg></span><span class="step-txt">Site updates</span></li>
+      <ol class="steps" id="steps">
+        <li style="--i:0">
+          <button class="step" type="button" aria-describedby="tip0"><span class="step-ico"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="6" cy="18" r="1.8" class="fill"/><path d="M5 11a8 8 0 0 1 8 8M5 5a14 14 0 0 1 14 14"/></svg><i class="step-i" aria-hidden="true">i</i></span><span class="step-txt">Reads sources</span></button>
+          <span class="tip" role="tooltip" id="tip0">From <span data-ist="06:30">early morning</span> daily, it checks 26 public feeds: OpenAI, Google AI, Hacker News, GitHub, arXiv, Hugging Face, CISA and more. Already-sent news is skipped.</span>
+        </li>
+        <li style="--i:1">
+          <button class="step" type="button" aria-describedby="tip1"><span class="step-ico"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M11 3l1.8 4.7 4.7 1.8-4.7 1.8L11 16l-1.8-4.7L4.5 9.5l4.7-1.8z"/><path d="M18.5 14.5l.8 2.2 2.2.8-2.2.8-.8 2.2-.8-2.2-2.2-.8 2.2-.8z"/></svg><i class="step-i" aria-hidden="true">i</i></span><span class="step-txt">AI summarises</span></button>
+          <span class="tip" role="tooltip" id="tip1">Groq AI writes a one-line headline and a two-sentence summary. Every link comes from the original source, never the AI.</span>
+        </li>
+        <li style="--i:2">
+          <button class="step" type="button" aria-describedby="tip2"><span class="step-ico"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M21 4L3 11l6.5 2.5L12 20l3-5 4.5 3z"/><path d="M9.5 13.5L21 4"/></svg><i class="step-i" aria-hidden="true">i</i></span><span class="step-txt">Instant alert</span></button>
+          <span class="tip" role="tooltip" id="tip2">Each report arrives as a private message on your phone. Actively exploited security bugs are flagged within the hour.</span>
+        </li>
+        <li style="--i:3">
+          <button class="step" type="button" aria-describedby="tip3"><span class="step-ico"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="4.5" width="18" height="15" rx="3"/><path d="M3 9h18M7 13h6M7 16h9"/></svg><i class="step-i" aria-hidden="true">i</i></span><span class="step-txt">Site updates</span></button>
+          <span class="tip" role="tooltip" id="tip3">A minute later this page refreshes on GitHub Pages — all seven topics, free and public.</span>
+        </li>
       </ol>
       </div>
+    </section>
+
+    <!-- What stays, what leaves -->
+    <section class="flow wrap" id="flow" aria-labelledby="flowTitle">
+      <h2 class="flow-title" id="flowTitle">What stays, what leaves</h2>
+      <div class="flow-grid">
+        <article class="flow-card stays" aria-labelledby="staysTitle">
+          <div class="flow-head">
+            <span class="flow-ico"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="3.5" width="16" height="7" rx="2.2"/><rect x="4" y="13.5" width="16" height="7" rx="2.2"/><path d="M8 7h.01M8 17h.01M12 7h4M12 17h4"/></svg></span>
+            <div><h3 id="staysTitle">Stays on our server</h3><p class="flow-sub">Oracle Cloud · free tier</p></div>
+          </div>
+          <ul class="flow-list">
+            <li style="--i:0"><span class="fi"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7.5h16v11a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2z"/><path d="M3 4h18v3.5H3zM10 12h4"/></svg></span><span>Saved reports and what&rsquo;s already been sent</span></li>
+            <li style="--i:1"><span class="fi"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h9M17 7h3M4 17h3M11 17h9"/><circle cx="15" cy="7" r="2"/><circle cx="9" cy="17" r="2"/></svg></span><span>Your topics, sources and schedule</span></li>
+            <li style="--i:2"><span class="fi"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="8" cy="15" r="4"/><path d="M11 12l8-8M16 7l2.5 2.5M14 9l2 2"/></svg></span><span>API keys, in a private file only the app reads</span></li>
+          </ul>
+        </article>
+        <article class="flow-card leaves" aria-labelledby="leavesTitle">
+          <div class="flow-head">
+            <span class="flow-ico"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M14 4h6v6M20 4l-9 9"/><path d="M18 14v4a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4"/></svg></span>
+            <div><h3 id="leavesTitle">Leaves the server</h3><p class="flow-sub">Public news only</p></div>
+          </div>
+          <ul class="flow-list">
+            <li style="--i:0"><span class="fi"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 4h14v16H5z"/><path d="M8 8h8M8 12h8M8 16h5"/></svg></span><span>Public news text<span class="hop" aria-hidden="true"><i></i></span><span class="sr-only"> to </span><span class="to">Groq AI to summarise</span></span></li>
+            <li style="--i:1"><span class="fi"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M21 4L3 11l6.5 2.5L12 20l3-5 4.5 3z"/><path d="M9.5 13.5L21 4"/></svg></span><span>Finished summary<span class="hop" aria-hidden="true"><i></i></span><span class="sr-only"> to </span><span class="to">your phone, as a private alert</span></span></li>
+            <li style="--i:2"><span class="fi"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8.5"/><path d="M3.5 12h17M12 3.5c2.5 2.6 2.5 14.4 0 17M12 3.5c-2.5 2.6-2.5 14.4 0 17"/></svg></span><span>Same summary<span class="hop" aria-hidden="true"><i></i></span><span class="sr-only"> to </span><span class="to">this public page</span></span></li>
+          </ul>
+        </article>
+      </div>
+      <p class="flow-note">Nothing personal is sent. The AI provider may log prompts — run a local model if nothing should leave.</p>
     </section>
   </main>
 

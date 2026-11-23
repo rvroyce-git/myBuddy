@@ -3,6 +3,11 @@
 (() => {
   'use strict';
 
+  /* Colour palette: change the default here (and in the inline <head> script). Preview any
+     palette with ?palette=NAME. Each name is a data-palette block in styles.css. */
+  const DEFAULT_PALETTE = 'periwinkle';
+  const PALETTES = ['honey', 'mint', 'periwinkle'];
+
   const doc = document;
   const root = doc.documentElement;
   const $ = (s, r = doc) => r.querySelector(s);
@@ -16,6 +21,7 @@
   const store = {
     get(k) { try { return localStorage.getItem(k); } catch (e) { return null; } },
     set(k, v) { try { localStorage.setItem(k, v); } catch (e) { /* storage blocked */ } },
+    remove(k) { try { localStorage.removeItem(k); } catch (e) { /* storage blocked */ } },
   };
 
   /* ---------- tiny DOM helpers ---------- */
@@ -49,46 +55,105 @@
     startups: [P('M12 2.5c3 2 4.5 5.5 4.5 9.5l-2 3h-5l-2-3c0-4 1.5-7.5 4.5-9.5z'), ['circle', { cx: '12', cy: '9.5', r: '1.7' }], P('M9.5 15l-3 2.5 1-4.5M14.5 15l3 2.5-1-4.5M10.5 18.5c.4 1.3.9 2.3 1.5 3 .6-.7 1.1-1.7 1.5-3')],
     ai_models: [P('M12 2.5l8 4.5v9l-8 4.5-8-4.5v-9z'), P('M4 7l8 4.5L20 7M12 11.5V21')],
   };
-  const COLORS = {
-    ai_news: ['#6D28D9', '#C026D3'],
-    security: ['#BE123C', '#F43F5E'],
-    github_trending: ['#A84A06', '#CA8A04'],
-    deep_dive: ['#0F766E', '#14B8A6'],
-    research_papers: ['#1D4ED8', '#38BDF8'],
-    startups: ['#C2410C', '#FB923C'],
-    ai_models: ['#047857', '#65A30D'],
-  };
   const SHORT = {
     ai_news: 'AI news', security: 'Security', github_trending: 'GitHub', deep_dive: 'Deep dive',
     research_papers: 'Papers', startups: 'Launches', ai_models: 'Models',
   };
-  function colorsFor(id) {
-    if (COLORS[id]) return COLORS[id];
-    let h = 0;
-    for (const ch of String(id)) h = (h * 31 + ch.charCodeAt(0)) % 360;
-    return [`hsl(${h} 70% 38%)`, `hsl(${(h + 30) % 360} 75% 52%)`];
-  }
   function iconFor(t, cls) {
     if (ICONS[t.id]) return svgEl(ICONS[t.id], 'ico ' + (cls || ''));
     const s = el('span', 'emoji', t.emoji || '•');
     s.setAttribute('aria-hidden', 'true');
     return s;
   }
+  /* Every topic shares the palette's card gradient (--card-1/--card-2); only the angle varies. */
   function paint(node, t) {
-    node.style.setProperty('--c1', t.c1);
-    node.style.setProperty('--c2', t.c2);
+    node.style.setProperty('--ang', t.ang + 'deg');
+  }
+
+  /* ---------- time ----------
+     The schedule is fixed in IST, but every time is shown in the visitor's own time zone,
+     without a zone label. Words stay English (the page is English); only the 12/24-hour
+     preference comes from the visitor's locale. IST is only used internally. */
+  const IST = 'Asia/Kolkata';
+  const H12 = (() => {
+    try {
+      const h = new Intl.DateTimeFormat(navigator.language, { hour: 'numeric' }).resolvedOptions();
+      return h.hour12 !== undefined ? h.hour12 : !/^h2[34]$/.test(h.hourCycle || '');
+    } catch (e) { return true; }
+  })();
+  const fmtTime = new Intl.DateTimeFormat('en', H12
+    ? { hour: 'numeric', minute: '2-digit', hourCycle: 'h12' }
+    : { hour: '2-digit', minute: '2-digit', hourCycle: 'h23' });
+  const fmtDate = new Intl.DateTimeFormat('en', { day: 'numeric', month: 'short' });
+  const fmtWeekday = new Intl.DateTimeFormat('en', { weekday: 'long' });
+  const fmtLocalDay = new Intl.DateTimeFormat('en-CA', { year: 'numeric', month: '2-digit', day: '2-digit' });
+  const fmtDay = new Intl.DateTimeFormat('en-CA', { year: 'numeric', month: '2-digit', day: '2-digit', timeZone: IST });
+  const dayNum = (key) => Date.UTC(+key.slice(0, 4), +key.slice(5, 7) - 1, +key.slice(8, 10)) / 864e5;
+  const dayKey = (n) => new Date(n * 864e5).toISOString().slice(0, 10);
+  const localGap = (d) => dayNum(fmtLocalDay.format(d)) - dayNum(fmtLocalDay.format(new Date()));
+  /* "5:00 PM" today, "Yesterday · 5:00 PM" or "Nov 22 · 5:00 PM" (visitor's zone).
+     `mid` lowercases the word for use inside a phrase ("Updated yesterday · …"). */
+  function localStamp(d, mid) {
+    const time = fmtTime.format(d);
+    const gap = localGap(d);
+    if (gap === 0) return time;
+    if (gap === -1) return (mid ? 'yesterday' : 'Yesterday') + ' · ' + time;
+    return fmtDate.format(d) + ' · ' + time;
+  }
+  const IST_AT = (key, h, m) => new Date(`${key}T${String(h).padStart(2, '0')}:${m}:00+05:30`);
+  /* An "HH:MM" IST time on today's IST date, as a local clock time. */
+  function istClock(hm) {
+    const m = /^(\d{1,2}):(\d{2})$/.exec(hm || '');
+    if (!m) return '';
+    const d = IST_AT(fmtDay.format(new Date()), m[1], m[2]);
+    return isNaN(d) ? '' : fmtTime.format(d);
+  }
+  /* Schedule label from the data ("Daily · 06:30 IST", "Mon–Fri · 07:30 IST", "Sat, Sun · …")
+     -> the next run, as "Due 9:00 PM", "Due tomorrow · 9:00 PM" or "Back Monday". */
+  const WD = { sun: 0, mon: 1, tue: 2, wed: 3, thu: 4, fri: 5, sat: 6 };
+  function scheduleDays(label) {
+    const l = String(label || '').toLowerCase();
+    if (/daily/.test(l)) return [0, 1, 2, 3, 4, 5, 6];
+    if (/weekend/.test(l)) return [6, 0];
+    const r = /\b(sun|mon|tue|wed|thu|fri|sat)\w*\s*[–-]\s*(sun|mon|tue|wed|thu|fri|sat)/.exec(l);
+    if (r) { const out = []; for (let k = WD[r[1]]; ; k = (k + 1) % 7) { out.push(k); if (k === WD[r[2]]) break; } return out; }
+    const list = (l.match(/\b(sun|mon|tue|wed|thu|fri|sat)/g) || []).map((x) => WD[x]);
+    return list.length ? list : [0, 1, 2, 3, 4, 5, 6];
+  }
+  const LATE_GRACE_MS = 60 * 60 * 1000; // a run that is a little late is still "due" today
+  function dueText(schedule) {
+    const m = /(\d{1,2}):(\d{2})/.exec(String(schedule || ''));
+    if (!m) return '';
+    const days = scheduleDays(String(schedule).split('·')[0]);
+    const now = Date.now(), base = dayNum(fmtDay.format(new Date()));
+    for (let k = 0; k < 8; k++) {
+      const key = dayKey(base + k);
+      if (!days.includes(new Date((base + k) * 864e5).getUTCDay())) continue;
+      const at = IST_AT(key, m[1], m[2]);
+      if (isNaN(at) || at.getTime() + LATE_GRACE_MS <= now) continue;
+      const gap = localGap(at);
+      if (gap <= 0) return 'Due ' + fmtTime.format(at);
+      if (gap === 1) return 'Due tomorrow · ' + fmtTime.format(at);
+      return 'Back ' + fmtWeekday.format(at);
+    }
+    return '';
+  }
+  function localizeStatic() {
+    const ready = istClock('08:15');
+    if (ready) $('#readyBy').textContent = `Ready by ${ready}.`;
+    doc.querySelectorAll('[data-ist]').forEach((n) => { const t = istClock(n.dataset.ist); if (t) n.textContent = t; });
   }
 
   /* ---------- data helpers ---------- */
-  const IST = 'Asia/Kolkata';
-  const fmtClock = new Intl.DateTimeFormat('en-GB', { hour: '2-digit', minute: '2-digit', hour12: false, timeZone: IST });
-  const fmtDay = new Intl.DateTimeFormat('en-CA', { timeZone: IST });
-  const fmtShort = new Intl.DateTimeFormat('en-GB', { day: 'numeric', month: 'short', timeZone: IST });
   function validDate(iso) { const d = new Date(iso); return isNaN(d) ? null : d; }
+  /* Only absolute https: links are allowed (data contract). */
   function safeUrl(u) {
+    if (typeof u !== 'string') return null;
+    const s = u.trim();
+    if (!/^https:\/\/[^/\\\s]/i.test(s)) return null;
     try {
-      const x = new URL(String(u), location.href);
-      return (x.protocol === 'https:' || x.protocol === 'http:') ? x.href : null;
+      const x = new URL(s);
+      return x.protocol === 'https:' && x.hostname ? x.href : null;
     } catch (e) { return null; }
   }
   function firstSentences(text, max) {
@@ -97,24 +162,20 @@
     const parts = s.match(/[^.!?]+[.!?]+["')\]]*(\s+|$)|[^.!?]+$/g) || [s];
     return parts.slice(0, max).join('').trim();
   }
-  function normalize(raw, generatedAt) {
-    const genDay = generatedAt ? fmtDay.format(generatedAt) : null;
-    return (Array.isArray(raw.topics) ? raw.topics : []).filter((t) => t && t.id).map((t) => {
+  function normalize(raw) {
+    return (Array.isArray(raw.topics) ? raw.topics : []).filter((t) => t && t.id).map((t, k) => {
       const id = String(t.id);
-      const [c1, c2] = colorsFor(id);
       const r = t.report && typeof t.report === 'object' ? t.report : null;
       const d = r ? validDate(r.created_at) : null;
       let when = '';
       if (d) {
-        when = fmtClock.format(d) + ' IST';
-        if (genDay && fmtDay.format(d) !== genDay) when = fmtShort.format(d) + ' · ' + when;
+        when = localStamp(d);
       } else {
-        const m = /(\d{1,2}:\d{2})/.exec(String(t.schedule || ''));
-        when = m ? m[1] + ' IST' : '';
+        when = dueText(t.schedule);
       }
       const items = r && Array.isArray(r.items) ? r.items : [];
       return {
-        id, c1, c2,
+        id, ang: 135 + (k % 5) * 15,
         title: String(t.title || id),
         short: SHORT[id] || String(t.title || id),
         emoji: t.emoji ? String(t.emoji) : '',
@@ -152,23 +213,33 @@
     }
   } catch (e) { /* older browser: CSS fallback curve */ }
 
-  /* ---------- theme ---------- */
-  const themeBtn = $('#themeBtn');
-  const darkQuery = matchMedia('(prefers-color-scheme: dark)');
-  function effectiveDark() {
-    const t = root.getAttribute('data-theme');
-    return t ? t === 'dark' : darkQuery.matches;
+  /* ---------- palette ---------- */
+  function pickPalette() {
+    let q = '';
+    try { q = new URLSearchParams(location.search).get('palette') || ''; } catch (e) { q = ''; }
+    q = q.toLowerCase().replace(/[^a-z-]/g, '').slice(0, 32);
+    return PALETTES.includes(q) ? q : DEFAULT_PALETTE;
   }
+  root.setAttribute('data-palette', pickPalette());
+
+  /* ---------- theme ----------
+     Always opens dark. The toggle switches for this visit only (never saved). */
+  const themeBtn = $('#themeBtn');
+  const metaTheme = doc.querySelector('meta[name="theme-color"]');
+  store.remove('mybuddy.theme'); // old saved choice from earlier versions
+  root.setAttribute('data-theme', 'dark');
+  const effectiveDark = () => root.getAttribute('data-theme') !== 'light';
   function syncTheme() {
     const dark = effectiveDark();
     root.setAttribute('data-mode', dark ? 'dark' : 'light');
     themeBtn.setAttribute('aria-label', dark ? 'Switch to light theme' : 'Switch to dark theme');
+    const bg = getComputedStyle(root).getPropertyValue('--bg').trim();
+    if (metaTheme && bg) metaTheme.setAttribute('content', bg);
   }
-  darkQuery.addEventListener?.('change', syncTheme);
   syncTheme();
   themeBtn.addEventListener('click', () => {
     const next = effectiveDark() ? 'light' : 'dark';
-    const apply = () => { root.setAttribute('data-theme', next); store.set('mybuddy.theme', next); syncTheme(); };
+    const apply = () => { root.setAttribute('data-theme', next); syncTheme(); };
     if (!RM && doc.startViewTransition) {
       const r = themeBtn.getBoundingClientRect();
       const x = r.left + r.width / 2, y = r.top + r.height / 2;
@@ -186,6 +257,73 @@
   /* ---------- navbar border on scroll ---------- */
   const nav = $('#nav');
   addEventListener('scroll', () => nav.classList.toggle('scrolled', scrollY > 8), { passive: true });
+
+  /* ---------- "How it works" tooltips ----------
+     Hover (mouse) or keyboard focus shows a tip; a click/tap pins it open or closes it.
+     Esc, tapping elsewhere or leaving focus closes it. Positioned so it never leaves the viewport. */
+  const Tips = (() => {
+    const steps = Array.from(doc.querySelectorAll('#steps .step'));
+    const tips = steps.map((b) => doc.getElementById(b.getAttribute('aria-describedby')));
+    let open = -1, pinned = false;
+    const EDGE = 10, GAP = 12;
+
+    function place(i) {
+      const b = steps[i], tip = tips[i], li = b.parentNode;
+      tip.style.left = '0px'; tip.style.top = '0px';
+      const br = b.getBoundingClientRect(), lr = li.getBoundingClientRect();
+      const tw = tip.offsetWidth, th = tip.offsetHeight;
+      const vw = doc.documentElement.clientWidth;
+      const cx = br.left + br.width / 2;
+      const left = Math.max(EDGE, Math.min(cx - tw / 2, vw - EDGE - tw));
+      const below = br.top - th - GAP < EDGE + 62; // keep clear of the sticky nav
+      tip.classList.toggle('below', below);
+      tip.style.left = (left - lr.left) + 'px';
+      tip.style.top = (below ? br.bottom - lr.top + GAP : br.top - lr.top - th - GAP) + 'px';
+      tip.style.setProperty('--ax', Math.max(16, Math.min(tw - 16, cx - left)) + 'px');
+    }
+    function show(i, pin) {
+      if (open !== -1 && open !== i) hide();
+      open = i; pinned = !!pin;
+      place(i);
+      tips[i].classList.add('open');
+      steps[i].setAttribute('data-open', '');
+    }
+    function hide() {
+      if (open === -1) return;
+      tips[open].classList.remove('open');
+      steps[open].removeAttribute('data-open');
+      open = -1; pinned = false;
+    }
+    steps.forEach((b, i) => {
+      const li = b.parentNode;
+      li.addEventListener('pointerenter', (e) => { if (e.pointerType === 'mouse') show(i, pinned && open === i); });
+      li.addEventListener('pointerleave', (e) => { if (e.pointerType === 'mouse' && open === i && !pinned) hide(); });
+      b.addEventListener('focus', () => { if (b.matches(':focus-visible')) show(i, false); });
+      b.addEventListener('blur', () => { if (open === i) hide(); });
+      b.addEventListener('click', () => { if (open === i && pinned) hide(); else show(i, true); });
+    });
+    doc.addEventListener('pointerdown', (e) => {
+      if (open !== -1 && !steps[open].parentNode.contains(e.target)) hide();
+    }, true);
+    doc.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape' && open !== -1) { e.preventDefault(); hide(); }
+    });
+    addEventListener('resize', () => { if (open !== -1) place(open); });
+    return { hide };
+  })();
+
+  /* ---------- "What stays, what leaves": reveal on scroll ---------- */
+  (() => {
+    const flow = $('#flow');
+    if (!flow) return;
+    if (RM || !('IntersectionObserver' in window)) { flow.classList.add('in'); return; }
+    const io = new IntersectionObserver((entries) => {
+      if (entries.some((en) => en.isIntersecting)) { flow.classList.add('in'); io.disconnect(); }
+    }, { threshold: 0.2 });
+    io.observe(flow);
+  })();
+
+  localizeStatic();
 
   /* ---------- seen state ---------- */
   /* Seen state resets every day: it is keyed to the day of generated_at (IST). */
@@ -380,7 +518,6 @@
 
         const d = el('button', 'dot');
         d.type = 'button';
-        d.style.setProperty('--dc', t.c2);
         d.setAttribute('aria-label', `Show ${t.title}`);
         d.appendChild(el('span'));
         d.addEventListener('click', () => goTo(i));
@@ -876,17 +1013,25 @@
      LOAD
      ===================================================================== */
   const errBox = $('#loadErr');
+  /* data/reports.json, or the bundled sample when it is missing/unreachable (fresh install).
+     A file that exists but is broken is an error, not a reason to show sample data. */
+  async function fetchReports() {
+    let res = null;
+    try { res = await fetch('data/reports.json', { cache: 'no-cache' }); } catch (e) { res = null; }
+    if (!res || !res.ok) res = await fetch('data/reports.sample.json', { cache: 'no-cache' });
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+    return res.json();
+  }
   async function load() {
     errBox.hidden = true;
     try {
-      const res = await fetch('data/reports.json', { cache: 'no-cache' });
-      if (!res.ok) throw new Error('HTTP ' + res.status);
-      const raw = await res.json();
+      const raw = await fetchReports();
+      if (!raw || typeof raw !== 'object') throw new Error('bad data');
       const gen = validDate(raw.generated_at);
-      topics = normalize(raw, gen);
+      topics = normalize(raw);
       if (!topics.length) throw new Error('no topics');
       if (gen) {
-        $('#updatedText').textContent = 'Updated ' + fmtClock.format(gen) + ' IST';
+        $('#updatedText').textContent = 'Updated ' + localStamp(gen, true);
         $('#updated').hidden = false;
       }
       loadSeen(gen ? fmtDay.format(gen) : '');

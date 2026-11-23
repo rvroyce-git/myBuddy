@@ -22,6 +22,11 @@ dev = [
   "mypy>=1.13",
   "types-PyYAML",
 ]
+# Browser tests for the website (tests/ui); also run: python -m playwright install chromium
+ui = [
+  "playwright>=1.65",
+  "pytest-playwright>=0.10",
+]
 
 [project.scripts]
 mybuddy = "mybuddy.cli:main"
@@ -39,6 +44,10 @@ target-version = "py312"
 
 [tool.ruff.lint]
 select = ["E", "F", "I", "B", "UP", "SIM"]
+
+[tool.ruff.lint.per-file-ignores]
+# Browser tests embed long JavaScript snippets in strings.
+"tests/ui/*" = ["E501"]
 
 [tool.mypy]
 python_version = "3.12"
