@@ -1,5 +1,5 @@
 name: Publish website
-# If a deploy fails with a transient GitHub error, push a change to this file to retry.
+# If a deploy fails with a transient GitHub error (or after a history rewrite), push a change to this file to rerun it.
 
 on:
   push:
