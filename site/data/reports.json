@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-11-23T08:00:05+05:30",
+  "generated_at": "2026-11-23T08:15:03+05:30",
   "topics": [
     {
       "id": "ai_news",
@@ -302,44 +302,16 @@
       "description": "Open models trending on Hugging Face, with what they're good for.",
       "schedule": "Daily · 08:15 IST",
       "report": {
-        "created_at": "2026-11-22T13:21:29+05:30",
-        "headline": "Top trending open-source AI models span image-text, audio, and video capabilities",
-        "summary": "Qwen3.8-27B leads with massive downloads, while lightweight Inkling-2-Mini variants and new audio tools expand local AI options.",
+        "created_at": "2026-11-23T08:15:03+05:30",
+        "headline": "DepthPro2 depth‑estimation model appears on Hugging Face Trending",
+        "summary": "Apple’s DepthPro2 estimates scene depth from images; it has attracted 324 likes but no downloads yet.",
         "items": [
           {
-            "title": "Qwen/Qwen3.8-27B",
-            "url": "https://huggingface.co/Qwen/Qwen3.8-27B",
+            "title": "apple/DepthPro2",
+            "url": "https://huggingface.co/apple/DepthPro2",
             "source": "Hugging Face Trending",
-            "blurb": "Qwen3.8-27B (Qwen) – image-text model, huge community interest with over 6 M downloads",
-            "published": "2026-08-05T08:22:59+00:00"
-          },
-          {
-            "title": "thinkingmachines/Inkling-2-Mini",
-            "url": "https://huggingface.co/thinkingmachines/Inkling-2-Mini",
-            "source": "Hugging Face Trending",
-            "blurb": "Inkling-2-Mini (thinkingmachines) – image-text model, lightweight for local setups, trending on Hugging Face",
-            "published": "2026-11-17T00:26:57+00:00"
-          },
-          {
-            "title": "unsloth/Inkling-2-Mini-GGUF",
-            "url": "https://huggingface.co/unsloth/Inkling-2-Mini-GGUF",
-            "source": "Hugging Face Trending",
-            "blurb": "Inkling-2-Mini-GGUF (unsloth) – optimized GGUF version, image-text, many downloads, good for local inference",
-            "published": "2026-11-20T13:09:48+00:00"
-          },
-          {
-            "title": "tencent/Hy4-flash",
-            "url": "https://huggingface.co/tencent/Hy4-flash",
-            "source": "Hugging Face Trending",
-            "blurb": "Hy4-flash (tencent) – image-text model, new release, modest downloads indicating early interest",
-            "published": "2026-11-17T03:44:46+00:00"
-          },
-          {
-            "title": "inworld/voice-isolator",
-            "url": "https://huggingface.co/inworld/voice-isolator",
-            "source": "Hugging Face Trending",
-            "blurb": "voice-isolator (inworld) – audio-to-audio tool, isolates speech, zero downloads but many likes, potential",
-            "published": "2026-11-14T02:14:35+00:00"
+            "blurb": "DepthPro2 – image depth‑estimation model by Apple, trending with 324 likes, no downloads yet",
+            "published": "2026-11-03T16:55:03+00:00"
           }
         ]
       }
