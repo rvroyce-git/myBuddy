@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-11-23T07:30:06+05:30",
+  "generated_at": "2026-11-23T08:00:05+05:30",
   "topics": [
     {
       "id": "ai_news",
@@ -246,51 +246,51 @@
       "description": "New products and startup funding news — what it is and who it's for.",
       "schedule": "Daily · 08:00 IST",
       "report": {
-        "created_at": "2026-11-22T13:21:03+05:30",
-        "headline": "Major funding and AI tools reshape startups this week",
-        "summary": "Harbinger raises $240M for practical EVs, while AI‑driven tools like Stitch Loop, WaitFeed, Smorza and gitroots launch, and fusion startup Europa Fusion gains backing.",
+        "created_at": "2026-11-23T08:00:04+05:30",
+        "headline": "New AI tools and Mac utilities launch on Product Hunt this week",
+        "summary": "AI-powered desktop assistants and coding agents debut alongside Mac-focused knowledge, control, and recording apps. Each aims to streamline work and creative tasks.",
         "items": [
           {
-            "title": "Harbinger Lands $240M for Unsexy EVs That Actually Matter - The Tech Buzz",
-            "url": "https://news.google.com/rss/articles/CBMikwFBVV95cUxPMFZYVjc4LWpkUlBSY2xFTUw0cEJpLXVPN1lVSDA2ck1YTFlVQzMwblZHS0ZHSFNuNzVkNDRrcWdiYXBXZktRTWZMSWpTeHNVblJHSkxoOXZWVlBfa2Mxd2I2R3F0RHJjdHZiazlPMlk4UzROS3ZyVUpiUkQyMVpTcGFiZ0QzNW5FVmx6dm94R21OTU0?oc=5",
-            "source": "Google News Startups",
-            "blurb": "Harbinger secures $240M to build practical, unglamorous electric vehicles for everyday drivers.",
-            "published": "2026-11-21T13:02:26+00:00"
-          },
-          {
-            "title": "Daniel Ek backs AI researcher’s fusion power startup. Here’s what they’re building.",
-            "url": "https://techcrunch.com/2026/11/20/daniel-ek-backs-ai-researchers-fusion-power-startup-heres-what-theyre-building/",
-            "source": "TechCrunch Startups",
-            "blurb": "Europa Fusion, an AI‑researcher‑led startup, receives backing from Spotify founder Daniel Ek to develop fusion power.",
-            "published": "2026-11-20T19:53:41+00:00"
-          },
-          {
-            "title": "Stitch Loop",
-            "url": "https://www.producthunt.com/products/stitch-loop",
+            "title": "oovi",
+            "url": "https://www.producthunt.com/products/oovi",
             "source": "Product Hunt",
-            "blurb": "Stitch Loop is Google’s AI agent that automatically deploys fixes and monitors performance metrics.",
-            "published": "2026-11-20T19:38:38+00:00"
+            "blurb": "AI desktop team lets users automate tasks, boosting productivity.",
+            "published": "2026-11-21T20:02:03+00:00"
           },
           {
-            "title": "WaitFeed",
-            "url": "https://www.producthunt.com/products/waitfeed-2",
+            "title": "Omi CLI",
+            "url": "https://www.producthunt.com/products/omi-cli",
             "source": "Product Hunt",
-            "blurb": "WaitFeed offers a tech news feed that appears while users wait for AI agents to respond.",
-            "published": "2026-11-20T20:01:06+00:00"
+            "blurb": "AI coding agents run code unattended, helping developers keep projects moving.",
+            "published": "2026-11-21T08:05:31+00:00"
           },
           {
-            "title": "Smorza",
-            "url": "https://www.producthunt.com/products/smorza",
+            "title": "Resurf",
+            "url": "https://www.producthunt.com/products/resurf-2",
             "source": "Product Hunt",
-            "blurb": "Smorza lets each Mac app have its own volume and output controls for better audio management.",
-            "published": "2026-11-20T19:28:10+00:00"
+            "blurb": "Personal knowledge base and bookmark manager organizes Mac users' resources in one place.",
+            "published": "2026-11-21T16:21:36+00:00"
           },
           {
-            "title": "gitroots",
-            "url": "https://www.producthunt.com/products/gitroots",
+            "title": "Verge: Corner Controls",
+            "url": "https://www.producthunt.com/products/verge-corner-controls",
             "source": "Product Hunt",
-            "blurb": "gitroots provides path‑level GitHub access, enabling developers and AI agents to work on specific code sections.",
-            "published": "2026-11-20T13:22:16+00:00"
+            "blurb": "Corner swipe controls adjust brightness, volume, and more for quick Mac adjustments.",
+            "published": "2026-11-21T12:26:00+00:00"
+          },
+          {
+            "title": "Creavit Studio 4.0",
+            "url": "https://www.producthunt.com/products/creavit-studio",
+            "source": "Product Hunt",
+            "blurb": "Creavit Studio 4.0 records screens and iPhone camera, enabling cinematic demos on Mac.",
+            "published": "2026-11-20T21:11:32+00:00"
+          },
+          {
+            "title": "30yr-uptime",
+            "url": "https://www.producthunt.com/products/30yr-uptime",
+            "source": "Product Hunt",
+            "blurb": "Claude Code mod adds health reminders, encouraging users to care for their bodies.",
+            "published": "2026-11-20T10:55:49+00:00"
           }
         ]
       }
