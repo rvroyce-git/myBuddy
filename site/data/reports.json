@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-11-23T07:00:06+05:30",
+  "generated_at": "2026-11-23T07:15:20+05:30",
   "topics": [
     {
       "id": "ai_news",
@@ -85,51 +85,51 @@
       "description": "AI projects on GitHub that are picking up stars fastest right now.",
       "schedule": "Daily · 07:15 IST",
       "report": {
-        "created_at": "2026-11-22T13:20:12+05:30",
-        "headline": "Top AI GitHub repos dominate with hundreds of thousands of stars, offering powerful tools",
-        "summary": "The most starred projects span agents, plugins, data scraping, and core ML frameworks. Their massive star counts reflect strong community interest and practical value.",
+        "created_at": "2026-11-23T07:15:20+05:30",
+        "headline": "AI tool repos surge, with Orca and free model plugin leading trends",
+        "summary": "Orca gained the most stars, offering subscription‑based AI bots. Free model access and knowledge‑graph tools also drew strong interest.",
         "items": [
           {
-            "title": "affaan-m/ECC",
-            "url": "https://github.com/affaan-m/ECC",
+            "title": "stablyai/orca",
+            "url": "https://github.com/stablyai/orca",
             "source": "GitHub Trending",
-            "blurb": "ECC optimizes AI agent performance for Claude, Codex, Cursor; 308k stars show strong interest.",
-            "published": "2026-11-20T01:13:45+00:00"
+            "blurb": "Orca runs multiple AI bots via subscription, handy for developers; +809 stars.",
+            "published": "2026-11-23T01:44:41+00:00"
           },
           {
-            "title": "deepseek-ai/deepseek-harness",
-            "url": "https://github.com/deepseek-ai/deepseek-harness",
+            "title": "Ebony-Vinyl/dsh-our-free-model",
+            "url": "https://github.com/Ebony-Vinyl/dsh-our-free-model",
             "source": "GitHub Trending",
-            "blurb": "DeepSeek Harness makes any tool a plugin in TypeScript; 285k stars indicate wide adoption.",
-            "published": "2026-11-22T03:18:55+00:00"
+            "blurb": "dsh plugin offers free, unlimited access to frontier models like DeepSeek and Kimi; +626 stars.",
+            "published": "2026-11-22T16:01:28+00:00"
           },
           {
-            "title": "NousResearch/hermes-agent",
-            "url": "https://github.com/NousResearch/hermes-agent",
+            "title": "Graphify-Labs/graphify",
+            "url": "https://github.com/Graphify-Labs/graphify",
             "source": "GitHub Trending",
-            "blurb": "Hermes Agent grows with you, written in Python; 265k stars reflect developer enthusiasm.",
-            "published": "2026-11-22T07:42:05+00:00"
+            "blurb": "Graphify turns codebases into queryable knowledge graphs, no vector store needed; +376 stars.",
+            "published": "2026-11-23T00:39:23+00:00"
           },
           {
-            "title": "firecrawl/firecrawl",
-            "url": "https://github.com/firecrawl/firecrawl",
+            "title": "heygen-com/hyperframes",
+            "url": "https://github.com/heygen-com/hyperframes",
             "source": "GitHub Trending",
-            "blurb": "Firecrawl provides one API to search and scrape 550+ sources; 206k stars show demand.",
-            "published": "2026-11-22T06:23:11+00:00"
+            "blurb": "hyperframes is an open-source AI video editor that writes HTML to render MP4s; +345 stars.",
+            "published": "2026-11-23T01:42:53+00:00"
           },
           {
-            "title": "tensorflow/tensorflow",
-            "url": "https://github.com/tensorflow/tensorflow",
+            "title": "Leonxlnx/taste-skill",
+            "url": "https://github.com/Leonxlnx/taste-skill",
             "source": "GitHub Trending",
-            "blurb": "TensorFlow is a C++ machine‑learning framework for all; 201k stars prove lasting popularity.",
-            "published": "2026-11-22T07:40:02+00:00"
+            "blurb": "taste-skill adds art direction, reference images, and browser checks to coding agents; +307 stars.",
+            "published": "2026-11-22T20:10:07+00:00"
           },
           {
-            "title": "DietrichGebert/ponytail",
-            "url": "https://github.com/DietrichGebert/ponytail",
+            "title": "paperclipai/paperclip",
+            "url": "https://github.com/paperclipai/paperclip",
             "source": "GitHub Trending",
-            "blurb": "Ponytail makes AI agents code lazily like senior devs; 196k stars suggest curiosity.",
-            "published": "2026-11-22T02:31:58+00:00"
+            "blurb": "paperclip is an open-source app for managing work agents, popular with teams; +233 stars.",
+            "published": "2026-11-22T18:32:27+00:00"
           }
         ]
       }
