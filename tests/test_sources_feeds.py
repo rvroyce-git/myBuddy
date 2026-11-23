@@ -172,3 +172,44 @@ def test_google_news_title_publisher_split() -> None:
     assert split_publisher(plain) == plain
     dashy = Item("A - B - The Verge", "https://n.example/3", "Google News AI", when)
     assert split_publisher(dashy).title == "A - B" and split_publisher(dashy).source == "The Verge"
+
+
+class _FlakyHttp(FakeHttp):
+    """Fails the first `failures` arXiv requests, then serves the fixture."""
+
+    def __init__(self, failures: list[Exception]) -> None:
+        super().__init__({"https://export.arxiv.org/api/query?*": fixture_bytes("arxiv.xml")})
+        self.failures = list(failures)
+
+    def get_bytes(self, url: str, *, accept: str | None = None) -> bytes:
+        if self.failures:
+            self.calls.append(url)
+            raise self.failures.pop(0)
+        return super().get_bytes(url, accept=accept)
+
+
+def test_arxiv_retries_slow_api_then_succeeds() -> None:
+    from mybuddy.http import HttpError
+    from mybuddy.sources.arxiv import ArxivSource
+
+    timeout = HttpError("The read operation timed out", status=None)
+    http = _FlakyHttp([timeout, HttpError("busy", status=503)])
+    waits: list[float] = []
+    items = ArxivSource("arXiv", "cat:cs.AI", http, sleep=waits.append).collect()
+    assert len(items) == 3 and waits == [5.0, 15.0] and len(http.calls) == 3
+
+
+def test_arxiv_gives_up_after_retries_and_not_on_client_errors() -> None:
+    from mybuddy.http import HttpError
+    from mybuddy.sources.arxiv import ArxivSource
+
+    waits: list[float] = []
+    always = _FlakyHttp([HttpError("t", status=None)] * 3)
+    with pytest.raises(HttpError):
+        ArxivSource("arXiv", "cat:cs.AI", always, sleep=waits.append).collect()
+    assert waits == [5.0, 15.0]
+    waits.clear()
+    bad = _FlakyHttp([HttpError("bad query", status=400)])
+    with pytest.raises(HttpError):
+        ArxivSource("arXiv", "cat:cs.AI", bad, sleep=waits.append).collect()
+    assert waits == []
