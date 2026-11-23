@@ -1,4 +1,5 @@
 name: Publish website
+# If a deploy fails with a transient GitHub error, push a change to this file to retry.
 
 on:
   push:
