@@ -5,81 +5,66 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Page not found · MyBuddy</title>
   <meta name="robots" content="noindex">
-  <meta name="color-scheme" content="dark light">
-  <meta name="theme-color" content="#07080A" media="(prefers-color-scheme: dark)">
-  <meta name="theme-color" content="#FBFAF6" media="(prefers-color-scheme: light)">
+  <meta name="color-scheme" content="light dark">
+  <meta name="theme-color" content="#F6F1E8" media="(prefers-color-scheme: light)">
+  <meta name="theme-color" content="#1C1B19" media="(prefers-color-scheme: dark)">
   <script>try{var t=localStorage.getItem("mybuddy-theme");if(t==="light"||t==="dark")document.documentElement.dataset.theme=t}catch(e){}</script>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ccircle cx='24' cy='26' r='16' fill='%23F4E1C6' stroke='%23D9B88F' stroke-width='3'/%3E%3Ccircle cx='76' cy='26' r='16' fill='%23F4E1C6' stroke='%23D9B88F' stroke-width='3'/%3E%3Ccircle cx='50' cy='56' r='38' fill='%23F4E1C6' stroke='%23D9B88F' stroke-width='3'/%3E%3Cellipse cx='50' cy='68' rx='16' ry='12' fill='%23FFF8EE'/%3E%3Ccircle cx='36' cy='50' r='4.5' fill='%234A3A30'/%3E%3Ccircle cx='64' cy='50' r='4.5' fill='%234A3A30'/%3E%3Cellipse cx='50' cy='63' rx='6' ry='4.5' fill='%234A3A30'/%3E%3C/svg%3E">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@500&display=swap" rel="stylesheet">
-  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0' y1='0' x2='1' y2='1'%3E%3Cstop offset='0' stop-color='%23FFB547'/%3E%3Cstop offset='1' stop-color='%23FF7A45'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='32' height='32' rx='9' fill='url(%23g)'/%3E%3Ccircle cx='10.5' cy='11' r='3.6' fill='%231A1206'/%3E%3Ccircle cx='21.5' cy='11' r='3.6' fill='%231A1206'/%3E%3Ccircle cx='16' cy='18' r='8.2' fill='%231A1206'/%3E%3Ccircle cx='13' cy='17' r='1.2' fill='%23FFB547'/%3E%3Ccircle cx='19' cy='17' r='1.2' fill='%23FFB547'/%3E%3Cellipse cx='16' cy='20.6' rx='1.8' ry='1.2' fill='%23FFB547'/%3E%3C/svg%3E">
-  <!-- Self-contained: GitHub Pages serves this file for any missing URL, so it can't rely on relative assets. -->
+  <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600&family=Nunito:wght@400;700;800&display=swap" rel="stylesheet">
+  <!-- Self-contained: GitHub Pages serves this file for any missing URL, at any depth. -->
   <style>
-    :root { --bg: #07080A; --surface: #0E1014; --planet: #0A0B0E; --border: #FFFFFF14; --border-strong: #FFFFFF24; --text: #F4F5F7; --muted: #8A8F98; --dot: #FFFFFF1C; --hl: inset 0 1px 0 #FFFFFF0F;
-      --grad-text: linear-gradient(100deg, #FFC96F 0%, #FFB547 35%, #FF7A45 100%); --accent: #FFB547; --focus: #FFB547;
-      --fur: #F4E1C6; --fur-line: #D9B88F; --pink: #F8D3CB; --muzzle: #FFF8EE; --ink: #4A3A30;
-      --ease: cubic-bezier(.23, 1, .32, 1); color-scheme: dark; }
-    @media (prefers-color-scheme: light) { :root:not([data-theme="dark"]) { --bg: #FBFAF6; --surface: #FFFFFF; --planet: #F4F1E8; --border: #1B160E17; --border-strong: #1B160E29; --text: #17150F; --muted: #5D584F; --dot: #1B160E21; --hl: inset 0 1px 0 #FFFFFFE6; --grad-text: linear-gradient(100deg, #C96F00, #C2410C); --accent: #B4530A; --focus: #B4530A; color-scheme: light; } }
-    :root[data-theme="light"] { --bg: #FBFAF6; --surface: #FFFFFF; --planet: #F4F1E8; --border: #1B160E17; --border-strong: #1B160E29; --text: #17150F; --muted: #5D584F; --dot: #1B160E21; --hl: inset 0 1px 0 #FFFFFFE6; --grad-text: linear-gradient(100deg, #C96F00, #C2410C); --accent: #B4530A; --focus: #B4530A; color-scheme: light; }
-    * { box-sizing: border-box; }
-    html, body { margin: 0; min-height: 100%; background: var(--bg); }
-    body { color: var(--text); font: 400 16px/1.6 "Inter", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif; -webkit-font-smoothing: antialiased; overflow-x: clip; }
-    .lost { position: relative; isolation: isolate; overflow: hidden; min-height: 100vh; min-height: 100dvh; display: grid; place-items: center; padding: 96px 16px 64px; }
-    .dots { position: absolute; inset: 0; z-index: -2; background-image: radial-gradient(var(--dot) 1px, transparent 1.3px); background-size: 24px 24px; -webkit-mask-image: radial-gradient(ellipse 60% 55% at 50% 40%, #000 25%, transparent 78%); mask-image: radial-gradient(ellipse 60% 55% at 50% 40%, #000 25%, transparent 78%); }
-    .glow { position: absolute; left: 50%; top: 58%; width: 900px; height: 520px; margin: -260px 0 0 -450px; z-index: -1; border-radius: 50%; background: radial-gradient(closest-side, #FF8A4C4D, #FFB54720 55%, transparent); animation: drift 14s cubic-bezier(.37, 0, .63, 1) infinite alternate; }
-    .horizon { position: absolute; left: 50%; top: 74%; width: 2000px; height: 800px; margin-left: -1000px; z-index: -1; border-radius: 50% 50% 0 0 / 100% 100% 0 0; border-top: 1px solid #FFC56FB3; background: linear-gradient(var(--planet), var(--bg) 60%); box-shadow: 0 -1px 18px #FFB5478C, 0 -24px 90px -10px #FF8A4C66; }
-    @keyframes drift { to { transform: translate3d(40px, -20px, 0) scale(1.08); } }
-    .card { position: relative; width: min(500px, 100%); padding: 40px 28px 32px; border-radius: 24px; text-align: center; background: var(--surface); border: 1px solid var(--border-strong); box-shadow: var(--hl), 0 40px 80px -36px #000E; animation: rise .9s var(--ease) both; }
-    @keyframes rise { from { opacity: 0; transform: translateY(24px); filter: blur(6px); } }
-    .bear { position: absolute; left: 50%; bottom: calc(100% - 11px); width: 64px; margin-left: -32px; z-index: -1; animation: peek .8s var(--ease) .5s both; }
-    .paws { position: absolute; left: 50%; top: -8px; width: 72px; height: 15px; margin-left: -36px; animation: fade .4s var(--ease) .9s both; }
-    .paws svg { position: absolute; top: 0; left: 0; width: 22px; }
-    .paws svg:last-child { left: auto; right: 0; }
-    @keyframes peek { from { transform: translateY(100%); } }
-    @keyframes fade { from { opacity: 0; transform: translateY(-6px); } }
-    .fur { fill: var(--fur); stroke: var(--fur-line); stroke-width: 1.4; } .pink { fill: var(--pink); } .muzzle { fill: var(--muzzle); } .ink { fill: var(--ink); }
-    .line { fill: none; stroke: var(--ink); stroke-width: 1.4; stroke-linecap: round; } .toe { fill: none; stroke: var(--fur-line); stroke-width: 1.3; stroke-linecap: round; }
-    .code { margin: 0 0 14px; font: 500 12px/1 "JetBrains Mono", ui-monospace, monospace; letter-spacing: .12em; text-transform: uppercase; color: var(--accent); }
-    h1 { margin: 0; font-family: "Instrument Serif", ui-serif, Georgia, serif; font-weight: 400; font-size: clamp(40px, 9vw, 60px); line-height: 1; letter-spacing: -.03em; }
-    h1 em { display: block; padding: 0 .08em .06em; background: var(--grad-text); -webkit-background-clip: text; background-clip: text; color: transparent; -webkit-text-fill-color: transparent; }
-    p.sub { margin: 16px auto 0; max-width: 30ch; color: var(--muted); }
-    .home { position: relative; overflow: hidden; isolation: isolate; display: inline-flex; align-items: center; gap: 8px; margin-top: 28px; height: 48px; padding: 0 22px; border-radius: 999px; font-weight: 500; font-size: 15px; text-decoration: none; color: #1A1206; background: linear-gradient(100deg, #FFC062, #FFB547 35%, #FF7A45); box-shadow: inset 0 1px 0 #FFFFFF66, 0 10px 34px -10px #FF7A45B3; transition: transform .16s var(--ease); }
-    .home:active { transform: scale(.97); }
-    .home::after { content: ""; position: absolute; inset: 0; z-index: -1; background: linear-gradient(105deg, transparent 30%, #FFFFFFA6 50%, transparent 70%); transform: translateX(-120%); animation: shimmer 3.6s cubic-bezier(.77, 0, .175, 1) infinite; }
-    @keyframes shimmer { 45%, 100% { transform: translateX(120%); } }
-    .home svg { width: 17px; height: 17px; fill: none; stroke: currentColor; stroke-width: 1.75; stroke-linecap: round; stroke-linejoin: round; }
-    .home:focus-visible { outline: 2px solid var(--focus); outline-offset: 3px; }
+    :root { --bg: #F6F1E8; --card: #FFFCF6; --ink: #34302B; --ink-2: #5F574E; --line: #E6DDCE; --teal-soft: #D3E6E2; --lav-soft: #E4DFF1;
+      --primary: #2F6B65; --primary-ink: #FFFFFF; --focus: #435F7C;
+      --fur: #F4E1C6; --fur-line: #D9B88F; --fur-inner: #F8D3CB; --muzzle: #FFF8EE; --bear-ink: #4A3A30; --cheek: #F6B9B0; color-scheme: light; }
+    @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --bg: #1C1B19; --card: #272522; --ink: #EDE7DD; --ink-2: #C3BAAD; --line: #3A3631; --teal-soft: #2C3E3B; --lav-soft: #363246; --primary: #8CC6BF; --primary-ink: #18302D; --focus: #A2BCD8; --fur: #EBD6B8; --fur-line: #C9A77D; --fur-inner: #F1C8BF; --muzzle: #FBF1E3; --bear-ink: #3A2D25; --cheek: #EDACA2; color-scheme: dark; } }
+    :root[data-theme="dark"] { --bg: #1C1B19; --card: #272522; --ink: #EDE7DD; --ink-2: #C3BAAD; --line: #3A3631; --teal-soft: #2C3E3B; --lav-soft: #363246; --primary: #8CC6BF; --primary-ink: #18302D; --focus: #A2BCD8; --fur: #EBD6B8; --fur-line: #C9A77D; --fur-inner: #F1C8BF; --muzzle: #FBF1E3; --bear-ink: #3A2D25; --cheek: #EDACA2; color-scheme: dark; }
+    *, *::before, *::after { box-sizing: border-box; }
+    body { margin: 0; background: var(--bg); color: var(--ink); font-family: "Nunito", ui-rounded, system-ui, -apple-system, "Segoe UI", sans-serif; line-height: 1.6; overflow-x: hidden; }
+    .sky { position: fixed; inset: 0; z-index: -1; overflow: hidden; pointer-events: none; }
+    .blob { position: absolute; border-radius: 50%; animation: drift 24s ease-in-out infinite alternate; }
+    .b1 { width: 560px; height: 560px; top: -200px; left: -180px; background: radial-gradient(closest-side, var(--teal-soft), transparent); }
+    .b2 { width: 520px; height: 520px; bottom: -200px; right: -180px; background: radial-gradient(closest-side, var(--lav-soft), transparent); animation-duration: 30s; }
+    @keyframes drift { to { transform: translate(60px, 50px) scale(1.1); } }
+    .lost { min-height: 100vh; min-height: 100dvh; display: grid; place-items: center; padding: 110px 16px 32px; }
+    .card { position: relative; width: min(400px, 100%); padding: 2rem 1.5rem 1.8rem; border-radius: 24px; background: var(--card); border: 1px solid var(--line); text-align: center; box-shadow: 0 12px 30px rgb(46 36 24 / .08); animation: up .7s cubic-bezier(.34, 1.45, .55, 1) both; }
+    .bear { position: absolute; left: calc(50% - 56px); bottom: calc(100% - 10px); width: 112px; z-index: -1; animation: peek .8s .4s cubic-bezier(.34, 1.45, .55, 1) both; }
+    .bear svg { display: block; width: 100%; height: auto; transform-origin: 50% 100%; animation: wiggle 3s 1.4s ease-in-out infinite; }
+    .fur { fill: var(--fur); stroke: var(--fur-line); stroke-width: 1.6; } .inner { fill: var(--fur-inner); } .muzzle { fill: var(--muzzle); }
+    .eye, .nose { fill: var(--bear-ink); } .cheek { fill: var(--cheek); opacity: .7; }
+    .mouth { fill: none; stroke: var(--bear-ink); stroke-width: 2.2; stroke-linecap: round; }
+    h1 { font-family: "Fredoka", "Nunito", ui-rounded, system-ui, sans-serif; font-weight: 600; font-size: clamp(1.8rem, 7vw, 2.4rem); line-height: 1.1; margin: 0; }
+    p { margin: .5rem 0 0; color: var(--ink-2); font-weight: 700; }
+    .home { display: inline-flex; align-items: center; min-height: 48px; margin-top: 1.3rem; padding: .7rem 1.4rem; border-radius: 999px; background: var(--primary); color: var(--primary-ink); font-weight: 800; text-decoration: none; transition: transform .3s cubic-bezier(.34, 1.45, .55, 1); }
+    .home:hover { transform: translateY(-3px); }
+    .home:focus-visible { outline: 3px solid var(--focus); outline-offset: 3px; }
+    @keyframes up { from { opacity: 0; transform: translateY(30px) scale(.95); } }
+    @keyframes peek { from { transform: translateY(80%); } }
+    @keyframes wiggle { 0%, 100% { transform: rotate(0); } 25% { transform: rotate(-5deg); } 75% { transform: rotate(5deg); } }
     @media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation: none !important; transition: none !important; } }
   </style>
 </head>
 <body>
+  <div class="sky" aria-hidden="true"><span class="blob b1"></span><span class="blob b2"></span></div>
   <main class="lost">
-    <div class="dots" aria-hidden="true"></div>
-    <div class="glow" aria-hidden="true"></div>
-    <div class="horizon" aria-hidden="true"></div>
     <div class="card">
-      <svg class="bear" viewBox="0 0 64 56" aria-hidden="true">
-        <circle cx="14" cy="14" r="9" class="fur"/><circle cx="14" cy="14" r="4.6" class="pink"/>
-        <circle cx="50" cy="14" r="9" class="fur"/><circle cx="50" cy="14" r="4.6" class="pink"/>
-        <ellipse cx="32" cy="32" rx="22" ry="20" class="fur"/>
-        <ellipse cx="32" cy="39.5" rx="9.5" ry="7" class="muzzle"/>
-        <ellipse cx="19.5" cy="37" rx="3.2" ry="2" class="pink"/><ellipse cx="44.5" cy="37" rx="3.2" ry="2" class="pink"/>
-        <circle cx="24.5" cy="30" r="2.3" class="ink"/><circle cx="39.5" cy="30" r="2.3" class="ink"/>
-        <circle cx="25.3" cy="29.2" r=".75" fill="#fff"/><circle cx="40.3" cy="29.2" r=".75" fill="#fff"/>
-        <ellipse cx="32" cy="36.4" rx="2.9" ry="2.1" class="ink"/>
-        <path d="M29.6 41.6c1.5-1 3.3-1 4.8 0" class="line"/>
-      </svg>
-      <span class="paws" aria-hidden="true">
-        <svg viewBox="0 0 22 16"><ellipse cx="11" cy="8" rx="9.5" ry="6.6" class="fur"/><path d="M7 10.5v2.2M11 11v2.2M15 10.5v2.2" class="toe"/></svg>
-        <svg viewBox="0 0 22 16"><ellipse cx="11" cy="8" rx="9.5" ry="6.6" class="fur"/><path d="M7 10.5v2.2M11 11v2.2M15 10.5v2.2" class="toe"/></svg>
-      </span>
-      <p class="code">Error 404</p>
-      <h1>This page <em>wandered off.</em></h1>
-      <p class="sub">Nothing lives at this address. The brief is right where you left it.</p>
-      <a class="home" id="home" href="/myBuddy/">Back to today's brief <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg></a>
+      <div class="bear" aria-hidden="true">
+        <svg viewBox="0 0 120 92">
+          <circle cx="24" cy="26" r="17" class="fur"/><circle cx="24" cy="26" r="9" class="inner"/>
+          <circle cx="96" cy="26" r="17" class="fur"/><circle cx="96" cy="26" r="9" class="inner"/>
+          <ellipse cx="60" cy="60" rx="44" ry="40" class="fur"/>
+          <ellipse cx="60" cy="72" rx="19" ry="14" class="muzzle"/>
+          <ellipse cx="34" cy="66" rx="7" ry="4.5" class="cheek"/><ellipse cx="86" cy="66" rx="7" ry="4.5" class="cheek"/>
+          <circle cx="44" cy="54" r="5" class="eye"/><circle cx="76" cy="54" r="5" class="eye"/>
+          <ellipse cx="60" cy="66" rx="6.5" ry="4.8" class="nose"/>
+          <path d="M53 79c4-4 10-4 14 0" class="mouth"/>
+        </svg>
+      </div>
+      <h1>Page not found</h1>
+      <p>The bear looked everywhere.</p>
+      <a class="home" href="/myBuddy/">Back home</a>
     </div>
   </main>
-  <!-- Works under /myBuddy/ on GitHub Pages and at a server root. -->
-  <script>(function(){var a=document.getElementById("home");if(a&&location.pathname.toLowerCase().indexOf("/mybuddy/")!==0)a.setAttribute("href","/")})();</script>
 </body>
 </html>
