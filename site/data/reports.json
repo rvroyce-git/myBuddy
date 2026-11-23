@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-11-23T07:15:20+05:30",
+  "generated_at": "2026-11-23T07:30:06+05:30",
   "topics": [
     {
       "id": "ai_news",
@@ -140,7 +140,48 @@
       "emoji": "🔬",
       "description": "One AI subject a weekday, explained simply with the latest papers.",
       "schedule": "Mon–Fri · 07:30 IST",
-      "report": null
+      "report": {
+        "created_at": "2026-11-23T07:30:05+05:30",
+        "headline": "RAG advances: new benchmarks, knowledge‑graph tricks, and self‑retrieving agents",
+        "summary": "Retrieval‑augmented generation lets language models pull in fresh data. Today’s papers add a benchmark for building RAG agents, a knowledge‑graph scoring method, self‑RAG for security alerts, and tools to share…",
+        "items": [
+          {
+            "title": "AutoRAGBench: A Benchmark for LLM Agents Automating RAG System Development",
+            "url": "https://arxiv.org/abs/2611.25582v1",
+            "source": "arXiv RAG",
+            "blurb": "AutoRAGBench provides a test suite to quickly evaluate and iterate RAG agent designs.",
+            "published": "2026-11-19T06:26:28+00:00"
+          },
+          {
+            "title": "LSP-RAG: Latent Scoring Perspectives for Knowledge Graph Retrieval-Augmented Generation",
+            "url": "https://arxiv.org/abs/2611.25229v1",
+            "source": "arXiv RAG",
+            "blurb": "LSP‑RAG scores knowledge‑graph pieces to improve factual answers and multi‑step reasoning.",
+            "published": "2026-11-18T22:01:25+00:00"
+          },
+          {
+            "title": "RAVEN: A Self-RAG Based Agent for Threat Classification and Response",
+            "url": "https://arxiv.org/abs/2611.25832v1",
+            "source": "arXiv RAG",
+            "blurb": "RAVEN uses a self‑RAG loop to classify and respond to security alerts automatically.",
+            "published": "2026-11-19T09:47:11+00:00"
+          },
+          {
+            "title": "Democratizing Cross-Project Knowledge for Transforming Water Governance and Climate Resilience: an Agentic AI Ecosystem",
+            "url": "https://arxiv.org/abs/2611.26398v1",
+            "source": "arXiv RAG",
+            "blurb": "Agentic AI ecosystem links scattered EU project reports, making cross‑project knowledge searchable for decisions.",
+            "published": "2026-11-19T16:49:04+00:00"
+          },
+          {
+            "title": "CAIMS: Scalable Cross-Array In-Memory Search",
+            "url": "https://arxiv.org/abs/2611.25141v1",
+            "source": "arXiv RAG",
+            "blurb": "CAIMS speeds up similarity search by keeping data in memory, reducing retrieval bottlenecks.",
+            "published": "2026-11-18T20:19:55+00:00"
+          }
+        ]
+      }
     },
     {
       "id": "research_papers",
