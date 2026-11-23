@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-11-23T06:30:46+05:30",
+  "generated_at": "2026-11-23T07:00:06+05:30",
   "topics": [
     {
       "id": "ai_news",
@@ -50,51 +50,30 @@
       "description": "Fresh security advisories and breaches, with what they mean and what to do.",
       "schedule": "Daily · 07:00 IST",
       "report": {
-        "created_at": "2026-11-22T13:19:32+05:30",
-        "headline": "Multiple active exploits hit major software; patch now to protect your systems",
-        "summary": "CISA listed four actively exploited CVEs, including SAP and Cisco products. Critical bugs in Ghostscript, GnuPG, Microsoft Entra Connect Health, and a Rackspace breach also demand immediate updates and credential checks.",
+        "created_at": "2026-11-23T07:00:05+05:30",
+        "headline": "Hackers exploit GL.iNet cloud, stealing router control; other breaches surface",
+        "summary": "GL.iNet’s cloud flaw lets attackers install malware on routers and KVM devices. Cleverbridge data breach exposed payment cards, while Signal added new chat‑blocking protections.",
         "items": [
           {
-            "title": "CISA Adds Four Known Exploited Vulnerabilities to Catalog",
-            "url": "https://www.cisa.gov/news-events/alerts/2026/11/20/cisa-adds-four-known-exploited-vulnerabilities-catalog",
-            "source": "CISA Advisories",
-            "blurb": "CISA adds four actively exploited CVEs (e.g., SAP NetWeaver, Cisco Expressway); apply vendor patches ASAP.",
-            "published": "2026-11-20T12:00:00+00:00"
-          },
-          {
-            "title": "Researchers Demonstrate Ghostscript Sandbox-Escape RCE via Crafted File Uploads in Popular Apps",
-            "url": "https://thehackernews.com/2026/11/researchers-demonstrate-ghostscript.html",
-            "source": "The Hacker News",
-            "blurb": "Ghostscript sandbox‑escape RCE patched; update Ghostscript immediately to stop remote code execution.",
-            "published": "2026-11-22T05:03:41+00:00"
-          },
-          {
-            "title": "GnuPG Warns Critical GPGME Flaw Could Expose App Data via Malicious OpenPGP Keys",
-            "url": "https://thehackernews.com/2026/11/gnupg-warns-critical-gpgme-flaw-could.html",
-            "source": "The Hacker News",
-            "blurb": "Critical GPGME memory bug can steal data via malicious OpenPGP keys; upgrade GnuPG/GPGME now.",
-            "published": "2026-11-21T11:05:53+00:00"
-          },
-          {
-            "title": "Microsoft Entra Connect Health flaw exploited to steal tenant data",
-            "url": "https://www.bleepingcomputer.com/news/security/microsoft-entra-connect-health-flaw-exploited-to-steal-tenant-data/",
+            "title": "Hackers exploit GL.iNet cloud flaw to infect routers, KVM devices",
+            "url": "https://www.bleepingcomputer.com/news/security/hackers-exploit-glinet-cloud-flaw-to-infect-routers-kvm-devices/",
             "source": "BleepingComputer",
-            "blurb": "Microsoft Entra Connect Health flaw exploited to steal admin emails; apply updates and review access.",
-            "published": "2026-11-21T18:01:58+00:00"
+            "blurb": "GL.iNet routers and KVM devices infected via cloud flaw, giving attackers remote access.",
+            "published": "2026-11-22T18:45:37+00:00"
           },
           {
-            "title": "Rackspace Spot breach let hackers access customer Kubernetes secrets",
-            "url": "https://www.bleepingcomputer.com/news/security/rackspace-spot-breach-let-hackers-access-customer-kubernetes-secrets/",
+            "title": "Signal to block Siri, Gemini AI from capturing chats on iOS, Android",
+            "url": "https://www.bleepingcomputer.com/news/security/signal-to-block-siri-gemini-ai-from-capturing-chats-on-ios-android/",
             "source": "BleepingComputer",
-            "blurb": "Rackspace Spot breach used stolen credentials to access Kubernetes secrets; rotate keys and monitor workloads.",
-            "published": "2026-11-21T22:59:58+00:00"
+            "blurb": "Signal now blocks screenshots on iOS and stops AI assistants from capturing chats on Android.",
+            "published": "2026-11-22T15:15:25+00:00"
           },
           {
-            "title": "BADBOX botnet returns with record-breaking 40 billion daily ad requests",
-            "url": "https://www.bleepingcomputer.com/news/security/badbox-30-botnet-returns-with-record-breaking-40-billion-daily-ad-requests/",
+            "title": "Cleverbridge warns hackers stole credit card numbers, CVVs in data breach",
+            "url": "https://www.bleepingcomputer.com/news/security/cleverbridge-warns-hackers-stole-credit-card-numbers-cvvs-in-data-breach/",
             "source": "BleepingComputer",
-            "blurb": "BADBOX botnet resurfaces in Android TV boxes, flooding ads; secure devices and remove unknown apps.",
-            "published": "2026-11-21T15:17:27+00:00"
+            "blurb": "Cleverbridge breach leaked customers’ credit card numbers and CVVs, risking fraud.",
+            "published": "2026-11-22T15:43:04+00:00"
           }
         ]
       }
