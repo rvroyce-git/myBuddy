@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-11-22T14:35:45+05:30",
+  "generated_at": "2026-11-23T06:30:46+05:30",
   "topics": [
     {
       "id": "ai_news",
@@ -8,51 +8,37 @@
       "description": "The day's AI news in plain words — models, labs, funding, policy and open source.",
       "schedule": "Daily · 06:30 IST",
       "report": {
-        "created_at": "2026-11-22T13:19:04+05:30",
-        "headline": "OpenAI adds safeguards while Google adds tool retrieval, boosting AI safety and usability",
-        "summary": "OpenAI unveiled a layered defense against adversarial attacks, and Google introduced tool retrieval in Gemini’s API. Meanwhile, Hebbia reports gains with GPT‑6 Astra and AI shows promise in drug discovery.",
+        "created_at": "2026-11-23T06:30:45+05:30",
+        "headline": "AI metrics, collaborations, job‑skill study, and diet trial dominate recent AI news",
+        "summary": "OpenAI discusses perplexity as a shared evaluation metric, while rivals form a team to curb agentic fragmentation. Research links AI to job skill demands and tests AI‑guided diets with metformin.",
         "items": [
           {
-            "title": "Combatting adversarial distillation",
-            "url": "https://openai.com/index/combatting-adversarial-distillation",
+            "title": "Perplexity and Intelligence",
+            "url": "https://openai.com/index/perplexity-and-intelligence",
             "source": "OpenAI News",
-            "blurb": "OpenAI adds layered safeguards to block adversarial distillation and protect model capabilities.",
-            "published": "2026-11-20T10:00:00+00:00"
+            "blurb": "OpenAI explains perplexity metric to help developers evaluate AI model capabilities consistently.",
+            "published": "2026-11-22T00:00:00+00:00"
           },
           {
-            "title": "Introducing Tool Retrieval in the Gemini API",
-            "url": "https://blog.google/innovation-and-ai/technology/developers-tools/gemini-api-tool-retrieval/",
-            "source": "Google AI Blog",
-            "blurb": "Google’s Gemini API now supports tool retrieval, letting apps fetch external resources automatically.",
-            "published": "2026-11-19T18:00:00+00:00"
+            "title": "AI Competitors Team to Prevent Agentic Fragmentation",
+            "url": "https://news.google.com/rss/articles/CBMirwFBVV95cUxPbVJmcW9uem4wNmZNNXFKM0dsalZpdl9Scl9mQ0E3MVpWZkhNZW1sQnFfZ0FKWHI4TUNTczdlVW5tdGM5c2FlVk9wUjZtazZoRkFlQ2plcmFoNVdtWllvUS1tU0pSeTRqSThDRGxMeVN1dFBsWENrWmVoemd0eE1QbWhycXRFeVZoaTJTM1k1Qk1UQjRaSlhVOWtNVW85TGNFWWUxQ19oQ1JOT2dIcUpZ?oc=5",
+            "source": "PYMNTS.com",
+            "blurb": "AI competitors form a team aiming to prevent fragmentation of autonomous agents.",
+            "published": "2026-11-23T00:56:29+00:00"
           },
           {
-            "title": "Hebbia sees improvements in financial research with GPT-6 Astra",
-            "url": "https://openai.com/business/customer-stories/hebbia",
-            "source": "OpenAI News",
-            "blurb": "Hebbia’s tests show GPT‑6 Astra improves source coverage and citation relevance for finance research.",
-            "published": "2026-11-20T00:00:00+00:00"
+            "title": "Study Uncovers How Job Postings Pair Artificial Intelligence With Traditional Skills",
+            "url": "https://news.google.com/rss/articles/CBMirgFBVV95cUxOTjVURzllRXgxcDhEU0tKcmVvQjhkQ1F5SzZiYXgzRUFwSmlsLW14cmtpWTJEZnBERkxzZ041RnRfX3RxT2ZfWjMya2ZGVEFqVWdaRTU2TVJTcTNMODdpNXlDenVkTURaNnZTcnptUlRNTF9Xc3k0aHR2aUozaF9yc2N4d3U1QWQtb2ZUTk1wNmRIZWx1X1RTTWF5cGN2UlZSeTI3UjZWbG1mLWZSc0E?oc=5",
+            "source": "Bioengineer.org",
+            "blurb": "Study finds job ads increasingly pair AI skills with traditional expertise, signaling blended workforce needs.",
+            "published": "2026-11-23T00:44:15+00:00"
           },
           {
-            "title": "Can AI help scientists identify promising drug candidates?",
-            "url": "https://openai.com/index/introducing-medchembench",
-            "source": "OpenAI News",
-            "blurb": "MedChemBench evaluates AI models for early‑stage drug discovery, assessing structure interpretation and compound…",
-            "published": "2026-11-20T00:00:00+00:00"
-          },
-          {
-            "title": "How OpenAI’s Performance Factory keeps ChatGPT fast",
-            "url": "https://openai.com/index/how-openai-performance-factory-keeps-chatgpt-fast",
-            "source": "OpenAI News",
-            "blurb": "OpenAI’s Performance Factory uses Codex workflows to find and fix ChatGPT speed issues.",
-            "published": "2026-11-19T08:00:00+00:00"
-          },
-          {
-            "title": "Alumnus pledges Rs 46.34 crore for research on applied artificial intelligence at IIT - Telegraph India",
-            "url": "https://news.google.com/rss/articles/CBMihwJBVV95cUxNb0szNnhNQVlRRUgwUnhoUFA4MmR2eDNMaXMwOFQ2Qi00aS1lVHh1djJoMVU0bjc0VlRVSnRvT1FVWEdGTHlwWE5uV0VNNHE4Tmw3T3lsUTFHVUx0eXNlRVNFdlA0ZE9jcXlWcTNrNk56UGtQQmFSdWNmd2RBSUVfczNuZm1LNVNLaldsSEVUM215WmVvWjhTbWN6cDRFVnluQWJWTVkxSHFiNU9PRG5hOGZ2ZVlpTW1GMHFMQWt6Q0JYVVJmem9WN0pLeGN3c01VUk9kOVFUdmM3Qmk5dkhnOFBBQ3VOLWhEVjh1NUY1cTdRVE1YQ3BDTUJsdGExdGlDcUdJUl9OMNIBjAJBVV95cUxOQXNZM3hUVEJlMFI3SFZsLV9OaGNDSzctYmJKYTZ5cF9sTEFQeVNuclNqTkl1cHVuRG9oMnpZdmlLa0FzLWhQb21MRW5ZWEtuZEQyekZKTVJjNzFKNDJjR2FpLWdTWmd0a2ZzTmRZdVdMTWpoWGJBLUV2ZWsydTZaR0dFb3pTV3RGR2x2MHRHOFljZy1nd2c1bmhHd0E1blU2U3RoUUpJNWVQMlBGVWFuSTh1X1hYbEJOdnAzZDB3dF9VNkpXUmRaTWh1LWEtNmctUWFBMlQ2eVdBUFJBZkNhcTVMcDIwbmNmSEZUU1VJNldON1FGTGp5YzVjTmhWdklkb3oxaTJsYTZZZmx3?oc=5",
-            "source": "Google News AI",
-            "blurb": "An alumnus pledges 46.34 crore rupees to fund applied AI research at IIT.",
-            "published": "2026-11-22T01:08:01+00:00"
+            "title": "Can an AI-guided diet beat healthy eating when taking metformin?",
+            "url": "https://news.google.com/rss/articles/CBMisAFBVV95cUxOcUlmNEN1bTJwR0VUTzlEUU91RDFjQ3FjdVZJa3BMWl96WEk4WXluR2xSdjJQc3BYVU4yc3FpZl9nM1Q1UVYwc2NpYk52Q3VYWDUxM0tlV3c4aTR0Y1czaHJsdlhzYUxjWmtBMjFSTTAwVzFwZXU2S1JuYWQ5Z2R6OFBtN0lSakktWDRpR0cyaE1ZYWthSmxwaWlxbmZCQ0k3TzlvdHdUNlV2Q056Yy1KUA?oc=5",
+            "source": "News-Medical",
+            "blurb": "Research tests whether an AI‑guided diet outperforms standard healthy eating for metformin users.",
+            "published": "2026-11-23T00:23:00+00:00"
           }
         ]
       }
