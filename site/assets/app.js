@@ -176,6 +176,7 @@
       const items = r && Array.isArray(r.items) ? r.items : [];
       return {
         id, ang: 135 + (k % 5) * 15,
+        bit: t.bit, // stable subscription bit (may be missing in older data)
         title: String(t.title || id),
         short: SHORT[id] || String(t.title || id),
         emoji: t.emoji ? String(t.emoji) : '',
@@ -1010,6 +1011,418 @@
   });
 
   /* =====================================================================
+     QR CODE (tiny self-contained encoder)
+     Byte mode, error correction level M, versions 1–6 (up to 106 bytes) — plenty for the
+     start link. Follows ISO/IEC 18004; the tests decode it and check the Reed–Solomon blocks.
+     ===================================================================== */
+  const QR = (() => {
+    const TOTAL = [0, 26, 44, 70, 100, 134, 172]; // codewords per version
+    const ECC = [0, 10, 16, 26, 18, 24, 16];      // ECC codewords per block (level M)
+    const BLOCKS = [0, 1, 1, 1, 2, 2, 4];         // blocks (level M)
+    function gfMul(x, y) {
+      let z = 0;
+      for (let i = 7; i >= 0; i--) {
+        z = (z << 1) ^ ((z >>> 7) * 0x11D);
+        z ^= ((y >>> i) & 1) * x;
+      }
+      return z;
+    }
+    function rsDivisor(deg) {
+      const r = new Array(deg).fill(0);
+      r[deg - 1] = 1;
+      let root = 1;
+      for (let i = 0; i < deg; i++) {
+        for (let j = 0; j < deg; j++) {
+          r[j] = gfMul(r[j], root);
+          if (j + 1 < deg) r[j] ^= r[j + 1];
+        }
+        root = gfMul(root, 2);
+      }
+      return r;
+    }
+    function rsRemainder(data, div) {
+      const r = div.map(() => 0);
+      data.forEach((b) => {
+        const f = b ^ r.shift();
+        r.push(0);
+        div.forEach((c, i) => { r[i] ^= gfMul(c, f); });
+      });
+      return r;
+    }
+    function codewords(bytes, v) {
+      const nb = BLOCKS[v], ecl = ECC[v], cap = (TOTAL[v] - ecl * nb) * 8;
+      const bits = [];
+      const put = (val, len) => { for (let i = len - 1; i >= 0; i--) bits.push((val >>> i) & 1); };
+      put(4, 4); put(bytes.length, 8); bytes.forEach((b) => put(b, 8));
+      put(0, Math.min(4, cap - bits.length));
+      put(0, (8 - (bits.length % 8)) % 8);
+      for (let pad = 0xEC; bits.length < cap; pad ^= 0xEC ^ 0x11) put(pad, 8);
+      const data = [];
+      for (let i = 0; i < bits.length; i += 8) data.push(bits.slice(i, i + 8).reduce((a, b) => (a << 1) | b, 0));
+      const short = Math.floor(TOTAL[v] / nb), nShort = nb - (TOTAL[v] % nb), div = rsDivisor(ecl);
+      const blocks = [];
+      for (let i = 0, k = 0; i < nb; i++) {
+        const len = short - ecl + (i < nShort ? 0 : 1);
+        const d = data.slice(k, k + len); k += len;
+        blocks.push([d, rsRemainder(d, div)]);
+      }
+      const out = [];
+      for (let i = 0; i <= short - ecl; i++) blocks.forEach(([d]) => { if (i < d.length) out.push(d[i]); });
+      for (let i = 0; i < ecl; i++) blocks.forEach(([, e]) => out.push(e[i]));
+      return out;
+    }
+    function maskHit(m, x, y) {
+      switch (m) {
+        case 0: return (x + y) % 2 === 0;
+        case 1: return y % 2 === 0;
+        case 2: return x % 3 === 0;
+        case 3: return (x + y) % 3 === 0;
+        case 4: return (Math.floor(x / 3) + Math.floor(y / 2)) % 2 === 0;
+        case 5: return ((x * y) % 2) + ((x * y) % 3) === 0;
+        case 6: return (((x * y) % 2) + ((x * y) % 3)) % 2 === 0;
+        default: return (((x + y) % 2) + ((x * y) % 3)) % 2 === 0;
+      }
+    }
+    function penalty(g) {
+      const n = g.length;
+      let p = 0, dark = 0;
+      for (let pass = 0; pass < 2; pass++) {
+        for (let a = 0; a < n; a++) {
+          let run = 0, prev = -1, line = '';
+          for (let b = 0; b < n; b++) {
+            const c = pass ? g[b][a] : g[a][b];
+            line += c;
+            if (c === prev) run++; else { if (run >= 5) p += run - 2; run = 1; prev = c; }
+          }
+          if (run >= 5) p += run - 2;
+          const s = '0000' + line + '0000';
+          for (const pat of ['10111010000', '00001011101']) {
+            for (let k = s.indexOf(pat); k >= 0; k = s.indexOf(pat, k + 1)) p += 40;
+          }
+        }
+      }
+      for (let y = 0; y < n; y++) {
+        for (let x = 0; x < n; x++) {
+          dark += g[y][x];
+          if (x < n - 1 && y < n - 1) {
+            const c = g[y][x];
+            if (c === g[y][x + 1] && c === g[y + 1][x] && c === g[y + 1][x + 1]) p += 3;
+          }
+        }
+      }
+      return p + Math.floor(Math.abs(dark * 20 - n * n * 10) / (n * n)) * 10;
+    }
+    /* Returns a size×size grid of 0/1 (1 = dark), or null when the text is too long. */
+    function matrix(text) {
+      const bytes = Array.from(new TextEncoder().encode(text));
+      let v = 1;
+      while (v <= 6 && 12 + bytes.length * 8 > (TOTAL[v] - ECC[v] * BLOCKS[v]) * 8) v++;
+      if (v > 6) return null;
+      const n = 17 + 4 * v;
+      const g = Array.from({ length: n }, () => new Array(n).fill(0));
+      const fn = Array.from({ length: n }, () => new Array(n).fill(false));
+      const set = (grid, x, y, d) => { grid[y][x] = d ? 1 : 0; fn[y][x] = true; };
+      for (let i = 0; i < n; i++) { set(g, 6, i, i % 2 === 0); set(g, i, 6, i % 2 === 0); }
+      [[3, 3], [n - 4, 3], [3, n - 4]].forEach(([cx, cy]) => {
+        for (let dy = -4; dy <= 4; dy++) {
+          for (let dx = -4; dx <= 4; dx++) {
+            const x = cx + dx, y = cy + dy, d = Math.max(Math.abs(dx), Math.abs(dy));
+            if (x >= 0 && y >= 0 && x < n && y < n) set(g, x, y, d !== 2 && d !== 4);
+          }
+        }
+      });
+      if (v >= 2) {
+        for (let dy = -2; dy <= 2; dy++) {
+          for (let dx = -2; dx <= 2; dx++) set(g, n - 7 + dx, n - 7 + dy, Math.max(Math.abs(dx), Math.abs(dy)) !== 1);
+        }
+      }
+      const format = (grid, mask) => {
+        const data = mask; // level M = 00
+        let rem = data;
+        for (let i = 0; i < 10; i++) rem = (rem << 1) ^ ((rem >>> 9) * 0x537);
+        const bits = ((data << 10) | rem) ^ 0x5412;
+        const bit = (i) => (bits >>> i) & 1;
+        for (let i = 0; i <= 5; i++) set(grid, 8, i, bit(i));
+        set(grid, 8, 7, bit(6)); set(grid, 8, 8, bit(7)); set(grid, 7, 8, bit(8));
+        for (let i = 9; i < 15; i++) set(grid, 14 - i, 8, bit(i));
+        for (let i = 0; i < 8; i++) set(grid, n - 1 - i, 8, bit(i));
+        for (let i = 8; i < 15; i++) set(grid, 8, n - 15 + i, bit(i));
+        set(grid, 8, n - 8, 1); // dark module
+      };
+      format(g, 0); // reserve the format areas
+      const cw = codewords(bytes, v);
+      let i = 0;
+      for (let right = n - 1; right >= 1; right -= 2) {
+        if (right === 6) right = 5;
+        for (let vert = 0; vert < n; vert++) {
+          for (let j = 0; j < 2; j++) {
+            const x = right - j, y = ((right + 1) & 2) === 0 ? n - 1 - vert : vert;
+            if (fn[y][x]) continue;
+            g[y][x] = i < cw.length * 8 ? (cw[i >>> 3] >>> (7 - (i & 7))) & 1 : 0;
+            i++;
+          }
+        }
+      }
+      let best = null, bestP = Infinity;
+      for (let m = 0; m < 8; m++) {
+        const t = g.map((row, y) => row.map((c, x) => (!fn[y][x] && maskHit(m, x, y) ? c ^ 1 : c)));
+        format(t, m);
+        const p = penalty(t);
+        if (p < bestP) { bestP = p; best = t; }
+      }
+      return best;
+    }
+    function draw(svg, text) {
+      const m = matrix(text);
+      if (!m) return false;
+      const n = m.length, q = 4;
+      let d = '';
+      m.forEach((row, y) => row.forEach((c, x) => { if (c) d += `M${x + q} ${y + q}h1v1h-1z`; }));
+      svg.setAttribute('viewBox', `0 0 ${n + 2 * q} ${n + 2 * q}`);
+      svg.setAttribute('shape-rendering', 'crispEdges');
+      svg.dataset.n = String(n);
+      svg.dataset.text = text;
+      svg.textContent = '';
+      const bg = doc.createElementNS(SVGNS, 'rect');
+      bg.setAttribute('width', '100%'); bg.setAttribute('height', '100%'); bg.setAttribute('class', 'qr-bg');
+      const p = doc.createElementNS(SVGNS, 'path');
+      p.setAttribute('d', d); p.setAttribute('class', 'qr-dots');
+      svg.append(bg, p);
+      return true;
+    }
+    return { matrix, draw };
+  })();
+
+  /* =====================================================================
+     DAILY UPDATES
+     Visitors pick topics, then open our chat bot with a start link that carries them
+     (CONTRACT.md "Subscriptions contract", stable topic bits v2): payload = "t" + lowercase
+     hex bitmask with each chosen topic's permanent `bit` set. The bit comes from reports.json;
+     older data without one falls back to TOPIC_BITS by id. A topic whose bit is unknown,
+     invalid or shared with another topic gets no chip. Chips follow the data's order, so new
+     or removed topics just appear or disappear; saved picks are kept by topic id.
+     ===================================================================== */
+  const BOT_USERNAME = 'myBuddy_update_bot';
+  const BOT_LINK = 'https://t.me/' + BOT_USERNAME;
+  /* the chat app's own link: works where a network blocks the web link's domain */
+  const BOT_APP = 'tg://resolve?domain=' + BOT_USERNAME;
+  const APP_WAIT = 1200; // ms to wait for the app before falling back to the web link
+  const SUBS_KEY = 'mybuddy.subs.v1';
+  const MAX_BITS = 60; // payload is at most 15 hex digits: bits 0–59
+  /* fallback when reports.json has no `bit` for a topic (same as config/topics.yaml) */
+  const TOPIC_BITS = {
+    ai_news: 0, security: 1, github_trending: 2, deep_dive: 3, research_papers: 4, startups: 5, ai_models: 6,
+  };
+  /* topics that also bring urgent alerts (security -> actively exploited bugs, hourly) */
+  const URGENT = { security: true };
+  const Subs = (() => {
+    const sec = $('#subscribe');
+    const card = $('#subsCard');
+    const wrap = $('#subsChips');
+    const btn = $('#subsBtn');
+    const countEl = $('#subsN');
+    const qr = $('#qrSvg');
+    const note = $('#subsNote');
+    const web = $('#subsWeb');
+    let ids = [], bitOf = {}, chosen = new Set(), chips = [], allChip = null;
+
+    function payload(list) {
+      const nib = [];
+      list.forEach((id) => {
+        const i = bitOf[id];
+        if (Number.isInteger(i) && i >= 0 && i < MAX_BITS) nib[i >> 2] = (nib[i >> 2] || 0) | (1 << (i & 3));
+      });
+      let hex = '';
+      for (let k = nib.length - 1; k >= 0; k--) hex += (nib[k] || 0).toString(16);
+      return hex ? 't' + hex : '';
+    }
+    const ordered = () => ids.filter((id) => chosen.has(id));
+    function linkFor(list) { const p = payload(list); return p ? `${BOT_LINK}?start=${p}` : BOT_LINK; }
+    function appFor(list) { const p = payload(list); return p ? `${BOT_APP}&start=${p}` : BOT_APP; }
+
+    function load() {
+      let saved = null;
+      try { saved = JSON.parse(store.get(SUBS_KEY) || 'null'); } catch (e) { saved = null; }
+      chosen = new Set(Array.isArray(saved) ? saved.filter((id) => typeof id === 'string' && ids.includes(id)) : []);
+    }
+    function save() { store.set(SUBS_KEY, JSON.stringify(ordered())); }
+
+    function pop(node, delay) {
+      if (RM) return;
+      node.classList.remove('pop');
+      void node.offsetWidth;
+      node.style.setProperty('--pd', (delay || 0) + 'ms');
+      node.classList.add('pop');
+    }
+    wrap.parentNode.addEventListener('animationend', (e) => {
+      if (e.animationName === 'chipPop') e.target.classList.remove('pop');
+    });
+
+    function sync() {
+      const list = ordered(), n = list.length;
+      chips.forEach((c) => c.setAttribute('aria-pressed', chosen.has(c.dataset.id) ? 'true' : 'false'));
+      if (allChip) allChip.setAttribute('aria-pressed', n > 0 && n === ids.length ? 'true' : 'false');
+      const was = btn.hasAttribute('href');
+      if (n) {
+        btn.href = linkFor(list);
+        web.href = btn.href;
+        web.hidden = false;
+        btn.removeAttribute('aria-disabled');
+        btn.setAttribute('aria-label', `Get daily updates for ${n} topic${n === 1 ? '' : 's'} (opens in a new tab)`);
+        if (!was) pop(btn);
+      } else {
+        btn.removeAttribute('href');
+        web.removeAttribute('href');
+        web.hidden = true;
+        btn.setAttribute('aria-disabled', 'true');
+        btn.setAttribute('aria-label', 'Get daily updates (pick a topic first)');
+      }
+      if (countEl.textContent !== String(n)) { countEl.textContent = String(n); if (n) pop(countEl); }
+      card.classList.toggle('has', n > 0);
+      card.classList.toggle('full', n > 0 && n === ids.length);
+      note.classList.toggle('on', list.some((id) => URGENT[id]));
+      QR.draw(qr, linkFor(list));
+    }
+
+    function chip(cls, label, icon, i) {
+      const b = el('button', 'tchip ' + cls);
+      b.type = 'button';
+      b.style.setProperty('--i', i);
+      const ic = el('span', 'tc-ico'); ic.setAttribute('aria-hidden', 'true');
+      const chk = svgEl([P('M6 12.5l4 4 8-9')], 'tc-chk');
+      ic.append(icon, chk);
+      b.append(ic, el('span', 'tc-txt', label));
+      return b;
+    }
+
+    /* each topic's subscription bit, or null when unknown / invalid / shared */
+    function topicBits(list) {
+      const raw = list.map((t) => (t.bit === undefined || t.bit === null
+        ? (Object.prototype.hasOwnProperty.call(TOPIC_BITS, t.id) ? TOPIC_BITS[t.id] : null)
+        : t.bit));
+      const ok = raw.map((b) => (Number.isInteger(b) && b >= 0 && b < MAX_BITS ? b : null));
+      return ok.map((b) => (b !== null && ok.filter((x) => x === b).length === 1 ? b : null));
+    }
+
+    function build(all) {
+      const bits = topicBits(all);
+      const list = all.filter((t, k) => bits[k] !== null);
+      bitOf = {};
+      all.forEach((t, k) => { if (bits[k] !== null) bitOf[t.id] = bits[k]; });
+      ids = list.map((t) => t.id);
+      wrap.textContent = '';
+      allChip = chip('tc-all', 'All', decorateIcon(svgEl([
+        ['rect', { x: '4', y: '4', width: '6.5', height: '6.5', rx: '2' }], ['rect', { x: '13.5', y: '4', width: '6.5', height: '6.5', rx: '2' }],
+        ['rect', { x: '4', y: '13.5', width: '6.5', height: '6.5', rx: '2' }], ['rect', { x: '13.5', y: '13.5', width: '6.5', height: '6.5', rx: '2' }],
+      ], 'ico')), 0);
+      allChip.addEventListener('click', () => {
+        const all = chosen.size === ids.length;
+        chosen = new Set(all ? [] : ids);
+        save();
+        pop(allChip);
+        chips.forEach((c, k) => pop(c, (k + 1) * 45));
+        sync();
+      });
+      wrap.appendChild(allChip);
+      chips = list.map((t, i) => {
+        const c = chip('', t.short, decorateIcon(iconFor(t)), i + 1);
+        paint(c.querySelector('.tc-ico'), t);
+        c.dataset.id = t.id;
+        c.dataset.bit = String(bitOf[t.id]);
+        if (URGENT[t.id]) {
+          const z = svgEl([P('M13 2.5L5.5 13.5h5.5l-1 8 7.5-11H12z')], 'tc-bolt');
+          c.appendChild(z);
+          c.title = '+ urgent alerts';
+        }
+        c.addEventListener('click', () => {
+          if (chosen.has(t.id)) chosen.delete(t.id); else chosen.add(t.id);
+          save();
+          pop(c);
+          sync();
+        });
+        wrap.appendChild(c);
+        return c;
+      });
+      load();
+      sync();
+    }
+
+    /* the button is a link only once a topic is picked; before that it nudges the chips */
+    function nudge() {
+      if (btn.hasAttribute('href')) return;
+      chips.concat(allChip || []).forEach((c, k) => pop(c, k * 35));
+    }
+    /* A plain click/tap first tries the app link (some networks block the web link's domain).
+       If the page is still in front after APP_WAIT, the app did not open: fall back to the web
+       link in a new tab. Modified clicks (new tab, copy link…) keep the plain web link.
+       The cancelable "mybuddy:open-app" event lets tests watch the app attempt. */
+    let pending = null;
+    function tryApp(app, link) {
+      if (pending) pending();
+      let left = false;
+      const away = () => { left = true; };
+      const onVis = () => { if (document.hidden) left = true; };
+      const timer = setTimeout(() => {
+        done();
+        if (!left && !document.hidden) window.open(link, '_blank', 'noopener,noreferrer');
+      }, APP_WAIT);
+      function done() {
+        clearTimeout(timer);
+        pending = null;
+        document.removeEventListener('visibilitychange', onVis);
+        window.removeEventListener('blur', away);
+        window.removeEventListener('pagehide', away);
+      }
+      pending = done;
+      document.addEventListener('visibilitychange', onVis);
+      window.addEventListener('blur', away);
+      window.addEventListener('pagehide', away);
+      const ev = new CustomEvent('mybuddy:open-app', { detail: { url: app }, cancelable: true });
+      if (window.dispatchEvent(ev)) window.location.href = app;
+    }
+    btn.addEventListener('click', (e) => {
+      if (!btn.hasAttribute('href')) { e.preventDefault(); nudge(); return; }
+      if (e.button !== 0 || e.ctrlKey || e.metaKey || e.shiftKey || e.altKey) return;
+      e.preventDefault();
+      const list = ordered();
+      tryApp(appFor(list), linkFor(list));
+    });
+    btn.addEventListener('keydown', (e) => {
+      if (!btn.hasAttribute('href') && (e.key === 'Enter' || e.key === ' ')) { e.preventDefault(); nudge(); }
+    });
+
+    /* reveal on scroll */
+    let revealed = false;
+    function reveal() {
+      if (revealed) return;
+      revealed = true;
+      sec.classList.add('in');
+      setTimeout(() => sec.classList.add('done'), RM ? 0 : 1600); // chips have staggered in
+    }
+    if (RM || !('IntersectionObserver' in window)) reveal();
+    else {
+      const io = new IntersectionObserver((en) => { if (en.some((x) => x.isIntersecting)) { reveal(); io.disconnect(); } }, { threshold: 0.15 });
+      io.observe(sec);
+    }
+
+    /* navbar bell: glide to the panel, focus it and make it glow */
+    let flashTimer = 0;
+    $('#bellBtn').addEventListener('click', (e) => {
+      e.preventDefault();
+      reveal();
+      sec.scrollIntoView({ behavior: RM ? 'auto' : 'smooth', block: 'start' });
+      sec.focus({ preventScroll: true });
+      card.classList.remove('flash');
+      void card.offsetWidth;
+      card.classList.add('flash');
+      clearTimeout(flashTimer);
+      flashTimer = setTimeout(() => card.classList.remove('flash'), 2200);
+    });
+
+    return { build, payload, linkFor, appFor };
+  })();
+
+  /* =====================================================================
      LOAD
      ===================================================================== */
   const errBox = $('#loadErr');
@@ -1038,6 +1451,7 @@
       buildBubbles();
       Deck.build();
       buildList();
+      Subs.build(topics);
       clampAll();
       if (doc.fonts && doc.fonts.ready) doc.fonts.ready.then(clampAll).catch(() => {});
     } catch (err) {

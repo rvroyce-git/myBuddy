@@ -1,4 +1,6 @@
 # MyBuddy topics. Times are Asia/Kolkata (IST). Validate with: mybuddy check
+# `bit`: permanent Telegram start-link bit of each website (ai: true) topic. Never change or
+# reuse a bit, even when topics are reordered or removed (old links must keep working).
 topics:
   - id: ai_news
     title: AI news
@@ -6,6 +8,7 @@ topics:
     description: The day's AI news in plain words — models, labs, funding, policy and open source.
     schedule: {time: "06:30", days: daily}
     ai: true
+    bit: 0  # permanent start-link bit; never change or reuse
     prompt: ai_news.md
     sources:
       - {type: rss, name: OpenAI News, url: "https://openai.com/news/rss.xml", max_age_hours: 72}
@@ -22,6 +25,7 @@ topics:
     description: Fresh security advisories and breaches, with what they mean and what to do.
     schedule: {time: "07:00", days: daily}
     ai: true
+    bit: 1
     prompt: security.md
     sources:
       - {type: rss, name: The Hacker News, url: "https://feeds.feedburner.com/TheHackersNews"}
@@ -35,6 +39,7 @@ topics:
     schedule: {every_minutes: 60}
     ai: false
     max_items: 25
+    audience: security  # subscribers of "security" also get these hourly alerts
     sources:
       - {type: cisa_kev, name: CISA KEV, days: 1}
 
@@ -44,6 +49,7 @@ topics:
     description: AI projects on GitHub that are picking up stars fastest right now.
     schedule: {time: "07:15", days: daily}
     ai: true
+    bit: 2
     prompt: github_trending.md
     sources:
       - type: github_trending
@@ -58,6 +64,7 @@ topics:
     description: One AI subject a weekday, explained simply with the latest papers.
     schedule: {time: "07:30", days: [mon, tue, wed, thu, fri]}
     ai: true
+    bit: 3
     prompt: deep_dive.md
     rotation:
       mon:
@@ -92,6 +99,7 @@ topics:
     description: Today's notable AI papers, each boiled down to its key idea.
     schedule: {time: "07:45", days: daily}
     ai: true
+    bit: 4
     prompt: research_papers.md
     sources:
       - {type: hf_papers, name: Hugging Face Daily Papers, limit: 8}
@@ -103,6 +111,7 @@ topics:
     description: New products and startup funding news — what it is and who it's for.
     schedule: {time: "08:00", days: daily}
     ai: true
+    bit: 5
     prompt: startups.md
     sources:
       - {type: rss, name: Product Hunt, url: "https://www.producthunt.com/feed", max_age_hours: 72}
@@ -115,6 +124,7 @@ topics:
     description: Open models trending on Hugging Face, with what they're good for.
     schedule: {time: "08:15", days: daily}
     ai: true
+    bit: 6
     prompt: ai_models.md
     sources:
       - {type: hf_models, name: Hugging Face Trending, limit: 10}

@@ -95,3 +95,31 @@ Every source returns `Item`s with absolute https URLs. Verify each endpoint with
 }
 ```
 `report` may be `null` when a topic has not run yet. The website must handle that.
+
+## Subscriptions contract (website ↔ Telegram bot)
+
+Visitors pick topics on the website and subscribe to the existing bot `@myBuddy_update_bot`
+(Telegram cannot message a phone number; the visitor must open the bot and tap Start).
+
+* **Stable topic bits** (v2): every website topic (`ai: true`) has a permanent `bit:` in
+  `config/topics.yaml` — unique, 0–59, never changed or reused, even if topics are reordered or
+  removed. Today: `ai_news 0, security 1, github_trending 2, deep_dive 3, research_papers 4,
+  startups 5, ai_models 6` (identical to the old positional order, so existing links stay valid).
+  `export.py` writes it into each topic of `reports.json` as `"bit": <int>`. The website uses the
+  topic's `bit` from `reports.json`; if a topic has no `bit` (older data) it falls back to the
+  built-in map above by topic id, and hides any chip whose bit is still unknown.
+* **Start link**: `https://t.me/myBuddy_update_bot?start=<payload>` where payload is
+  `t` + lowercase hex of a bitmask with bit *n* set for each chosen topic's `bit`.
+  All 7 topics → `t7f`; AI news + security → `t3`. Payload must match `^t[0-9a-f]{1,15}$`;
+  anything else (or bits that no current topic owns) is ignored and the bot shows the picker.
+  `/start` with no payload also shows the picker.
+* **Bot commands**: `/start [payload]`, `/topics` (inline-keyboard picker: one toggle button per
+  topic, plus "Save"), `/stop` (unsubscribe), `/help`. Replies are short, friendly English.
+* **Delivery**: each AI topic's report goes to the owner (`TELEGRAM_CHAT_ID`, all topics) and to
+  every active subscriber of that topic; duplicates removed. `kev_alerts` (non-AI, hourly) goes to
+  the owner and to subscribers of `security`. A subscriber error never blocks the owner's delivery;
+  a subscriber who blocked the bot (HTTP 403) is marked inactive.
+* **Storage**: SQLite `subscribers(chat_id, topics, active, created_at, updated_at)`. Only the
+  Telegram chat id and topic ids are stored — no names, usernames or phone numbers.
+* **Limit**: `MYBUDDY_MAX_SUBSCRIBERS` (default 100) active subscribers; new ones beyond that get a
+  polite "full" message. Per-chat flood guard: ignore more than 10 commands per minute.

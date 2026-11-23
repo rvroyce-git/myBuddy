@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
-# Copy MyBuddy from this laptop to the Oracle VM, install it, and (re)start the service.
+# Copy MyBuddy from this laptop to the Oracle VM, install it, and (re)start the services
+# (mybuddy = scheduler, mybuddy-bot = Telegram subscription bot).
 # Usage: MYBUDDY_HOST=<vm-ip> bash deploy/deploy.sh
 set -euo pipefail
 
@@ -26,20 +27,21 @@ install -d -m 700 ~/.local/share/mybuddy ~/.config/mybuddy
 .venv/bin/mybuddy list
 EOF
 
-echo "==> Installing and restarting the systemd service (admin user)"
+echo "==> Installing and restarting the systemd services (admin user)"
 "${SSH[@]}" "ubuntu@$HOST" bash -s <<'EOF'
 set -euo pipefail
 sudo install -m 644 /home/mybuddy/app/deploy/mybuddy.service /etc/systemd/system/mybuddy.service
+sudo install -m 644 /home/mybuddy/app/deploy/mybuddy-bot.service /etc/systemd/system/mybuddy-bot.service
 sudo install -m 644 /home/mybuddy/app/deploy/mybuddy-publish.service /etc/systemd/system/mybuddy-publish.service
 sudo install -m 644 /home/mybuddy/app/deploy/mybuddy-publish.path /etc/systemd/system/mybuddy-publish.path
 sudo systemctl daemon-reload
-sudo systemctl enable --now mybuddy
+sudo systemctl enable --now mybuddy mybuddy-bot
 # Publishing to GitHub Pages needs the server's deploy key added on GitHub first.
 if sudo test -f /home/mybuddy/.ssh/github_deploy; then
   sudo systemctl enable --now mybuddy-publish.path
 fi
-sudo systemctl restart mybuddy
+sudo systemctl restart mybuddy mybuddy-bot
 sleep 3
-systemctl --no-pager --lines=5 status mybuddy || true
+systemctl --no-pager --lines=5 status mybuddy mybuddy-bot || true
 EOF
 echo "==> Done"

@@ -10,6 +10,7 @@ from typing import Any
 
 import pytest
 
+from mybuddy import http as http_mod
 from mybuddy.http import USER_AGENT, HttpError, UrllibHttpClient, _HttpsOnlyRedirect
 
 
@@ -105,3 +106,26 @@ def test_network_error_and_bad_json() -> None:
     c, _ = client(FakeResponse(b"not json", "https://api.example/"))
     with pytest.raises(HttpError, match="invalid JSON"):
         c.get_json("https://api.example/")
+
+
+@pytest.mark.parametrize(
+    ("url", "safe"),
+    [
+        (
+            "https://api.telegram.org/bot123456789:AAH-secret_token_value_1234567890/getUpdates",
+            "https://api.telegram.org/bot<redacted>/getUpdates",
+        ),
+        (
+            "https://api.telegram.org/botgarbage-no-colon/sendMessage?x=1",
+            "https://api.telegram.org/bot<redacted>/sendMessage",
+        ),
+        (
+            "https://proxy.example/v1/bot42:abcDEF/sendMessage",
+            "https://proxy.example/v1/bot<redacted>/sendMessage",
+        ),
+        ("https://feeds.example/bottles/rss", "https://feeds.example/bottles/rss"),
+    ],
+)
+def test_safe_url_redacts_bot_tokens(url: str, safe: str) -> None:
+    assert http_mod._safe_url(url) == safe
+    assert "secret" not in http_mod._safe_url(url)

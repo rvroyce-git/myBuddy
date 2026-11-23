@@ -156,7 +156,33 @@ def test_telegram_setup_saves_chat_id(
     assert cli.main(argv) == 0
     assert env_file.read_text(encoding="utf-8") == "GROQ_API_KEY=x\nTELEGRAM_CHAT_ID=777\n"
     assert stat.S_IMODE(env_file.stat().st_mode) == 0o600
-    assert TOKEN not in capsys.readouterr().out
+    out = capsys.readouterr().out
+    assert TOKEN not in out
+    assert "private chat …" in out and "Alex" not in out
+
+
+def test_telegram_setup_prints_masked_ids_only(
+    env: dict[str, Any],  # noqa: F811
+    monkeypatch: pytest.MonkeyPatch,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    monkeypatch.setenv("TELEGRAM_BOT_TOKEN", TOKEN)
+    url = f"https://api.telegram.org/bot{TOKEN}/getUpdates"
+    env["http"].get_responses[url] = _updates(
+        {"id": 987654321, "type": "private", "first_name": "Alex", "username": "alex_k"}
+    )
+    assert cli.main([*env["argv"], "telegram-setup"]) == 0
+    out = capsys.readouterr().out
+    assert "private chat …321" in out and "--save" in out
+    assert "987654321" not in out and "Alex" not in out and "alex_k" not in out
+    env["http"].get_responses[url] = _updates(
+        {"id": 987654321, "type": "private", "first_name": "Alex"},
+        {"id": 123123123, "type": "private", "first_name": "Bea"},
+    )
+    assert cli.main([*env["argv"], "telegram-setup"]) == 1
+    captured = capsys.readouterr()
+    assert "…321" in captured.out and "…123" in captured.out and "Bea" not in captured.out
+    assert "987654321" not in captured.out + captured.err
 
 
 def test_telegram_setup_without_messages(

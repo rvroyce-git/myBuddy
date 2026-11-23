@@ -22,6 +22,7 @@ CONFIG = {
             "description": "AI things.",
             "schedule": {"time": "06:30", "days": "daily"},
             "ai": True,
+            "bit": 0,
             "prompt": "ai_news.md",
             "sources": [{"type": "rss", "name": "Feed", "url": "https://feed.example/rss"}],
         },

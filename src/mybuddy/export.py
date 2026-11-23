@@ -94,6 +94,8 @@ def build_export(topics: Sequence[Topic], store: Store, now: datetime) -> dict[s
                 "emoji": t.emoji,
                 "description": t.description,
                 "schedule": schedule_label(t.schedule),
+                # Permanent Telegram start-link bit (subscriptions contract v2).
+                "bit": t.bit,
                 "report": _contract_report(store.latest_report(t.id)),
             }
             # Non-AI topics (the hourly KEV alert) are Discord-only pings, not website widgets.

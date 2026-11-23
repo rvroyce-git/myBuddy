@@ -1,5 +1,5 @@
 """Command line: mybuddy list | run <topic|all> [--dry-run] | serve | check | export |
-telegram-setup [--save]."""
+telegram-setup [--save] | bot | subscribers."""
 
 from __future__ import annotations
 
@@ -20,20 +20,31 @@ from mybuddy.config import (
     Topic,
     load_env_file,
     load_topics,
+    parse_max_subscribers,
 )
-from mybuddy.deliver import TELEGRAM_API, make_deliverer
+from mybuddy.deliver import TELEGRAM_API, TOKEN_RE, make_deliverer
 from mybuddy.engine import Deps, RunResult, run_topic
 from mybuddy.export import export, schedule_label
 from mybuddy.http import HttpError, UrllibHttpClient
 from mybuddy.models import Clock
 from mybuddy.schedule import Scheduler, SystemClock, next_run
 from mybuddy.store import Store
+from mybuddy.subscriptions import full_mask, mask_chat_id, topic_bits, website_topics
 from mybuddy.summarize import Summarizer
 
 GROQ_MODELS_URL = "https://api.groq.com/openai/v1/models"
+EX_CONFIG = 78  # "not configured": the systemd unit does not restart on this exit code
+
+
+def _bot_http() -> UrllibHttpClient:
+    from mybuddy.bot import HTTP_TIMEOUT_SECONDS
+
+    return UrllibHttpClient(timeout=HTTP_TIMEOUT_SECONDS)
+
 
 # Factories are module attributes so tests can swap in fakes.
 make_http: Any = UrllibHttpClient
+make_bot_http: Any = _bot_http  # long polling needs a longer timeout than the default 20 s
 make_clock: Any = SystemClock
 
 
@@ -66,6 +77,8 @@ def _parser() -> argparse.ArgumentParser:
         "telegram-setup", help="find your Telegram chat id (send your bot a message first)"
     )
     tg.add_argument("--save", action="store_true", help="write TELEGRAM_CHAT_ID to the env file")
+    sub.add_parser("bot", help="run the Telegram bot that lets visitors subscribe to topics")
+    sub.add_parser("subscribers", help="count public Telegram subscribers per topic")
     return p
 
 
@@ -88,7 +101,7 @@ def _build_deps(settings: Settings, topics: Sequence[Topic], clock: Clock) -> De
         clock=clock,
         store=store,
         summarizer=Summarizer(settings, http, clock),
-        deliverer=make_deliverer(settings, http, clock),
+        deliverer=make_deliverer(settings, http, clock, store=store, topics=topics),
         topics=list(topics),
         export_path=settings.site_data,
     )
@@ -208,10 +221,16 @@ def cmd_check(config_path: Path, settings: Settings, clock: Clock) -> int:
         problems.append("DISCORD_WEBHOOK_URL must start with https://")
 
     try:
-        Store(settings.data_dir).close()
+        with Store(settings.data_dir) as store:
+            active = store.active_subscriber_count()
         print("  ok: data dir is writable")
+        print(f"  subscribers: {active} active (limit {settings.max_subscribers})")
     except Exception as exc:
         problems.append(f"data dir {settings.data_dir}: {exc}")
+    try:
+        parse_max_subscribers(os.environ.get("MYBUDDY_MAX_SUBSCRIBERS"))
+    except ConfigError as exc:
+        print(f"  warning: {exc}; using {settings.max_subscribers}")
 
     if settings.groq_api_key and not settings.fake:
         print("connectivity:")
@@ -229,6 +248,11 @@ def cmd_check(config_path: Path, settings: Settings, clock: Clock) -> int:
         bot_name = _telegram_bot_name(settings.telegram_bot_token)
         if bot_name:
             print(f"  ok: Telegram bot @{bot_name}")
+            if bot_name.lower() != settings.bot_username.lower():
+                print(
+                    f"  warning: website links point to @{settings.bot_username}; "
+                    "set MYBUDDY_BOT_USERNAME to match"
+                )
         else:
             problems.append("Telegram check failed: token rejected or Telegram unreachable")
 
@@ -268,24 +292,25 @@ def cmd_telegram_setup(settings: Settings, env_file: Path, save: bool) -> int:
     except RuntimeError as exc:
         _err(str(exc))
         return 1
-    chats: dict[str, str] = {}
+    # Chat ids are personal data: only masked ids are printed, never names.
+    found: dict[str, None] = {}  # ordered set
     for update in data.get("result", []) if isinstance(data, dict) else []:
         msg = update.get("message") if isinstance(update, dict) else None
         chat = msg.get("chat") if isinstance(msg, dict) else None
         if isinstance(chat, dict) and chat.get("type") == "private" and "id" in chat:
-            who = chat.get("first_name") or chat.get("username") or "?"
-            chats[str(chat["id"])] = str(who)
+            found[str(chat["id"])] = None
+    chats = list(found)
     if not chats:
         _err("No messages found. Open your bot in Telegram, tap Start, send 'hi', then retry.")
         return 1
-    for chat_id, who in chats.items():
-        print(f"  chat {chat_id}  ({who})")
+    for chat_id in chats:
+        print(f"  private chat {mask_chat_id(chat_id)}")
     if len(chats) > 1:
         _err("More than one person messaged the bot; set TELEGRAM_CHAT_ID by hand.")
         return 1
-    chat_id = next(iter(chats))
+    chat_id = chats[0]
     if not save:
-        print(f"Run again with --save to store TELEGRAM_CHAT_ID={chat_id}")
+        print(f"Run again with --save to store chat {mask_chat_id(chat_id)} as TELEGRAM_CHAT_ID")
         return 0
     path = env_file.expanduser()
     lines = path.read_text(encoding="utf-8").splitlines() if path.exists() else []
@@ -295,6 +320,48 @@ def cmd_telegram_setup(settings: Settings, env_file: Path, save: bool) -> int:
     path.write_text("\n".join(lines) + "\n", encoding="utf-8")
     path.chmod(0o600)
     print(f"saved TELEGRAM_CHAT_ID to {path}")
+    return 0
+
+
+def cmd_bot(topics: Sequence[Topic], settings: Settings, clock: Clock) -> int:
+    from mybuddy.bot import SubscriptionBot
+
+    token = settings.telegram_bot_token
+    if not token or not TOKEN_RE.fullmatch(token):
+        _err("TELEGRAM_BOT_TOKEN is missing or invalid; the subscription bot is not started")
+        return EX_CONFIG
+    if settings.fake:
+        _err("MYBUDDY_FAKE is on; the subscription bot needs the real Telegram API")
+        return EX_CONFIG
+    with Store(settings.data_dir) as store:
+        bot = SubscriptionBot(
+            token,
+            make_bot_http(),
+            store,
+            topics,
+            clock,
+            owner_chat_id=settings.telegram_chat_id,
+            max_subscribers=settings.max_subscribers,
+            bot_username=settings.bot_username,
+        )
+        bot.install_signal_handlers()
+        bot.run()
+    return 0
+
+
+def cmd_subscribers(topics: Sequence[Topic], settings: Settings) -> int:
+    """Counts only. Chat ids are personal data and are never printed."""
+    with Store(settings.data_dir) as store:
+        counts = store.subscriber_counts()
+        active = store.active_subscriber_count()
+    print(f"active subscribers: {active} (limit {settings.max_subscribers})")
+    for t in website_topics(topics):
+        extra = [f.id for f in topics if not f.ai and f.audience == t.id]
+        note = f"  (+ {', '.join(extra)})" if extra else ""
+        print(f"  {t.emoji} {t.id:<16} {counts.get(t.id, 0):>5}{note}")
+    mask = full_mask(topic_bits(topics))
+    if mask:
+        print(f"start link (all topics): https://t.me/{settings.bot_username}?start=t{mask:x}")
     return 0
 
 
@@ -326,6 +393,10 @@ def main(argv: Sequence[str] | None = None) -> int:
         return cmd_serve(topics, settings, clock)
     if args.command == "export":
         return cmd_export(topics, settings, clock)
+    if args.command == "bot":
+        return cmd_bot(topics, settings, clock)
+    if args.command == "subscribers":
+        return cmd_subscribers(topics, settings)
     return 2  # pragma: no cover - argparse enforces choices
 
 

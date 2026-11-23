@@ -19,6 +19,11 @@ DEFAULT_ENV_FILE = Path("~/.config/mybuddy/env")
 
 WEEKDAYS: tuple[str, ...] = ("mon", "tue", "wed", "thu", "fri", "sat", "sun")
 DEFAULT_MAX_ITEMS = 10
+MAX_TOPIC_BIT = 59  # payload is at most 15 hex digits = 60 bits
+DEFAULT_MAX_SUBSCRIBERS = 100
+MAX_SUBSCRIBERS_CEILING = 10_000
+DEFAULT_BOT_USERNAME = "myBuddy_update_bot"
+_BOT_USERNAME_RE = re.compile(r"^[A-Za-z][A-Za-z0-9_]{3,31}$")
 
 _TOPIC_KEYS = {
     "id",
@@ -31,6 +36,8 @@ _TOPIC_KEYS = {
     "rotation",
     "sources",
     "max_items",
+    "audience",
+    "bit",
 }
 _REQUIRED_TOPIC_KEYS = ("id", "title", "emoji", "description", "schedule", "ai")
 _SCHEDULE_KEYS = {"time", "days", "every_minutes"}
@@ -76,6 +83,12 @@ class Topic:
     sources: tuple[dict[str, Any], ...] = ()
     rotation: dict[str, RotationEntry] | None = None
     max_items: int = DEFAULT_MAX_ITEMS
+    # Non-AI topics only: deliver this topic's reports to subscribers of that (AI) topic.
+    # kev_alerts uses `audience: security`. Without it, subscribers never get the topic.
+    audience: str | None = None
+    # AI (website) topics only: permanent bit in Telegram start-link payloads. Never change or
+    # reuse a bit, even when topics are reordered or removed.
+    bit: int | None = None
 
 
 @dataclass(frozen=True)
@@ -90,6 +103,8 @@ class Settings:
     data_dir: Path = field(default_factory=lambda: Path("~/.local/share/mybuddy").expanduser())
     site_data: Path = field(default_factory=lambda: REPO_ROOT / "site" / "data" / "reports.json")
     fake: bool = False
+    max_subscribers: int = DEFAULT_MAX_SUBSCRIBERS
+    bot_username: str = DEFAULT_BOT_USERNAME
 
     @classmethod
     def from_env(cls, env: Mapping[str, str] | None = None) -> Settings:
@@ -115,7 +130,34 @@ class Settings:
             data_dir=data_dir,
             site_data=site_data,
             fake=(get("MYBUDDY_FAKE") or "").lower() in {"1", "true", "yes", "on"},
+            max_subscribers=_max_subscribers_or_default(get("MYBUDDY_MAX_SUBSCRIBERS")),
+            bot_username=_bot_username_or_default(get("MYBUDDY_BOT_USERNAME")),
         )
+
+
+def parse_max_subscribers(raw: str | None) -> int:
+    """MYBUDDY_MAX_SUBSCRIBERS: whole number 0..10000; unset means the default (100)."""
+    if raw is None or not raw.strip():
+        return DEFAULT_MAX_SUBSCRIBERS
+    value = raw.strip()
+    if not value.isdigit() or not 0 <= int(value) <= MAX_SUBSCRIBERS_CEILING:
+        raise ConfigError(
+            f"MYBUDDY_MAX_SUBSCRIBERS must be a whole number 0..{MAX_SUBSCRIBERS_CEILING}, "
+            f"got {value[:20]!r}"
+        )
+    return int(value)
+
+
+def _max_subscribers_or_default(raw: str | None) -> int:
+    try:
+        return parse_max_subscribers(raw)
+    except ConfigError:  # `mybuddy check` reports it; never crash the services over it
+        return DEFAULT_MAX_SUBSCRIBERS
+
+
+def _bot_username_or_default(raw: str | None) -> str:
+    name = (raw or "").strip().lstrip("@")
+    return name if _BOT_USERNAME_RE.match(name) else DEFAULT_BOT_USERNAME
 
 
 SETTING_ENV_VARS: tuple[tuple[str, bool], ...] = (
@@ -130,6 +172,8 @@ SETTING_ENV_VARS: tuple[tuple[str, bool], ...] = (
     ("MYBUDDY_DATA_DIR", False),
     ("MYBUDDY_SITE_DATA", False),
     ("MYBUDDY_FAKE", False),
+    ("MYBUDDY_MAX_SUBSCRIBERS", False),
+    ("MYBUDDY_BOT_USERNAME", False),
 )
 
 
@@ -300,6 +344,22 @@ def _parse_topic(
     if not sources and not rotation:
         raise ConfigError(f"{where}: needs 'sources' or 'rotation'")
 
+    bit: int | None = None
+    if ai:
+        if "bit" not in data:
+            raise ConfigError(f"{where}: ai topics need a permanent 'bit' (0..{MAX_TOPIC_BIT})")
+        bit = data["bit"]
+        if not isinstance(bit, int) or isinstance(bit, bool) or not 0 <= bit <= MAX_TOPIC_BIT:
+            raise ConfigError(f"{where}.bit: must be an integer between 0 and {MAX_TOPIC_BIT}")
+    elif "bit" in data:
+        raise ConfigError(f"{where}.bit: only AI (website) topics have a subscription bit")
+
+    audience: str | None = None
+    if "audience" in data:
+        audience = _require_str(data["audience"], f"{where}.audience")
+        if ai:
+            raise ConfigError(f"{where}.audience: only non-AI topics can borrow an audience")
+
     return Topic(
         id=topic_id,
         title=title,
@@ -311,6 +371,8 @@ def _parse_topic(
         sources=sources,
         rotation=rotation,
         max_items=max_items,
+        audience=audience,
+        bit=bit,
     )
 
 
@@ -329,12 +391,27 @@ def parse_topics(
         raise ConfigError(f"{origin}: 'topics' must be a non-empty list")
     topics: list[Topic] = []
     seen: set[str] = set()
+    bits: dict[int, str] = {}
     for i, entry in enumerate(raw):
         topic = _parse_topic(entry, f"{origin}: topics[{i}]", prompts_dir, source_types)
         if topic.id in seen:
             raise ConfigError(f"{origin}: topics[{i}]: duplicate topic id {topic.id!r}")
+        if topic.bit is not None:
+            if topic.bit in bits:
+                raise ConfigError(
+                    f"{origin}: topics[{i}] ({topic.id}).bit: {topic.bit} is already used by "
+                    f"{bits[topic.bit]!r}"
+                )
+            bits[topic.bit] = topic.id
         seen.add(topic.id)
         topics.append(topic)
+    ai_ids = {t.id for t in topics if t.ai}
+    for i, topic in enumerate(topics):
+        if topic.audience is not None and topic.audience not in ai_ids:
+            raise ConfigError(
+                f"{origin}: topics[{i}] ({topic.id}).audience: {topic.audience!r} must be the "
+                "id of an AI topic in this file"
+            )
     return topics
 
 

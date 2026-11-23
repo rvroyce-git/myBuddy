@@ -26,6 +26,7 @@ def _topic(**kw: Any) -> dict[str, Any]:
         "description": "d",
         "schedule": {"time": "06:30", "days": "daily"},
         "ai": True,
+        "bit": 0,
         "prompt": "ai_news.md",
         "sources": [{"type": "rss", "name": "A", "url": "https://a.example/feed"}],
     }

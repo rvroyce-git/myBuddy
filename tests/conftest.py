@@ -102,6 +102,8 @@ def make_topic(**kw: Any) -> Topic:
         "sources": ({"type": "fake", "name": "Feed"},),
     }
     defaults.update(kw)
+    if defaults["ai"]:
+        defaults.setdefault("bit", 0)
     return Topic(**defaults)
 
 

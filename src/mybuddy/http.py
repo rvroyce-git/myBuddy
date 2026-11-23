@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import re
 import urllib.error
 import urllib.parse
 import urllib.request
@@ -39,10 +40,17 @@ def _require_https(url: str) -> None:
         raise HttpError(f"refusing non-https URL: {_safe_url(url)}", url=_safe_url(url))
 
 
+# "/bot<id>:<secret>" anywhere; on api.telegram.org any "/bot..." segment (even malformed).
+_BOT_TOKEN_SEGMENT = re.compile(r"/bot\d+:[^/]*")
+_TELEGRAM_BOT_SEGMENT = re.compile(r"/bot[^/]*")
+
+
 def _safe_url(url: str) -> str:
     """Drop query string and path tail so secrets (e.g. webhook tokens) never hit logs."""
     parts = urllib.parse.urlsplit(url)
-    path = parts.path
+    # Telegram puts the bot token in the path (/bot<token>/method): drop it entirely.
+    pattern = _TELEGRAM_BOT_SEGMENT if parts.hostname == "api.telegram.org" else _BOT_TOKEN_SEGMENT
+    path = pattern.sub("/bot<redacted>", parts.path)
     if len(path) > 40:
         path = path[:40] + "…"
     return f"{parts.scheme}://{parts.hostname or ''}{path}"

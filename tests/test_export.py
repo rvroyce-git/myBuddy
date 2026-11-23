@@ -36,7 +36,9 @@ def test_schedule_label(schedule: Schedule, label: str) -> None:
 def test_exact_shape_with_null_report(tmp_path: Path) -> None:
     topics = [
         make_topic(),
-        make_topic(id="kev_alerts", title="KEV", emoji="🚨", schedule=Schedule(every_minutes=60)),
+        make_topic(
+            id="kev_alerts", title="KEV", emoji="🚨", schedule=Schedule(every_minutes=60), bit=5
+        ),
     ]
     report = Report(
         topic_id="ai_news",
@@ -71,6 +73,7 @@ def test_exact_shape_with_null_report(tmp_path: Path) -> None:
                 "emoji": "🧠",
                 "description": "AI things.",
                 "schedule": "Daily · 06:30 IST",
+                "bit": 0,
                 "report": {
                     "created_at": "2026-11-23T06:30:11+05:30",
                     "headline": "H.",
@@ -99,6 +102,7 @@ def test_exact_shape_with_null_report(tmp_path: Path) -> None:
                 "emoji": "🚨",
                 "description": "AI things.",
                 "schedule": "Every hour",
+                "bit": 5,
                 "report": None,
             },
         ],
@@ -133,3 +137,19 @@ def test_non_ai_topics_are_not_website_widgets(tmp_path: Path) -> None:
     with Store(tmp_path / "data") as store:
         data = export(topics, store, tmp_path / "reports.json", MONDAY)
     assert [t["id"] for t in data["topics"]] == ["ai_news"]
+
+
+def test_shipped_topics_export_their_permanent_bits(tmp_path: Path) -> None:
+    from mybuddy.config import DEFAULT_CONFIG_PATH, load_topics
+
+    with Store(tmp_path / "data") as store:
+        data = export(load_topics(DEFAULT_CONFIG_PATH), store, tmp_path / "r.json", MONDAY)
+    assert {t["id"]: t["bit"] for t in data["topics"]} == {
+        "ai_news": 0,
+        "security": 1,
+        "github_trending": 2,
+        "deep_dive": 3,
+        "research_papers": 4,
+        "startups": 5,
+        "ai_models": 6,
+    }

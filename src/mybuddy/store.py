@@ -1,4 +1,4 @@
-"""SQLite state: seen URLs (dedupe), source snapshots and saved reports."""
+"""SQLite state: seen URLs (dedupe), source snapshots, saved reports and Telegram subscribers."""
 
 from __future__ import annotations
 
@@ -8,6 +8,7 @@ import json
 import os
 import sqlite3
 from collections.abc import Iterable
+from dataclasses import dataclass
 from datetime import UTC, datetime, timedelta
 from pathlib import Path
 from typing import Any
@@ -34,7 +35,34 @@ CREATE TABLE IF NOT EXISTS reports (
     json TEXT NOT NULL
 );
 CREATE INDEX IF NOT EXISTS reports_topic ON reports(topic_id, id);
+-- Public Telegram subscribers: only the chat id and topic ids, nothing about the person.
+CREATE TABLE IF NOT EXISTS subscribers (
+    chat_id INTEGER PRIMARY KEY,
+    topics TEXT NOT NULL DEFAULT '[]',
+    active INTEGER NOT NULL DEFAULT 1,
+    created_at TEXT NOT NULL,
+    updated_at TEXT NOT NULL
+);
 """
+
+BOT_STATE_KEY = "telegram:bot"
+
+
+@dataclass(frozen=True)
+class Subscriber:
+    chat_id: int
+    topics: tuple[str, ...]
+    active: bool
+
+
+def _decode_topics(raw: str) -> tuple[str, ...]:
+    try:
+        data = json.loads(raw)
+    except ValueError:
+        return ()
+    if not isinstance(data, list):
+        return ()
+    return tuple(t for t in data if isinstance(t, str))
 
 
 def url_hash(url: str) -> str:
@@ -163,3 +191,74 @@ class Store:
     def count_reports(self, topic_id: str) -> int:
         row = self._db.execute("SELECT COUNT(*) FROM reports WHERE topic_id=?", (topic_id,))
         return int(row.fetchone()[0])
+
+    # ---- Telegram subscribers
+    def get_subscriber(self, chat_id: int) -> Subscriber | None:
+        row = self._db.execute(
+            "SELECT chat_id, topics, active FROM subscribers WHERE chat_id=?", (chat_id,)
+        ).fetchone()
+        if row is None:
+            return None
+        return Subscriber(int(row[0]), _decode_topics(row[1]), bool(row[2]))
+
+    def subscribe(self, chat_id: int, topics: Iterable[str], now: datetime) -> None:
+        """Create or replace a subscription and mark it active."""
+        stamp = _utc_stamp(now)
+        data = json.dumps(sorted(set(topics)))
+        with self._db:
+            self._db.execute(
+                "INSERT INTO subscribers(chat_id, topics, active, created_at, updated_at) "
+                "VALUES (?, ?, 1, ?, ?) ON CONFLICT(chat_id) DO UPDATE SET "
+                "topics=excluded.topics, active=1, updated_at=excluded.updated_at",
+                (chat_id, data, stamp, stamp),
+            )
+
+    def set_subscriber_topics(self, chat_id: int, topics: Iterable[str], now: datetime) -> bool:
+        """Change topics of an existing subscriber without touching `active`."""
+        with self._db:
+            cur = self._db.execute(
+                "UPDATE subscribers SET topics=?, updated_at=? WHERE chat_id=?",
+                (json.dumps(sorted(set(topics))), _utc_stamp(now), chat_id),
+            )
+        return cur.rowcount > 0
+
+    def deactivate_subscriber(self, chat_id: int, now: datetime) -> bool:
+        """Mark inactive. Returns True when an active subscriber was deactivated."""
+        with self._db:
+            cur = self._db.execute(
+                "UPDATE subscribers SET active=0, updated_at=? WHERE chat_id=? AND active=1",
+                (_utc_stamp(now), chat_id),
+            )
+        return cur.rowcount > 0
+
+    def _active_rows(self) -> list[tuple[int, tuple[str, ...]]]:
+        rows = self._db.execute(
+            "SELECT chat_id, topics FROM subscribers WHERE active=1 ORDER BY chat_id"
+        ).fetchall()
+        return [(int(r[0]), _decode_topics(r[1])) for r in rows]
+
+    def active_subscribers(self, topic_id: str) -> list[int]:
+        """Chat ids of active subscribers of `topic_id` (small table: filtered in Python)."""
+        return [chat for chat, topics in self._active_rows() if topic_id in topics]
+
+    def subscriber_counts(self) -> dict[str, int]:
+        """Active subscribers per topic id."""
+        counts: dict[str, int] = {}
+        for _, topics in self._active_rows():
+            for t in topics:
+                counts[t] = counts.get(t, 0) + 1
+        return counts
+
+    def active_subscriber_count(self, *, exclude: int | None = None) -> int:
+        row = self._db.execute(
+            "SELECT COUNT(*) FROM subscribers WHERE active=1 AND chat_id IS NOT ?", (exclude,)
+        ).fetchone()
+        return int(row[0])
+
+    # ---- bot state
+    def load_bot_offset(self) -> int:
+        value = self.load_snapshot(BOT_STATE_KEY).get("offset", 0)
+        return value if isinstance(value, int) and not isinstance(value, bool) else 0
+
+    def save_bot_offset(self, offset: int) -> None:
+        self.save_snapshot(BOT_STATE_KEY, {"offset": int(offset)})
