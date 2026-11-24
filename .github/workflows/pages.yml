@@ -1,6 +1,6 @@
 name: Publish website
 # Copies site/ to the gh-pages branch; GitHub Pages serves that branch (Settings → Pages →
-# Deploy from a branch → gh-pages / root). Push a change to this file to publish it again.
+# Deploy from a branch → gh-pages / root). Push a change to this file to publish again.
 
 on:
   push:
