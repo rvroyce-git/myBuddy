@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-11-24T02:00:01+05:30",
+  "generated_at": "2026-11-24T08:15:04+05:30",
   "topics": [
     {
       "id": "ai_news",
@@ -9,37 +9,51 @@
       "schedule": "Daily · 06:30 IST",
       "bit": 0,
       "report": {
-        "created_at": "2026-11-23T06:30:45+05:30",
-        "headline": "AI metrics, collaborations, job‑skill study, and diet trial dominate recent AI news",
-        "summary": "OpenAI discusses perplexity as a shared evaluation metric, while rivals form a team to curb agentic fragmentation. Research links AI to job skill demands and tests AI‑guided diets with metformin.",
+        "created_at": "2026-11-24T06:30:46+05:30",
+        "headline": "OpenAI and Cisco launch Shirudo; AI policy and courts see new moves",
+        "summary": "Shirudo, an open‑source Linux runtime, aims to protect systems while patching. Meanwhile, US courts adopt a first AI rule and governors push for coordinated AI regulation.",
         "items": [
           {
-            "title": "Perplexity and Intelligence",
-            "url": "https://openai.com/index/perplexity-and-intelligence",
+            "title": "OpenAI and Cisco introduce Shirudo",
+            "url": "https://openai.com/index/introducing-shirudo",
             "source": "OpenAI News",
-            "blurb": "OpenAI explains perplexity metric to help developers evaluate AI model capabilities consistently.",
-            "published": "2026-11-22T00:00:00+00:00"
+            "blurb": "Shirudo, an open‑source Linux runtime from OpenAI and Cisco, helps protect systems while patching.",
+            "published": "2026-11-23T21:20:00+00:00"
           },
           {
-            "title": "AI Competitors Team to Prevent Agentic Fragmentation",
-            "url": "https://news.google.com/rss/articles/CBMirwFBVV95cUxPbVJmcW9uem4wNmZNNXFKM0dsalZpdl9Scl9mQ0E3MVpWZkhNZW1sQnFfZ0FKWHI4TUNTczdlVW5tdGM5c2FlVk9wUjZtazZoRkFlQ2plcmFoNVdtWllvUS1tU0pSeTRqSThDRGxMeVN1dFBsWENrWmVoemd0eE1QbWhycXRFeVZoaTJTM1k1Qk1UQjRaSlhVOWtNVW85TGNFWWUxQ19oQ1JOT2dIcUpZ?oc=5",
-            "source": "PYMNTS.com",
-            "blurb": "AI competitors form a team aiming to prevent fragmentation of autonomous agents.",
-            "published": "2026-11-23T00:56:29+00:00"
+            "title": "Live Updates: Huang’s Return to Nvidia Sparks Stock Rally and Lawmaker Skepticism",
+            "url": "https://news.google.com/rss/articles/CBMiiAFBVV95cUxNdnQ0LTNaSmJtV2pfeHlCZmVqWDM1QXU0TkZZcnYxS1JpTGozTVR2dVhfM013NUp2VWdoMmdFWjZtR0tUenJlOURYNGFtcmZwZjJrd2VnSjUxVnFoZk90bWhrV3d3NzNkTTlyNjM3NzZXaXZLUEdEWlV4ZGdEeUZQY0xZbzBnZUYz?oc=5",
+            "source": "The New York Times",
+            "blurb": "Nvidia's Huang returns, sparking a stock rally and raising lawmaker skepticism.",
+            "published": "2026-11-24T00:15:05+00:00"
           },
           {
-            "title": "Study Uncovers How Job Postings Pair Artificial Intelligence With Traditional Skills",
-            "url": "https://news.google.com/rss/articles/CBMirgFBVV95cUxOTjVURzllRXgxcDhEU0tKcmVvQjhkQ1F5SzZiYXgzRUFwSmlsLW14cmtpWTJEZnBERkxzZ041RnRfX3RxT2ZfWjMya2ZGVEFqVWdaRTU2TVJTcTNMODdpNXlDenVkTURaNnZTcnptUlRNTF9Xc3k0aHR2aUozaF9yc2N4d3U1QWQtb2ZUTk1wNmRIZWx1X1RTTWF5cGN2UlZSeTI3UjZWbG1mLWZSc0E?oc=5",
-            "source": "Bioengineer.org",
-            "blurb": "Study finds job ads increasingly pair AI skills with traditional expertise, signaling blended workforce needs.",
-            "published": "2026-11-23T00:44:15+00:00"
+            "title": "New AI rule marks a first for US federal appeals courts",
+            "url": "https://news.google.com/rss/articles/CBMiswFBVV95cUxQMFpmUkVHc2JjTWYtenpNaDMtVUhVNHBRS1ExTFhJRnFMNU9vWHYwSFlvZmoxcmZXUXhieGl0UGRqdzdJXy1pUGY1Ul90QW93OTBET21hWkRDd1pOWUlhTWQtcGdwZE9fOTAtTmVjYU11VWZTOGpMQXhiUlg4bzh6bEtVOHhBWEFFZGJxLVdveUd3MEdMOU1RU2JjTktnSU1UYTNTVzlCTkJBdUVGUF8tblk0RQ?oc=5",
+            "source": "Reuters",
+            "blurb": "US federal appeals courts adopt a new AI rule, a first for the judiciary.",
+            "published": "2026-11-23T23:57:13+00:00"
           },
           {
-            "title": "Can an AI-guided diet beat healthy eating when taking metformin?",
-            "url": "https://news.google.com/rss/articles/CBMisAFBVV95cUxOcUlmNEN1bTJwR0VUTzlEUU91RDFjQ3FjdVZJa3BMWl96WEk4WXluR2xSdjJQc3BYVU4yc3FpZl9nM1Q1UVYwc2NpYk52Q3VYWDUxM0tlV3c4aTR0Y1czaHJsdlhzYUxjWmtBMjFSTTAwVzFwZXU2S1JuYWQ5Z2R6OFBtN0lSakktWDRpR0cyaE1ZYWthSmxwaWlxbmZCQ0k3TzlvdHdUNlV2Q056Yy1KUA?oc=5",
-            "source": "News-Medical",
-            "blurb": "Research tests whether an AI‑guided diet outperforms standard healthy eating for metformin users.",
-            "published": "2026-11-23T00:23:00+00:00"
+            "title": "Governors Call for Increased, Aligned AI Policy Regulation",
+            "url": "https://news.google.com/rss/articles/CBMiqAFBVV95cUxNdmNSZUs4RVBfajI0RWIzSXJyUFZiSUF2N0RnbGNmcE1rU2hEMGs5eWNtazB2VDhJcHc5YXlfa3pJZkxBNlpwNXZMQ3hXRDNaeXc3cTdzX1dBZ0tEX3lXRFhoQmZONkZVVFRNUWlvU05qZWNXWXR2STNLZm5oSzB0blJrZmFjYjY1bWwwekFuSUZTZ3M4dDRneFB0Z3laYWdfNFU1eTQ2blM?oc=5",
+            "source": "GovTech",
+            "blurb": "Governors call for stronger, aligned AI policy regulation across states.",
+            "published": "2026-11-24T00:13:32+00:00"
+          },
+          {
+            "title": "Physics-guided AI reconstructs fluid flow from sparse, noisy data",
+            "url": "https://news.google.com/rss/articles/CBMie0FVX3lxTE1RV1R3XzUxV0tTVTJicW9ad1MtZWFSekJnaDFGaGZUUG1OYjZYSDVicUhkR3lob3RlaDZTRmgzWjUzR3lzcmVVTkJYUHlPVWtGdzZzZ1d3T0tidC0xNHJPNFNyX2xfcWpaWGlEXzY3TmNxcXVuNW04UzU4RQ?oc=5",
+            "source": "Phys.org",
+            "blurb": "Physics‑guided AI can reconstruct fluid flow from sparse, noisy data, advancing scientific modeling.",
+            "published": "2026-11-23T23:20:01+00:00"
+          },
+          {
+            "title": "Richpanel helps companies automate 50% of support in 30 days",
+            "url": "https://openai.com/business/customer-stories/richpanel-ai-customer-support",
+            "source": "OpenAI News",
+            "blurb": "Richpanel equips AI support agents with GPT‑6 models to automate half of support in 30 days.",
+            "published": "2026-11-23T08:00:00+00:00"
           }
         ]
       }
@@ -52,30 +66,51 @@
       "schedule": "Daily · 07:00 IST",
       "bit": 1,
       "report": {
-        "created_at": "2026-11-23T07:00:05+05:30",
-        "headline": "Hackers exploit GL.iNet cloud, stealing router control; other breaches surface",
-        "summary": "GL.iNet’s cloud flaw lets attackers install malware on routers and KVM devices. Cleverbridge data breach exposed payment cards, while Signal added new chat‑blocking protections.",
+        "created_at": "2026-11-24T07:00:06+05:30",
+        "headline": "Active exploits hit Azure, ScreenConnect, and critical libraries—patch now",
+        "summary": "CISA flagged two actively exploited CVEs, while Azure and ScreenConnect flaws are already being used. Update affected software and guard credentials immediately.",
         "items": [
           {
-            "title": "Hackers exploit GL.iNet cloud flaw to infect routers, KVM devices",
-            "url": "https://www.bleepingcomputer.com/news/security/hackers-exploit-glinet-cloud-flaw-to-infect-routers-kvm-devices/",
+            "title": "Microsoft Azure flaw exploited to steal customers' API credentials",
+            "url": "https://www.bleepingcomputer.com/news/security/microsoft-azure-flaw-exploited-to-steal-customers-api-credentials/",
             "source": "BleepingComputer",
-            "blurb": "GL.iNet routers and KVM devices infected via cloud flaw, giving attackers remote access.",
-            "published": "2026-11-22T18:45:37+00:00"
+            "blurb": "Azure API Management Classic flaw exploited; update to patched version or rotate API keys.",
+            "published": "2026-11-23T19:42:20+00:00"
           },
           {
-            "title": "Signal to block Siri, Gemini AI from capturing chats on iOS, Android",
-            "url": "https://www.bleepingcomputer.com/news/security/signal-to-block-siri-gemini-ai-from-capturing-chats-on-ios-android/",
-            "source": "BleepingComputer",
-            "blurb": "Signal now blocks screenshots on iOS and stops AI assistants from capturing chats on Android.",
-            "published": "2026-11-22T15:15:25+00:00"
+            "title": "Hackers Exploit Critical ScreenConnect Flaw to Hijack MSP Technician PCs Without Warning",
+            "url": "https://thehackernews.com/2026/11/hackers-exploit-critical-screenconnect.html",
+            "source": "The Hacker News",
+            "blurb": "ConnectWise ScreenConnect client CVE‑2026‑84869 critical; apply patch immediately to stop hijacks.",
+            "published": "2026-11-23T12:41:04+00:00"
           },
           {
-            "title": "Cleverbridge warns hackers stole credit card numbers, CVVs in data breach",
-            "url": "https://www.bleepingcomputer.com/news/security/cleverbridge-warns-hackers-stole-credit-card-numbers-cvvs-in-data-breach/",
+            "title": "CISA Adds Two Known Exploited Vulnerabilities to Catalog",
+            "url": "https://www.cisa.gov/news-events/alerts/2026/11/23/cisa-adds-two-known-exploited-vulnerabilities-catalog",
+            "source": "CISA Advisories",
+            "blurb": "CISA lists CVE‑2026‑133968 (MONAI) and CVE‑2026‑134624 (N‑able) as actively exploited; patch now.",
+            "published": "2026-11-23T12:00:00+00:00"
+          },
+          {
+            "title": "Critical binary-parser Flaw Enables JavaScript Injection via Malicious Parser Definitions",
+            "url": "https://thehackernews.com/2026/11/critical-binary-parser-flaw-enables.html",
+            "source": "The Hacker News",
+            "blurb": "binary‑parser library CVE‑2026‑134814 critical (9.2); update library to prevent code injection.",
+            "published": "2026-11-23T13:22:20+00:00"
+          },
+          {
+            "title": "Webworm Suspected of Modifying SoftEther VPN to Evade Detection and Hide Remote Access",
+            "url": "https://thehackernews.com/2026/11/webworm-suspected-of-modifying.html",
+            "source": "The Hacker News",
+            "blurb": "Webworm using custom SoftEther VPN Bridge; monitor for unknown VPN processes.",
+            "published": "2026-11-23T17:45:15+00:00"
+          },
+          {
+            "title": "South Korea’s power giant KEPCO confirms data breach impacting 1.5 million",
+            "url": "https://www.bleepingcomputer.com/news/security/south-koreas-power-giant-kepco-confirms-data-breach-impacting-15-million/",
             "source": "BleepingComputer",
-            "blurb": "Cleverbridge breach leaked customers’ credit card numbers and CVVs, risking fraud.",
-            "published": "2026-11-22T15:43:04+00:00"
+            "blurb": "KEPCO breach exposed 1.5 M records; watch for phishing using stolen data.",
+            "published": "2026-11-23T20:54:51+00:00"
           }
         ]
       }
@@ -145,44 +180,51 @@
       "schedule": "Mon–Fri · 07:30 IST",
       "bit": 3,
       "report": {
-        "created_at": "2026-11-23T07:30:05+05:30",
-        "headline": "RAG advances: new benchmarks, knowledge‑graph tricks, and self‑retrieving agents",
-        "summary": "Retrieval‑augmented generation lets language models pull in fresh data. Today’s papers add a benchmark for building RAG agents, a knowledge‑graph scoring method, self‑RAG for security alerts, and tools to share…",
+        "created_at": "2026-11-24T07:30:05+05:30",
+        "headline": "AI agents are expanding into robotics, coding, and medical imaging with new tools",
+        "summary": "New research shows agents can design dexterous robot hands, improve zero‑shot policies, generate clinical code, and track tumors without training, highlighting versatile, task‑specific AI.",
         "items": [
           {
-            "title": "AutoRAGBench: A Benchmark for LLM Agents Automating RAG System Development",
-            "url": "https://arxiv.org/abs/2611.25582v1",
-            "source": "arXiv RAG",
-            "blurb": "AutoRAGBench provides a test suite to quickly evaluate and iterate RAG agent designs.",
-            "published": "2026-11-19T06:26:28+00:00"
+            "title": "Task2Hand: A Contact-Grounded Skill for Parametric Dexterous-Hand Morphology Design",
+            "url": "https://arxiv.org/abs/2611.27967v1",
+            "source": "arXiv agents",
+            "blurb": "Task2Hand turns a manipulation brief into a parameterized hand design, easing robot hand creation.",
+            "published": "2026-11-20T18:48:12+00:00"
           },
           {
-            "title": "LSP-RAG: Latent Scoring Perspectives for Knowledge Graph Retrieval-Augmented Generation",
-            "url": "https://arxiv.org/abs/2611.25229v1",
-            "source": "arXiv RAG",
-            "blurb": "LSP‑RAG scores knowledge‑graph pieces to improve factual answers and multi‑step reasoning.",
-            "published": "2026-11-18T22:01:25+00:00"
+            "title": "SUAF: Spectral Universal Advantage Features for Zero-Shot Policy Improvement",
+            "url": "https://arxiv.org/abs/2611.27919v1",
+            "source": "arXiv agents",
+            "blurb": "SUAF proposes reward‑independent features that let RL agents reuse knowledge across tasks.",
+            "published": "2026-11-20T17:53:21+00:00"
           },
           {
-            "title": "RAVEN: A Self-RAG Based Agent for Threat Classification and Response",
-            "url": "https://arxiv.org/abs/2611.25832v1",
-            "source": "arXiv RAG",
-            "blurb": "RAVEN uses a self‑RAG loop to classify and respond to security alerts automatically.",
-            "published": "2026-11-19T09:47:11+00:00"
+            "title": "TEA-Bench-BR: Can Coding Agents Turn a Branching Clinical Specification into Correct Code?",
+            "url": "https://arxiv.org/abs/2611.27895v1",
+            "source": "arXiv agents",
+            "blurb": "TEA‑Bench‑BR tests coding agents on clinical specifications, exposing silent bugs in generated code.",
+            "published": "2026-11-20T17:35:59+00:00"
           },
           {
-            "title": "Democratizing Cross-Project Knowledge for Transforming Water Governance and Climate Resilience: an Agentic AI Ecosystem",
-            "url": "https://arxiv.org/abs/2611.26398v1",
-            "source": "arXiv RAG",
-            "blurb": "Agentic AI ecosystem links scattered EU project reports, making cross‑project knowledge searchable for decisions.",
-            "published": "2026-11-19T16:49:04+00:00"
+            "title": "LesionAgent: Training-Free Agentic Tumor Tracking and Response Assessment in Longitudinal CT",
+            "url": "https://arxiv.org/abs/2611.27876v1",
+            "source": "arXiv agents",
+            "blurb": "LesionAgent uses foundation models to track tumors in CT scans without extra training.",
+            "published": "2026-11-20T17:21:36+00:00"
           },
           {
-            "title": "CAIMS: Scalable Cross-Array In-Memory Search",
-            "url": "https://arxiv.org/abs/2611.25141v1",
-            "source": "arXiv RAG",
-            "blurb": "CAIMS speeds up similarity search by keeping data in memory, reducing retrieval bottlenecks.",
-            "published": "2026-11-18T20:19:55+00:00"
+            "title": "Decision Columns as an Index: Interpretable Embeddings for Explainable Entity Matching and Search",
+            "url": "https://arxiv.org/abs/2611.27910v1",
+            "source": "arXiv agents",
+            "blurb": "Decision Columns embed interpretable features for agents to match entities and explain search results.",
+            "published": "2026-11-20T17:48:55+00:00"
+          },
+          {
+            "title": "Network versus market information in coupled opinion-return dynamics",
+            "url": "https://arxiv.org/abs/2611.27874v1",
+            "source": "arXiv agents",
+            "blurb": "A new model lets agents choose between social network cues or market signals for trades.",
+            "published": "2026-11-20T17:18:07+00:00"
           }
         ]
       }
@@ -195,51 +237,51 @@
       "schedule": "Daily · 07:45 IST",
       "bit": 4,
       "report": {
-        "created_at": "2026-11-22T13:20:38+05:30",
-        "headline": "New AI papers boost robot reasoning, video models, and efficient LLM serving",
-        "summary": "Researchers introduce a robot reasoning benchmark, improve diffusion models with RL, launch large video understanding models, and propose faster LLM serving. Additional work explores game design automation and robot…",
+        "created_at": "2026-11-24T07:45:05+05:30",
+        "headline": "New AI papers push vision-language models toward better 3‑D reasoning and physical understanding",
+        "summary": "Researchers introduce binocular VLMs for metric 3‑D tasks, a tracking benchmark for object transformations, expose LLM formula errors, show short chain‑of‑thought harms spatial VQA, find world models allow penetration…",
         "items": [
           {
-            "title": "RL Post-Training in Diffusion Transformers Is Activation Steering",
-            "url": "https://arxiv.org/abs/2611.26627v1",
-            "source": "arXiv AI/CL/LG",
-            "blurb": "RL post‑training boosts diffusion transformer image quality, text rendering, and compositional accuracy, authors report.",
-            "published": "2026-11-19T18:59:53+00:00"
-          },
-          {
-            "title": "TideCache: Efficient Hybrid LLM Serving with Transparent Cache Management and Layer-Wise Streaming",
-            "url": "https://arxiv.org/abs/2611.26619v1",
-            "source": "arXiv AI/CL/LG",
-            "blurb": "TideCache system speeds hybrid LLM serving with transparent cache management and layer‑wise streaming.",
-            "published": "2026-11-19T18:58:31+00:00"
-          },
-          {
-            "title": "Mind2Act World: A Diagnostic Benchmark for Embodied Mind, Physical Action, and Mind-Action Composition in Robotic Manipulation",
-            "url": "https://huggingface.co/papers/2611.26444",
+            "title": "StereoVLM: Binocular Vision-Language Models for Metric 3D Spatial Reasoning",
+            "url": "https://huggingface.co/papers/2611.27915",
             "source": "Hugging Face Daily Papers",
-            "blurb": "Mind2Act World provides a benchmark to test robot reasoning, action execution, and their integration.",
-            "published": "2026-11-18T19:00:00+00:00"
+            "blurb": "Binocular VLM aims to reason about metric 3‑D space using calibrated stereo images.",
+            "published": "2026-11-20T12:52:02+00:00"
           },
           {
-            "title": "WeMM-Video: Pushing the Frontiers of Open-Source Omni-Modal Video Understanding",
-            "url": "https://huggingface.co/papers/2611.26409",
+            "title": "Taking Apart and Putting Together: Tracking Objects Through Physical Transformations",
+            "url": "https://huggingface.co/papers/2611.27398",
             "source": "Hugging Face Daily Papers",
-            "blurb": "WeMM‑Video releases Chinese‑English omni‑modal video models up to 35B parameters for multimodal tasks.",
-            "published": "2026-11-18T19:00:00+00:00"
+            "blurb": "Transformation Tracking (TTU) extends video tracking to follow objects through assembly and disassembly.",
+            "published": "2026-11-20T05:03:29+00:00"
           },
           {
-            "title": "PlayCraft: Designing Engaging Games from Agent Play Experience",
-            "url": "https://arxiv.org/abs/2611.26624v1",
+            "title": "Physical regime changes expose formula misuse in large language models",
+            "url": "https://arxiv.org/abs/2611.28669v1",
             "source": "arXiv AI/CL/LG",
-            "blurb": "PlayCraft uses a vision agent to automatically design games that prioritize player mastery.",
-            "published": "2026-11-19T18:59:34+00:00"
+            "blurb": "LLMs can misuse scientific formulas when physical regimes change, leading to incorrect calculations.",
+            "published": "2026-11-21T08:49:09+00:00"
           },
           {
-            "title": "AgentRoboCritic: Understanding the Capability of Frontier Agents on Direct Robot Control",
-            "url": "https://arxiv.org/abs/2611.26613v1",
+            "title": "Seeing Right, Writing Wrong: Where Short Chain-of-Thought Breaks Spatial VQA",
+            "url": "https://arxiv.org/abs/2611.28665v1",
             "source": "arXiv AI/CL/LG",
-            "blurb": "AgentRoboCritic evaluates frontier language agents' low‑level robot control beyond simple success rates.",
-            "published": "2026-11-19T18:57:25+00:00"
+            "blurb": "Short chain‑of‑thought prompts degrade VLM performance on spatial questions by turning perception into transcription.",
+            "published": "2026-11-21T08:45:39+00:00"
+          },
+          {
+            "title": "Non-penetrating World Models",
+            "url": "https://huggingface.co/papers/2611.27963",
+            "source": "Hugging Face Daily Papers",
+            "blurb": "NoPeBench shows current video world models let objects intersect, failing to prevent penetration.",
+            "published": "2026-11-19T19:00:00+00:00"
+          },
+          {
+            "title": "Learning Video Foresight Reasoning from Unlabeled Videos via On-Policy Self-Distillation",
+            "url": "https://huggingface.co/papers/2611.26954",
+            "source": "Hugging Face Daily Papers",
+            "blurb": "Self‑distillation from unlabeled videos lets models predict future actions without extra annotations.",
+            "published": "2026-11-19T19:00:00+00:00"
           }
         ]
       }
@@ -252,51 +294,51 @@
       "schedule": "Daily · 08:00 IST",
       "bit": 5,
       "report": {
-        "created_at": "2026-11-23T08:00:04+05:30",
-        "headline": "New AI tools and Mac utilities launch on Product Hunt this week",
-        "summary": "AI-powered desktop assistants and coding agents debut alongside Mac-focused knowledge, control, and recording apps. Each aims to streamline work and creative tasks.",
+        "created_at": "2026-11-24T08:00:05+05:30",
+        "headline": "Major funding rounds and new AI tools dominate startup news this week",
+        "summary": "Sierra secures over $1.7 B, while Myriota, Supertake and invoiceQ raise sizable rounds. New AI‑powered products Inkling 2 Mini and FigmaMCP aim to simplify coding and design.",
         "items": [
           {
-            "title": "oovi",
-            "url": "https://www.producthunt.com/products/oovi",
-            "source": "Product Hunt",
-            "blurb": "AI desktop team lets users automate tasks, boosting productivity.",
-            "published": "2026-11-21T20:02:03+00:00"
+            "title": "Bret Taylor’s Sierra Finalizing More Than $1.75 Billion Round",
+            "url": "https://news.google.com/rss/articles/CBMisAFBVV95cUxQM1BneUJiNjdrRDZtLTJibnlJVmdERE1wQkwxdzctbHVZVkJWT1puMzhYa2g4bGNSemJRU2hRdUZMSkhLS3ByQUZQR3JkYXo0Umg2T3NHUFdKQm9DbXNRUktJd0hJNmtkQjVBN2hQYUVnOWZEM0N6Q2ZIVEd5M2V6ZFNSbkkwbHNMREotQ0tFZi00N0s5RXFJaGQ4Rzd1blltdUQxX0dvYUgtcWVodFJmYg?oc=5",
+            "source": "Bloomberg.com",
+            "blurb": "Sierra, Bret Taylor’s venture, finalizing over $1.75 B round, fueling its tech platform growth.",
+            "published": "2026-11-23T18:34:12+00:00"
           },
           {
-            "title": "Omi CLI",
-            "url": "https://www.producthunt.com/products/omi-cli",
-            "source": "Product Hunt",
-            "blurb": "AI coding agents run code unattended, helping developers keep projects moving.",
-            "published": "2026-11-21T08:05:31+00:00"
+            "title": "Myriota secures $60m in first Series C close to scale satellite connectivity",
+            "url": "https://news.google.com/rss/articles/CBMi5gFBVV95cUxNUXE0NV9EdXZNOWppX0wzZ0RHZEtpOWJtYnNMQnJPVDBuVC0zRVVaYVJCazlkSnVGM1ZoU3RiYUp6WkpvNjN2Yl9rSk5mRzFVOFl6UGpqRm5lc0VlVTB1NXdKV3QyYUFrbjRvZ3lZdlR1dzRSclk1SzY4TU9YalYtU3N2eHF1SC0ydEFIRU5POVVwQTVaRGY1UEhBekQxcW1PNTlRWnBDeXNBZWtJeEdHRy1nSEpjRl91UFRQcXd5X0l0Tzd6VzdFTHBKRHZZZWlUNVV2aU1PbEhwUFh5NGY0Q2k3QkJqZw?oc=5",
+            "source": "Capital Brief",
+            "blurb": "Myriota raises $60 M Series C to expand satellite connectivity for IoT devices.",
+            "published": "2026-11-23T21:53:00+00:00"
           },
           {
-            "title": "Resurf",
-            "url": "https://www.producthunt.com/products/resurf-2",
-            "source": "Product Hunt",
-            "blurb": "Personal knowledge base and bookmark manager organizes Mac users' resources in one place.",
-            "published": "2026-11-21T16:21:36+00:00"
+            "title": "Supertake raises $20M to let AI agents turn your market predictions into stock portfolios",
+            "url": "https://techcrunch.com/2026/11/23/supertake-raises-20m-to-let-ai-agents-turn-your-market-predictions-into-stock-portfolios/",
+            "source": "TechCrunch Startups",
+            "blurb": "Supertake secures $20 M to let AI agents turn market forecasts into ready‑made portfolios.",
+            "published": "2026-11-23T22:02:05+00:00"
           },
           {
-            "title": "Verge: Corner Controls",
-            "url": "https://www.producthunt.com/products/verge-corner-controls",
-            "source": "Product Hunt",
-            "blurb": "Corner swipe controls adjust brightness, volume, and more for quick Mac adjustments.",
-            "published": "2026-11-21T12:26:00+00:00"
+            "title": "Jordanian Startup invoiceQ Raises $5 Million in Series A Funding to Expand Across MENA",
+            "url": "https://news.google.com/rss/articles/CBMiugFBVV95cUxPWl9JcllndmMwcUd5SEZqaFRCREs2enJrWkJ3VDBMQ1NCYTZOcTkzOTVDUGswMXRLRC1TQ0VxSkNwTFVSVkNFSUFUQnRrTzE5VnJxaGVrRTQ3NS02Rllrdjg2ZXJRQ2ZzQjJ4TWxsRW11UWtRU1ZvSXFETjVqVmliLVNJZi1hV0FuejNDaERUd2RfeFp6UnY1dTlpR0p6YWozUzJySTliM1BCTXAwRm9mWTlZa003R1ZCcGc?oc=5",
+            "source": "entARABI",
+            "blurb": "InvoiceQ obtains $5 M Series A to broaden its invoicing platform across MENA.",
+            "published": "2026-11-23T15:53:20+00:00"
           },
           {
-            "title": "Creavit Studio 4.0",
-            "url": "https://www.producthunt.com/products/creavit-studio",
+            "title": "Inkling 2 Mini",
+            "url": "https://www.producthunt.com/products/tinker-2",
             "source": "Product Hunt",
-            "blurb": "Creavit Studio 4.0 records screens and iPhone camera, enabling cinematic demos on Mac.",
-            "published": "2026-11-20T21:11:32+00:00"
+            "blurb": "Inkling 2 Mini launches a 26‑billion‑parameter coding model for laptop developers.",
+            "published": "2026-11-23T03:37:24+00:00"
           },
           {
-            "title": "30yr-uptime",
-            "url": "https://www.producthunt.com/products/30yr-uptime",
+            "title": "FigmaMCP",
+            "url": "https://www.producthunt.com/products/figmamcp",
             "source": "Product Hunt",
-            "blurb": "Claude Code mod adds health reminders, encouraging users to care for their bodies.",
-            "published": "2026-11-20T10:55:49+00:00"
+            "blurb": "FigmaMCP lets Claude Code or Codex edit open Figma files, streamlining design‑code workflow.",
+            "published": "2026-11-22T23:28:02+00:00"
           }
         ]
       }
@@ -309,16 +351,23 @@
       "schedule": "Daily · 08:15 IST",
       "bit": 6,
       "report": {
-        "created_at": "2026-11-23T08:15:03+05:30",
-        "headline": "DepthPro2 depth‑estimation model appears on Hugging Face Trending",
-        "summary": "Apple’s DepthPro2 estimates scene depth from images; it has attracted 324 likes but no downloads yet.",
+        "created_at": "2026-11-24T08:15:03+05:30",
+        "headline": "New open-source AI model for robotic point tracking emerges",
+        "summary": "RoboTrack enables real-world robot manipulation via point tracking. Details on Sulphur-3 are unavailable.",
         "items": [
           {
-            "title": "apple/DepthPro2",
-            "url": "https://huggingface.co/apple/DepthPro2",
+            "title": "RoboTrack: Point tracking for real-world robotic manipulation",
+            "url": "https://huggingface.co/blog/allenai/robotrack",
+            "source": "Hugging Face Blog",
+            "blurb": "RoboTrack tracks points for real-world robotic manipulation, aiding robot control.",
+            "published": "2026-11-23T17:20:37+00:00"
+          },
+          {
+            "title": "SulphurAI/Sulphur-3",
+            "url": "https://huggingface.co/SulphurAI/Sulphur-3",
             "source": "Hugging Face Trending",
-            "blurb": "DepthPro2 – image depth‑estimation model by Apple, trending with 324 likes, no downloads yet",
-            "published": "2026-11-03T16:55:03+00:00"
+            "blurb": "Sulphur-3 appears on Hugging Face Trending, but its function and specs aren’t described.",
+            "published": "2026-10-31T20:31:01+00:00"
           }
         ]
       }
