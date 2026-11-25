@@ -11,11 +11,12 @@ import sqlite3
 import stat
 import sys
 import tempfile
-from collections.abc import Sequence
+from collections.abc import Collection, Sequence
 from pathlib import Path
 from typing import Any
 
 from mybuddy import __version__
+from mybuddy.allowlist import TELEGRAM_HOSTS, build_allowed_hosts, topic_source_specs
 from mybuddy.config import (
     DEFAULT_CONFIG_PATH,
     DEFAULT_ENV_FILE,
@@ -23,14 +24,14 @@ from mybuddy.config import (
     ConfigError,
     Settings,
     Topic,
+    load_config,
     load_env_file,
-    load_topics,
     parse_max_subscribers,
 )
 from mybuddy.deliver import TELEGRAM_API, TOKEN_RE, make_deliverer
 from mybuddy.engine import Deps, RunResult, run_topic
 from mybuddy.export import export, schedule_label
-from mybuddy.http import HttpError, UrllibHttpClient
+from mybuddy.http import HttpError, UrllibHttpClient, url_host
 from mybuddy.models import Clock
 from mybuddy.schedule import Scheduler, SystemClock, next_run
 from mybuddy.store import Store
@@ -41,14 +42,18 @@ GROQ_MODELS_URL = "https://api.groq.com/openai/v1/models"
 EX_CONFIG = 78  # "not configured": the systemd unit does not restart on this exit code
 
 
-def _bot_http() -> UrllibHttpClient:
+def _http(allowed_hosts: Collection[str]) -> UrllibHttpClient:
+    return UrllibHttpClient(allowed_hosts=allowed_hosts)
+
+
+def _bot_http(allowed_hosts: Collection[str]) -> UrllibHttpClient:
     from mybuddy.bot import HTTP_TIMEOUT_SECONDS
 
-    return UrllibHttpClient(timeout=HTTP_TIMEOUT_SECONDS)
+    return UrllibHttpClient(allowed_hosts=allowed_hosts, timeout=HTTP_TIMEOUT_SECONDS)
 
 
-# Factories are module attributes so tests can swap in fakes.
-make_http: Any = UrllibHttpClient
+# Factories are module attributes so tests can swap in fakes. Each takes the host allowlist.
+make_http: Any = _http
 make_bot_http: Any = _bot_http  # long polling needs a longer timeout than the default 20 s
 make_clock: Any = SystemClock
 
@@ -98,8 +103,10 @@ def _err(msg: str) -> None:
     print(msg, file=sys.stderr)
 
 
-def _build_deps(settings: Settings, topics: Sequence[Topic], clock: Clock) -> Deps:
-    http = make_http()
+def _build_deps(
+    settings: Settings, topics: Sequence[Topic], clock: Clock, allowed_hosts: Collection[str]
+) -> Deps:
+    http = make_http(allowed_hosts)
     store = Store(settings.data_dir)
     return Deps(
         http=http,
@@ -126,7 +133,12 @@ def cmd_list(topics: Sequence[Topic], clock: Clock) -> int:
 
 
 def cmd_run(
-    target: str, topics: Sequence[Topic], settings: Settings, clock: Clock, dry_run: bool
+    target: str,
+    topics: Sequence[Topic],
+    settings: Settings,
+    clock: Clock,
+    dry_run: bool,
+    allowed_hosts: Collection[str],
 ) -> int:
     if target == "all":
         selected = list(topics)
@@ -135,7 +147,7 @@ def cmd_run(
         if not selected:
             _err(f"unknown topic {target!r}; choose one of: {', '.join(t.id for t in topics)}")
             return 2
-    deps = _build_deps(settings, topics, clock)
+    deps = _build_deps(settings, topics, clock, allowed_hosts)
     results: list[RunResult] = []
     try:
         for topic in selected:
@@ -151,8 +163,10 @@ def cmd_run(
     return 0 if all(r.ok for r in results) else 1
 
 
-def cmd_serve(topics: Sequence[Topic], settings: Settings, clock: Clock) -> int:
-    deps = _build_deps(settings, topics, clock)
+def cmd_serve(
+    topics: Sequence[Topic], settings: Settings, clock: Clock, allowed_hosts: Collection[str]
+) -> int:
+    deps = _build_deps(settings, topics, clock, allowed_hosts)
     scheduler = Scheduler(topics, lambda t: run_topic(t, deps), clock)
     scheduler.install_signal_handlers()
     print(f"[mybuddy] serving {len(topics)} topics (fake={settings.fake})", file=sys.stderr)
@@ -185,28 +199,31 @@ def cmd_check(config_path: Path, settings: Settings, clock: Clock, env_file: Pat
     problems: list[str] = []
     print(f"config: {config_path}")
     topics: list[Topic] = []
+    extra_hosts: frozenset[str] = frozenset()
     try:
-        topics = load_topics(config_path)
+        config = load_config(config_path)
+        topics, extra_hosts = config.topics, config.extra_allowed_hosts
         print(f"  ok: {len(topics)} topics ({', '.join(t.id for t in topics)})")
     except ConfigError as exc:
         problems.append(f"config: {exc}")
         print(f"  ERROR: {exc}")
+    allowed = build_allowed_hosts(topics, settings, extra_hosts)
+    print(f"  allowed hosts: {len(allowed)} ({', '.join(sorted(allowed))})")
+    for problem in _disallowed_urls(topics, settings, allowed):
+        problems.append(problem)
+        print(f"  ERROR: {problem}")
 
     if topics:
         try:
             from mybuddy.sources import build_source
 
-            http = make_http()
-            for t in topics:
-                specs = list(t.sources)
-                for entry in (t.rotation or {}).values():
-                    specs += entry.sources
-                for spec in specs:
-                    try:
-                        build_source({**spec, "_state": {}}, http, clock)
-                    except Exception as exc:
-                        problems.append(f"{t.id}: source {spec.get('name')!r}: {exc}")
-                        print(f"  ERROR: {t.id}: source {spec.get('name')!r}: {exc}")
+            http = make_http(allowed)
+            for t, spec in topic_source_specs(topics):
+                try:
+                    build_source({**spec, "_state": {}}, http, clock)
+                except Exception as exc:
+                    problems.append(f"{t.id}: source {spec.get('name')!r}: {exc}")
+                    print(f"  ERROR: {t.id}: source {spec.get('name')!r}: {exc}")
         except ImportError as exc:
             problems.append(f"sources package unavailable: {exc}")
             print(f"  ERROR: sources package unavailable: {exc}")
@@ -256,7 +273,7 @@ def cmd_check(config_path: Path, settings: Settings, clock: Clock, env_file: Pat
     if settings.groq_api_key and not settings.fake:
         print("connectivity:")
         try:
-            data = make_http().get_json(
+            data = make_http(allowed).get_json(
                 GROQ_MODELS_URL, headers={"Authorization": f"Bearer {settings.groq_api_key}"}
             )
             models = {m.get("id") for m in data.get("data", []) if isinstance(m, dict)}
@@ -288,12 +305,27 @@ def cmd_check(config_path: Path, settings: Settings, clock: Clock, env_file: Pat
     return 0
 
 
+def _disallowed_urls(
+    topics: Sequence[Topic], settings: Settings, allowed: Collection[str]
+) -> list[str]:
+    """Config and settings URLs whose host the HTTP client would refuse."""
+    out: list[str] = []
+    for t, spec in topic_source_specs(topics):
+        url = spec.get("url")
+        if isinstance(url, str) and url_host(url) not in allowed:
+            out.append(f"{t.id}: source {spec.get('name')!r}: host not allowed: {url_host(url)}")
+    webhook = settings.discord_webhook_url
+    if webhook and url_host(webhook) not in allowed:
+        out.append("DISCORD_WEBHOOK_URL: host not allowed (use a host name, not an IP)")
+    return out
+
+
 def _telegram_get(token: str, method: str) -> Any:
     """Call a Telegram Bot API method. Errors are reported without the URL (it holds the token)."""
     if not TOKEN_RE.fullmatch(token):
         raise RuntimeError("TELEGRAM_BOT_TOKEN does not look like a bot token")
     try:
-        return make_http().get_json(f"{TELEGRAM_API}/bot{token}/{method}")
+        return make_http(TELEGRAM_HOSTS).get_json(f"{TELEGRAM_API}/bot{token}/{method}")
     except HttpError as exc:
         raise RuntimeError(f"Telegram {method} failed: HTTP {exc.status}") from None
 
@@ -391,7 +423,7 @@ def cmd_bot(topics: Sequence[Topic], settings: Settings, clock: Clock) -> int:
     with Store(settings.data_dir) as store:
         bot = SubscriptionBot(
             token,
-            make_bot_http(),
+            make_bot_http(TELEGRAM_HOSTS),
             store,
             topics,
             clock,
@@ -448,16 +480,18 @@ def _dispatch(
     if args.command == "telegram-setup":
         return cmd_telegram_setup(settings, env_file, args.save)
     try:
-        topics = load_topics(config_path)
+        config = load_config(config_path)
     except ConfigError as exc:
         _err(f"config error: {exc}")
         return 2
+    topics = config.topics
+    allowed = build_allowed_hosts(topics, settings, config.extra_allowed_hosts)
     if args.command == "list":
         return cmd_list(topics, clock)
     if args.command == "run":
-        return cmd_run(args.topic, topics, settings, clock, args.dry_run)
+        return cmd_run(args.topic, topics, settings, clock, args.dry_run, allowed)
     if args.command == "serve":
-        return cmd_serve(topics, settings, clock)
+        return cmd_serve(topics, settings, clock, allowed)
     if args.command == "export":
         return cmd_export(topics, settings, clock)
     if args.command == "bot":

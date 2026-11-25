@@ -48,7 +48,7 @@ def env(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> dict[str, Any]:
     monkeypatch.setenv("MYBUDDY_DATA_DIR", str(tmp_path / "data"))
     monkeypatch.setenv("MYBUDDY_SITE_DATA", str(tmp_path / "site" / "reports.json"))
     http = FakeHttp()
-    monkeypatch.setattr(cli, "make_http", lambda: http)
+    monkeypatch.setattr(cli, "make_http", lambda hosts: http)
     monkeypatch.setattr(cli, "make_clock", lambda: FixedClock(MONDAY))
 
     def build(spec: dict[str, Any], h: HttpClient, c: Clock) -> Source:

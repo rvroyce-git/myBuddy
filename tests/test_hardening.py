@@ -15,7 +15,7 @@ import pytest
 from conftest import FakeHttp, FakeSource, FixedClock, make_item, make_topic
 from test_cli import env  # noqa: F401  (pytest fixture)
 from test_engine import make_deps
-from test_engine_http import FakeResponse, client
+from test_engine_http import TEST_HOSTS, FakeResponse, client
 from test_sources_huggingface import models
 
 from mybuddy import cli
@@ -81,11 +81,12 @@ def test_rejects_control_characters_and_malformed_urls() -> None:
     ],
 )
 def test_refuses_internal_addresses(url: str) -> None:
+    """Not on the allowlist, so refused before any connection (requests and redirects)."""
     c, opener = client(FakeResponse(b"", url))
-    with pytest.raises(HttpError, match="internal"):
+    with pytest.raises(HttpError, match="host not allowed"):
         c.get_bytes(url)
-    with pytest.raises(HttpError, match="internal"):
-        _HttpsOnlyRedirect().redirect_request(
+    with pytest.raises(HttpError, match="host not allowed"):
+        _HttpsOnlyRedirect(TEST_HOSTS).redirect_request(
             urllib.request.Request("https://ok.example/"),
             None,  # type: ignore[arg-type]
             302,
@@ -100,9 +101,9 @@ def test_cross_host_redirect_drops_credentials() -> None:
     req = urllib.request.Request(
         "https://api.groq.com/x", headers={"Authorization": "Bearer k", "Accept": "a"}
     )
-    handler = _HttpsOnlyRedirect()
+    handler = _HttpsOnlyRedirect(TEST_HOSTS)
     hdrs = Message()
-    other = handler.redirect_request(req, None, 302, "Found", hdrs, "https://evil.example/")  # type: ignore[arg-type]
+    other = handler.redirect_request(req, None, 302, "Found", hdrs, "https://cdn.example/")  # type: ignore[arg-type]
     assert other is not None and not other.has_header("Authorization")
     assert other.get_header("Accept") == "a"
     same = handler.redirect_request(req, None, 302, "Found", hdrs, "https://api.groq.com/y")  # type: ignore[arg-type]
@@ -118,7 +119,9 @@ class _DripResponse(FakeResponse):
 
 def test_slow_drip_response_hits_total_deadline() -> None:
     ticks = iter(range(10_000))
-    c = UrllibHttpClient(timeout=1.0, monotonic=lambda: float(next(ticks)))
+    c = UrllibHttpClient(
+        allowed_hosts=TEST_HOSTS, timeout=1.0, monotonic=lambda: float(next(ticks))
+    )
     c._opener = type(
         "O", (), {"open": lambda self, r, timeout: _DripResponse(b"x" * 100, "https://s.example/")}
     )()  # type: ignore[assignment]

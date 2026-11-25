@@ -1,6 +1,15 @@
 # MyBuddy topics. Times are Asia/Kolkata (IST). Validate with: mybuddy check
 # `bit`: permanent Telegram start-link bit of each website (ai: true) topic. Never change or
 # reuse a bit, even when topics are reordered or removed (old links must keep working).
+
+# The HTTP client only contacts allowed hosts: the hosts of the URLs below, each source
+# type's fixed API hosts and the configured AI/delivery services. Add here (exact names, no
+# IPs or wildcards) any other host a feed redirects to. Checked 2026-11-26 with
+# `curl -sIL -w '%{url_effective}'`: every feed stays on its own host (blog.google only
+# redirects within blog.google), so none are needed. Item links are only displayed, never
+# fetched (Google News article links included).
+extra_allowed_hosts: []
+
 topics:
   - id: ai_news
     title: AI news
