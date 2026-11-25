@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-11-25T08:00:06+05:30",
+  "generated_at": "2026-11-25T08:15:04+05:30",
   "topics": [
     {
       "id": "ai_news",
@@ -316,23 +316,16 @@
       "schedule": "Daily · 08:15 IST",
       "bit": 6,
       "report": {
-        "created_at": "2026-11-24T08:15:03+05:30",
-        "headline": "New open-source AI model for robotic point tracking emerges",
-        "summary": "RoboTrack enables real-world robot manipulation via point tracking. Details on Sulphur-3 are unavailable.",
+        "created_at": "2026-11-25T08:15:03+05:30",
+        "headline": "A new Sim2Real workflow for obstacle avoidance is detailed on Hugging Face Blog",
+        "summary": "The post describes Microduck’s obstacle‑avoidance pipeline using Isaac Lab and Newton, but provides no specific open‑source model details.",
         "items": [
           {
-            "title": "RoboTrack: Point tracking for real-world robotic manipulation",
-            "url": "https://huggingface.co/blog/allenai/robotrack",
+            "title": "Microduck Obstacle Avoidance: A Sim2Real Workflow with Isaac Lab and Newton",
+            "url": "https://huggingface.co/blog/nvidia/microduck-obstacle-avoidance",
             "source": "Hugging Face Blog",
-            "blurb": "RoboTrack tracks points for real-world robotic manipulation, aiding robot control.",
-            "published": "2026-11-23T17:20:37+00:00"
-          },
-          {
-            "title": "SulphurAI/Sulphur-3",
-            "url": "https://huggingface.co/SulphurAI/Sulphur-3",
-            "source": "Hugging Face Trending",
-            "blurb": "Sulphur-3 appears on Hugging Face Trending, but its function and specs aren’t described.",
-            "published": "2026-10-31T20:31:01+00:00"
+            "blurb": "Microduck presents an obstacle‑avoidance workflow using Isaac Lab and Newton, aimed at Sim2Real transfer.",
+            "published": "2026-11-24T16:34:13+00:00"
           }
         ]
       }
