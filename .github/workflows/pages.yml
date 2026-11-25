@@ -1,11 +1,12 @@
 name: Publish website
-# Copies site/ to the gh-pages branch; GitHub Pages serves that branch (Settings → Pages →
-# Deploy from a branch → gh-pages / root). Push a change to this file to publish again.
+# Builds the site from main (site/) plus the latest reports from the `data` branch and pushes
+# it to the gh-pages branch, which GitHub Pages serves (Settings → Pages → Deploy from a
+# branch → gh-pages / root). New reports are published by the workflow on the `data` branch.
 
 on:
   push:
     branches: [main]
-    paths: ["site/**", ".github/workflows/pages.yml"]
+    paths: ["site/**", ".github/workflows/pages.yml", ".github/scripts/build-pages.sh"]
   workflow_dispatch:
 
 permissions:
@@ -20,19 +21,12 @@ jobs:
   publish:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v6
-      - name: Push site/ to the gh-pages branch
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
+      - name: Fetch the latest reports from the data branch
         run: |
-          set -euo pipefail
-          out="$(mktemp -d)"
-          cp -R site/. "$out/"
-          touch "$out/.nojekyll"   # serve files as they are (no Jekyll processing)
-          cd "$out"
-          git init -q -b gh-pages
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add -A
-          git commit -q -m "Publish website from ${GITHUB_SHA::7}"
-          git push -q --force "https://x-access-token:${GITHUB_TOKEN}@github.com/${GITHUB_REPOSITORY}.git" gh-pages
+          git fetch --depth 1 origin data || true
+          git show origin/data:reports.json > "$RUNNER_TEMP/reports.json" 2>/dev/null || : > "$RUNNER_TEMP/reports.json"
+      - name: Publish site/ + reports to gh-pages
+        run: bash .github/scripts/build-pages.sh site "$RUNNER_TEMP/reports.json"
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

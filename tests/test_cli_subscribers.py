@@ -125,7 +125,8 @@ def test_bot_command_wires_settings(
 
     monkeypatch.setattr(mybuddy.bot.SubscriptionBot, "run", fake_run)
     monkeypatch.setattr(mybuddy.bot.SubscriptionBot, "install_signal_handlers", lambda self: None)
-    monkeypatch.setattr(cli, "make_bot_http", lambda: fake_http)
+    bot_hosts: list[Any] = []
+    monkeypatch.setattr(cli, "make_bot_http", lambda hosts: bot_hosts.append(hosts) or fake_http)
     monkeypatch.setenv("TELEGRAM_BOT_TOKEN", TOKEN)
     monkeypatch.setenv("TELEGRAM_CHAT_ID", "777")
     monkeypatch.setenv("MYBUDDY_MAX_SUBSCRIBERS", "7")
@@ -137,8 +138,10 @@ def test_bot_command_wires_settings(
         "order": ["ai_news"],
         "http": fake_http,
     }
+    assert bot_hosts == [frozenset({"api.telegram.org"})]  # the bot only talks to Telegram
 
 
 def test_bot_http_timeout_exceeds_poll() -> None:
-    client = cli._bot_http()
+    client = cli._bot_http(cli.TELEGRAM_HOSTS)
     assert client.timeout > mybuddy.bot.POLL_TIMEOUT_SECONDS + 5
+    assert client.allowed_hosts == {"api.telegram.org"}

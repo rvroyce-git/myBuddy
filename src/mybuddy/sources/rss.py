@@ -101,9 +101,12 @@ def split_publisher(item: Item) -> Item:
     return replace(item, title=head.strip(), source=publisher)
 
 
+GOOGLE_NEWS_RSS = "https://news.google.com/rss/search"
+
+
 def google_news_url(query: str) -> str:
     params = {"q": query, "hl": "en-IN", "gl": "IN", "ceid": "IN:en"}
-    return "https://news.google.com/rss/search?" + urlencode(params)
+    return GOOGLE_NEWS_RSS + "?" + urlencode(params)
 
 
 def build_rss(spec: dict[str, Any], http: HttpClient, clock: Clock) -> RssSource:

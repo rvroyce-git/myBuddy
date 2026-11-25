@@ -9,3 +9,7 @@ __pycache__/
 *.db
 /data/
 .DS_Store
+
+# Live reports live on the `data` branch (written by the server), never on main.
+site/data/reports.json
+.claude/
