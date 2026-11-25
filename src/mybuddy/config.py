@@ -11,6 +11,8 @@ from typing import Any
 
 import yaml
 
+from mybuddy.http import host_allowlist
+
 PACKAGE_DIR = Path(__file__).resolve().parent
 REPO_ROOT = PACKAGE_DIR.parent.parent
 PROMPTS_DIR = PACKAGE_DIR / "prompts"
@@ -387,6 +389,36 @@ def _parse_topic(
     )
 
 
+@dataclass(frozen=True)
+class Config:
+    topics: list[Topic]
+    # Hosts that configured URLs are known to redirect to (exact names, no IPs or wildcards).
+    extra_allowed_hosts: frozenset[str] = frozenset()
+
+
+def _parse_extra_hosts(data: Any, where: str) -> frozenset[str]:
+    if data is None:
+        return frozenset()
+    if not isinstance(data, list):
+        raise ConfigError(f"{where}: must be a list of host names")
+    try:
+        return host_allowlist(data)
+    except ValueError as exc:
+        raise ConfigError(f"{where}: {exc}") from None
+
+
+def parse_config(
+    data: Any,
+    *,
+    origin: str = "topics.yaml",
+    prompts_dir: Path = PROMPTS_DIR,
+    source_types: Collection[str] | None = None,
+) -> Config:
+    topics = parse_topics(data, origin=origin, prompts_dir=prompts_dir, source_types=source_types)
+    extra = _parse_extra_hosts(data.get("extra_allowed_hosts"), f"{origin}: extra_allowed_hosts")
+    return Config(topics=topics, extra_allowed_hosts=extra)
+
+
 def parse_topics(
     data: Any,
     *,
@@ -396,7 +428,7 @@ def parse_topics(
 ) -> list[Topic]:
     if not isinstance(data, dict):
         raise ConfigError(f"{origin}: top level must be a mapping with a 'topics' list")
-    _check_keys(data, {"topics"}, origin)
+    _check_keys(data, {"topics", "extra_allowed_hosts"}, origin)
     raw = data.get("topics")
     if not isinstance(raw, list) or not raw:
         raise ConfigError(f"{origin}: 'topics' must be a non-empty list")
@@ -434,6 +466,22 @@ def load_topics(
     check_source_types: bool = True,
 ) -> list[Topic]:
     """Load and validate the topics file. Raises ConfigError with the file path on problems."""
+    return load_config(
+        path,
+        prompts_dir=prompts_dir,
+        source_types=source_types,
+        check_source_types=check_source_types,
+    ).topics
+
+
+def load_config(
+    path: Path | None = None,
+    *,
+    prompts_dir: Path = PROMPTS_DIR,
+    source_types: Collection[str] | None = None,
+    check_source_types: bool = True,
+) -> Config:
+    """Load and validate the topics file and its other settings (extra_allowed_hosts)."""
     path = (path or DEFAULT_CONFIG_PATH).expanduser()
     try:
         text = path.read_text(encoding="utf-8")
@@ -445,4 +493,4 @@ def load_topics(
         raise ConfigError(f"{path}: invalid YAML: {exc}") from exc
     if source_types is None and check_source_types:
         source_types = _known_source_types()
-    return parse_topics(data, origin=str(path), prompts_dir=prompts_dir, source_types=source_types)
+    return parse_config(data, origin=str(path), prompts_dir=prompts_dir, source_types=source_types)

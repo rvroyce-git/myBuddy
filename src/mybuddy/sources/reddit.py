@@ -19,6 +19,7 @@ from mybuddy.sources._common import (
     spec_str,
 )
 
+REDDIT_BASE = "https://www.reddit.com"
 _SUBREDDIT = re.compile(r"^[A-Za-z0-9_]{2,21}$")
 
 
@@ -34,7 +35,7 @@ class RedditSource:
 
     @property
     def url(self) -> str:
-        return f"https://www.reddit.com/r/{self.subreddit}/top.json?t=day&limit={self.limit}"
+        return f"{REDDIT_BASE}/r/{self.subreddit}/top.json?t=day&limit={self.limit}"
 
     def collect(self) -> list[Item]:
         payload = self._http.get_json(self.url)
@@ -54,7 +55,7 @@ class RedditSource:
             items.append(
                 Item(
                     title=title,
-                    url="https://www.reddit.com" + permalink,
+                    url=REDDIT_BASE + permalink,
                     source=self.name,
                     published=from_epoch(post.get("created_utc")),
                     snippet=clean_snippet(str(post.get("selftext") or "")),

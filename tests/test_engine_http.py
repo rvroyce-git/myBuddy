@@ -38,7 +38,27 @@ class FakeOpener:
         return self.result
 
 
+# Hosts the fake-network tests may contact. Anything else is refused by the allowlist.
+TEST_HOSTS = frozenset(
+    {
+        "api.example",
+        "hook.example",
+        "ok.example",
+        "big.example",
+        "down.example",
+        "x.example",
+        "s.example",
+        "cdn.example",
+        "insecure.example",
+        "downgraded.example",
+        "api.telegram.org",
+        "api.groq.com",
+    }
+)
+
+
 def client(result: Any, **kw: Any) -> tuple[UrllibHttpClient, FakeOpener]:
+    kw.setdefault("allowed_hosts", TEST_HOSTS)
     c = UrllibHttpClient(**kw)
     opener = FakeOpener(result)
     c._opener = opener  # type: ignore[assignment]
@@ -62,14 +82,14 @@ def test_post_json_body_and_empty_reply() -> None:
 
 
 def test_rejects_http_and_redirect_to_http() -> None:
-    c, _ = client(FakeResponse(b"", "https://x"))
+    c, _ = client(FakeResponse(b"", "https://x.example/"))
     with pytest.raises(HttpError, match="non-https"):
         c.get_bytes("http://insecure.example/")
     c, _ = client(FakeResponse(b"x", "http://downgraded.example/"))
     with pytest.raises(HttpError, match="non-https"):
         c.get_bytes("https://ok.example/")
     with pytest.raises(HttpError, match="non-https"):
-        _HttpsOnlyRedirect().redirect_request(
+        _HttpsOnlyRedirect(TEST_HOSTS).redirect_request(
             None,  # type: ignore[arg-type]
             None,  # type: ignore[arg-type]
             302,
