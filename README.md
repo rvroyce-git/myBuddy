@@ -44,7 +44,7 @@ Visitors pick topics on the website, which opens
 ## Develop and test
 
 ```bash
-python3 -m venv .venv && .venv/bin/pip install -e '.[dev]'
+python3 -m venv .venv && .venv/bin/pip install -e '.[dev]'   # or the pinned set, see below
 .venv/bin/pytest                                      # offline unit tests
 .venv/bin/ruff check . && .venv/bin/mypy
 MYBUDDY_FAKE=1 .venv/bin/mybuddy run all --dry-run    # real feeds, no AI, no delivery
@@ -57,6 +57,52 @@ Optional browser tests for the website (`tests/ui`):
 .venv/bin/python -m playwright install chromium
 .venv/bin/pytest tests/ui
 ```
+
+Pre-commit hooks (gitleaks secret scan, ruff lint + format, YAML/whitespace checks):
+
+```bash
+.venv/bin/pre-commit install            # once per clone
+.venv/bin/pre-commit run --all-files    # optional: check everything now
+```
+
+The fake tokens in `tests/` are allowlisted value-by-value in `.gitleaks.toml`; CI also scans
+the full git history with a pinned, checksum-verified gitleaks binary.
+
+### Updating pinned dependencies
+
+`pyproject.toml` keeps compatible version ranges; CI and the server install the exact,
+hash-pinned versions from `requirements/runtime.txt` and `requirements/dev.txt`
+(runtime + `dev` + `ui` extras), resolved for Python 3.12. Regenerate them with pip-tools
+from a throwaway Python 3.12 venv (not the project venv), then commit both files:
+
+```bash
+python3.12 -m venv /tmp/pt && /tmp/pt/bin/pip install pip-tools
+CUSTOM_COMPILE_COMMAND="see README: Updating pinned dependencies" \
+  /tmp/pt/bin/pip-compile --upgrade --generate-hashes --strip-extras --allow-unsafe \
+  --no-emit-index-url -o requirements/runtime.txt pyproject.toml
+CUSTOM_COMPILE_COMMAND="see README: Updating pinned dependencies" \
+  /tmp/pt/bin/pip-compile --upgrade --generate-hashes --strip-extras --allow-unsafe \
+  --no-emit-index-url --extra dev --extra ui -c requirements/runtime.txt \
+  -o requirements/dev.txt pyproject.toml
+# Install exactly what CI installs:
+.venv/bin/pip install --require-hashes -r requirements/dev.txt && .venv/bin/pip install --no-deps -e .
+```
+
+Use `--upgrade-package NAME` instead of `--upgrade` to bump one package. pip-tools records the
+hashes of every file PyPI publishes for each pinned version (all platforms), but environment
+markers are evaluated on the machine you run it on; if you regenerate on macOS, check the
+Linux x86_64 resolution too:
+
+```bash
+/tmp/pt/bin/pip install --dry-run --ignore-installed --require-hashes --only-binary=:all: \
+  --platform manylinux_2_28_x86_64 --platform manylinux2014_x86_64 --python-version 3.12 \
+  --implementation cp --target /tmp/pt-check -r requirements/dev.txt
+```
+
+Dependabot (`.github/dependabot.yml`) opens weekly PRs for `requirements/` and for the
+SHA-pinned GitHub Actions. To pin an action by hand, resolve the release tag to its commit
+(`gh api repos/OWNER/REPO/git/ref/tags/vX.Y.Z`, following annotated tags) and write
+`uses: OWNER/REPO@<40-char sha> # vX.Y.Z`.
 
 ## Deploy
 
