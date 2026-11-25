@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-11-25T06:30:48+05:30",
+  "generated_at": "2026-11-25T07:00:09+05:30",
   "topics": [
     {
       "id": "ai_news",
@@ -66,51 +66,51 @@
       "schedule": "Daily · 07:00 IST",
       "bit": 1,
       "report": {
-        "created_at": "2026-11-24T07:00:06+05:30",
-        "headline": "Active exploits hit Azure, ScreenConnect, and critical libraries—patch now",
-        "summary": "CISA flagged two actively exploited CVEs, while Azure and ScreenConnect flaws are already being used. Update affected software and guard credentials immediately.",
+        "created_at": "2026-11-25T07:00:07+05:30",
+        "headline": "Critical auth bypass in VMware vCenter and other active exploits demand immediate patching",
+        "summary": "VMware vCenter faces a 9.8‑rated auth‑bypass flaw, while CISA flags three actively exploited vulnerabilities. Update affected software and migrate off Rackspace Spot promptly.",
         "items": [
           {
-            "title": "Microsoft Azure flaw exploited to steal customers' API credentials",
-            "url": "https://www.bleepingcomputer.com/news/security/microsoft-azure-flaw-exploited-to-steal-customers-api-credentials/",
-            "source": "BleepingComputer",
-            "blurb": "Azure API Management Classic flaw exploited; update to patched version or rotate API keys.",
-            "published": "2026-11-23T19:42:20+00:00"
-          },
-          {
-            "title": "Hackers Exploit Critical ScreenConnect Flaw to Hijack MSP Technician PCs Without Warning",
-            "url": "https://thehackernews.com/2026/11/hackers-exploit-critical-screenconnect.html",
+            "title": "VMware vCenter Hit by Another Critical 9.8-Rated Auth Bypass Flaw After Zero-Day Exploitation",
+            "url": "https://thehackernews.com/2026/11/vmware-vcenter-hit-by-another-critical.html",
             "source": "The Hacker News",
-            "blurb": "ConnectWise ScreenConnect client CVE‑2026‑84869 critical; apply patch immediately to stop hijacks.",
-            "published": "2026-11-23T12:41:04+00:00"
+            "blurb": "VMware vCenter auth bypass (CVE‑2026‑123903) rated 9.8; apply Broadcom patch now.",
+            "published": "2026-11-24T13:28:26+00:00"
           },
           {
-            "title": "CISA Adds Two Known Exploited Vulnerabilities to Catalog",
-            "url": "https://www.cisa.gov/news-events/alerts/2026/11/23/cisa-adds-two-known-exploited-vulnerabilities-catalog",
+            "title": "CISA Adds Three Known Exploited Vulnerabilities to Catalog",
+            "url": "https://www.cisa.gov/news-events/alerts/2026/11/24/cisa-adds-three-known-exploited-vulnerabilities-catalog",
             "source": "CISA Advisories",
-            "blurb": "CISA lists CVE‑2026‑133968 (MONAI) and CVE‑2026‑134624 (N‑able) as actively exploited; patch now.",
-            "published": "2026-11-23T12:00:00+00:00"
+            "blurb": "CISA adds three exploited CVEs (including Drupal RCE); patch systems immediately.",
+            "published": "2026-11-24T12:00:00+00:00"
           },
           {
-            "title": "Critical binary-parser Flaw Enables JavaScript Injection via Malicious Parser Definitions",
-            "url": "https://thehackernews.com/2026/11/critical-binary-parser-flaw-enables.html",
-            "source": "The Hacker News",
-            "blurb": "binary‑parser library CVE‑2026‑134814 critical (9.2); update library to prevent code injection.",
-            "published": "2026-11-23T13:22:20+00:00"
-          },
-          {
-            "title": "Webworm Suspected of Modifying SoftEther VPN to Evade Detection and Hide Remote Access",
-            "url": "https://thehackernews.com/2026/11/webworm-suspected-of-modifying.html",
-            "source": "The Hacker News",
-            "blurb": "Webworm using custom SoftEther VPN Bridge; monitor for unknown VPN processes.",
-            "published": "2026-11-23T17:45:15+00:00"
-          },
-          {
-            "title": "South Korea’s power giant KEPCO confirms data breach impacting 1.5 million",
-            "url": "https://www.bleepingcomputer.com/news/security/south-koreas-power-giant-kepco-confirms-data-breach-impacting-15-million/",
+            "title": "Rackspace shuts down Spot cloud platform after security breach",
+            "url": "https://www.bleepingcomputer.com/news/security/rackspace-shuts-down-spot-cloud-platform-after-security-breach/",
             "source": "BleepingComputer",
-            "blurb": "KEPCO breach exposed 1.5 M records; watch for phishing using stolen data.",
-            "published": "2026-11-23T20:54:51+00:00"
+            "blurb": "Rackspace Spot cloud breach forces shutdown; migrate services and download data by Dec 8.",
+            "published": "2026-11-24T21:37:30+00:00"
+          },
+          {
+            "title": "Danfoss AK-SM 8xxA Series",
+            "url": "https://www.cisa.gov/news-events/ics-advisories/icsa-26-328-03",
+            "source": "CISA Advisories",
+            "blurb": "Danfoss AK‑SM 8xxA series vulnerability (CVE‑2026‑129713) severity 9.8; update firmware.",
+            "published": "2026-11-24T12:00:00+00:00"
+          },
+          {
+            "title": "Schneider Electric EcoStruxure Power Build Rapsody software",
+            "url": "https://www.cisa.gov/news-events/ics-advisories/icsa-26-328-02",
+            "source": "CISA Advisories",
+            "blurb": "Schneider Electric EcoStruxure Power Build Rapsody has a vulnerability; check for patches.",
+            "published": "2026-11-24T12:00:00+00:00"
+          },
+          {
+            "title": "New Inception extortion gang launches large-scale vishing campaign",
+            "url": "https://www.bleepingcomputer.com/news/security/new-inception-extortion-gang-launches-large-scale-vishing-campaign/",
+            "source": "BleepingComputer",
+            "blurb": "Inception extortion gang runs vishing attacks on SSO credentials; beware phishing attempts.",
+            "published": "2026-11-24T20:21:20+00:00"
           }
         ]
       }
