@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-11-24T08:15:04+05:30",
+  "generated_at": "2026-11-25T06:30:48+05:30",
   "topics": [
     {
       "id": "ai_news",
@@ -9,51 +9,51 @@
       "schedule": "Daily · 06:30 IST",
       "bit": 0,
       "report": {
-        "created_at": "2026-11-24T06:30:46+05:30",
-        "headline": "OpenAI and Cisco launch Shirudo; AI policy and courts see new moves",
-        "summary": "Shirudo, an open‑source Linux runtime, aims to protect systems while patching. Meanwhile, US courts adopt a first AI rule and governors push for coordinated AI regulation.",
+        "created_at": "2026-11-25T06:30:47+05:30",
+        "headline": "OpenAI's GPT-6 now designs proteins, marking a leap in AI-driven biology",
+        "summary": "OpenAI's GPT-6 can design proteins, while the DOJ forms a Super Intelligence Task Force to tighten AI oversight. Google Gemini teams with the Warriors, iFood expands coding agents, and hobbyists use AI to hunt…",
         "items": [
           {
-            "title": "OpenAI and Cisco introduce Shirudo",
-            "url": "https://openai.com/index/introducing-shirudo",
+            "title": "GPT-6 models demonstrate intrinsic protein-design capabilities",
+            "url": "https://openai.com/index/gpt-6-models-demonstrate-intrinsic-protein-design-capabilities",
             "source": "OpenAI News",
-            "blurb": "Shirudo, an open‑source Linux runtime from OpenAI and Cisco, helps protect systems while patching.",
-            "published": "2026-11-23T21:20:00+00:00"
+            "blurb": "OpenAI's GPT-6 can design proteins, showing AI can create biologically functional molecules.",
+            "published": "2026-11-24T13:00:00+00:00"
           },
           {
-            "title": "Live Updates: Huang’s Return to Nvidia Sparks Stock Rally and Lawmaker Skepticism",
-            "url": "https://news.google.com/rss/articles/CBMiiAFBVV95cUxNdnQ0LTNaSmJtV2pfeHlCZmVqWDM1QXU0TkZZcnYxS1JpTGozTVR2dVhfM013NUp2VWdoMmdFWjZtR0tUenJlOURYNGFtcmZwZjJrd2VnSjUxVnFoZk90bWhrV3d3NzNkTTlyNjM3NzZXaXZLUEdEWlV4ZGdEeUZQY0xZbzBnZUYz?oc=5",
-            "source": "The New York Times",
-            "blurb": "Nvidia's Huang returns, sparking a stock rally and raising lawmaker skepticism.",
-            "published": "2026-11-24T00:15:05+00:00"
+            "title": "DOJ’s New Super Intelligence Task Force Signals More Coordinated AI Enforcement",
+            "url": "https://news.google.com/rss/articles/CBMiigFBVV95cUxPN3M5NVlhTFR3T1hHeGpDeGNXQjVCQnEtWG1DS2JmUmVrUlR4QUpPZGloN1pXam9RSTJvSy1rRUpRZEl1OTFaMXJ1MVZ4Skt0ejE2TEVra1ZjUUUtWnJjLUZ0ZGF5ajlvMWI3LVBXTVBTd0tPbDE2UDdwZEtWbHRWUlY2U25ZcFhxcEE?oc=5",
+            "source": "JD Supra",
+            "blurb": "DOJ launches Super Intelligence Task Force, signaling tighter coordinated enforcement of AI regulations.",
+            "published": "2026-11-25T00:33:11+00:00"
           },
           {
-            "title": "New AI rule marks a first for US federal appeals courts",
-            "url": "https://news.google.com/rss/articles/CBMiswFBVV95cUxQMFpmUkVHc2JjTWYtenpNaDMtVUhVNHBRS1ExTFhJRnFMNU9vWHYwSFlvZmoxcmZXUXhieGl0UGRqdzdJXy1pUGY1Ul90QW93OTBET21hWkRDd1pOWUlhTWQtcGdwZE9fOTAtTmVjYU11VWZTOGpMQXhiUlg4bzh6bEtVOHhBWEFFZGJxLVdveUd3MEdMOU1RU2JjTktnSU1UYTNTVzlCTkJBdUVGUF8tblk0RQ?oc=5",
-            "source": "Reuters",
-            "blurb": "US federal appeals courts adopt a new AI rule, a first for the judiciary.",
-            "published": "2026-11-23T23:57:13+00:00"
+            "title": "How Gemini is changing the game for Golden State's organization and fans.",
+            "url": "https://blog.google/products-and-platforms/products/gemini/gemini-golden-state/",
+            "source": "Google AI Blog",
+            "blurb": "Google Gemini partners with Golden State Warriors to power fan experiences and arena operations.",
+            "published": "2026-11-24T16:00:00+00:00"
           },
           {
-            "title": "Governors Call for Increased, Aligned AI Policy Regulation",
-            "url": "https://news.google.com/rss/articles/CBMiqAFBVV95cUxNdmNSZUs4RVBfajI0RWIzSXJyUFZiSUF2N0RnbGNmcE1rU2hEMGs5eWNtazB2VDhJcHc5YXlfa3pJZkxBNlpwNXZMQ3hXRDNaeXc3cTdzX1dBZ0tEX3lXRFhoQmZONkZVVFRNUWlvU05qZWNXWXR2STNLZm5oSzB0blJrZmFjYjY1bWwwekFuSUZTZ3M4dDRneFB0Z3laYWdfNFU1eTQ2blM?oc=5",
-            "source": "GovTech",
-            "blurb": "Governors call for stronger, aligned AI policy regulation across states.",
-            "published": "2026-11-24T00:13:32+00:00"
-          },
-          {
-            "title": "Physics-guided AI reconstructs fluid flow from sparse, noisy data",
-            "url": "https://news.google.com/rss/articles/CBMie0FVX3lxTE1RV1R3XzUxV0tTVTJicW9ad1MtZWFSekJnaDFGaGZUUG1OYjZYSDVicUhkR3lob3RlaDZTRmgzWjUzR3lzcmVVTkJYUHlPVWtGdzZzZ1d3T0tidC0xNHJPNFNyX2xfcWpaWGlEXzY3TmNxcXVuNW04UzU4RQ?oc=5",
-            "source": "Phys.org",
-            "blurb": "Physics‑guided AI can reconstruct fluid flow from sparse, noisy data, advancing scientific modeling.",
-            "published": "2026-11-23T23:20:01+00:00"
-          },
-          {
-            "title": "Richpanel helps companies automate 50% of support in 30 days",
-            "url": "https://openai.com/business/customer-stories/richpanel-ai-customer-support",
+            "title": "How iFood scales coding agents across 15,000 repositories",
+            "url": "https://openai.com/business/customer-stories/ifood",
             "source": "OpenAI News",
-            "blurb": "Richpanel equips AI support agents with GPT‑6 models to automate half of support in 30 days.",
-            "published": "2026-11-23T08:00:00+00:00"
+            "blurb": "iFood scales AI coding agents across 15,000 repositories, boosting development speed.",
+            "published": "2026-11-24T00:00:00+00:00"
+          },
+          {
+            "title": "Searching for distant planets with Astra",
+            "url": "https://openai.com/index/searching-for-distant-planets-with-astra",
+            "source": "OpenAI News",
+            "blurb": "Amateur astronomers used Codex and Astra to locate potential exoplanets in Kepler and TESS data.",
+            "published": "2026-11-24T11:00:00+00:00"
+          },
+          {
+            "title": "A training engine for your local model, using your idle compute",
+            "url": "https://github.com/sous-labs/songe",
+            "source": "Hacker News",
+            "blurb": "A new engine lets users train local models using idle computer resources.",
+            "published": "2026-11-24T15:03:40+00:00"
           }
         ]
       }
