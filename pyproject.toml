@@ -21,6 +21,7 @@ dev = [
   "ruff>=0.8",
   "mypy>=1.13",
   "types-PyYAML",
+  "pre-commit>=4.0",
 ]
 # Browser tests for the website (tests/ui); also run: python -m playwright install chromium
 ui = [

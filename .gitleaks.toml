@@ -1,0 +1,23 @@
+# gitleaks configuration: the upstream default rules plus a NARROW allowlist for the
+# fake credentials that the test-suite uses on purpose (to prove secrets are redacted).
+# Never add real values here, and never allowlist whole directories: a finding outside
+# these exact fake values must still fail the scan.
+title = "MyBuddy gitleaks config"
+
+[extend]
+useDefault = true
+
+[[allowlists]]
+description = "Fake Telegram token, Discord webhook URLs and Groq key used by the tests"
+# Only these exact fake values are ignored. Deliberately no `paths` entry: a path
+# allowlist makes gitleaks skip whole files, which would hide a real secret pasted
+# into a test.
+regexTarget = "match"
+regexes = [
+  # Fake Telegram bot token (tests/test_bot.py, test_fanout.py, test_hardening.py, ...)
+  '''123456789:AAH-secret_token_value_1234567890(?:[^\w-]|$)''',
+  # Fake Discord webhook URLs
+  '''discord\.com/api/webhooks/(x|1/abc|1/SECRET|123456789012345678/AbCdEfSecretTokenValue)\b''',
+  # Fake Groq API key (tests/test_cli.py)
+  '''gsk_supersecret(?:[^\w-]|$)''',
+]
