@@ -108,7 +108,14 @@ def bot(tg: TgHttp, store: Store, ticker: Ticker, log: io.StringIO) -> Subscript
 def make_bot(
     tg: TgHttp, store: Store, ticker: Ticker, log: io.StringIO, **kw: Any
 ) -> SubscriptionBot:
-    options: dict[str, Any] = {"owner_chat_id": str(OWNER), "monotonic": ticker, "log": log}
+    # These tests cover the subscription flow itself, so they run with PUBLIC_SIGNUP on;
+    # private mode (the default) is covered in test_bot_access.py.
+    options: dict[str, Any] = {
+        "owner_chat_id": str(OWNER),
+        "monotonic": ticker,
+        "log": log,
+        "public_signup": True,
+    }
     options.update(kw)
     return SubscriptionBot(TOKEN, tg, store, TOPICS, FixedClock(MONDAY), **options)
 
@@ -469,7 +476,9 @@ def test_bot_uses_stable_bits_not_positions(
     tg: TgHttp, store: Store, ticker: Ticker, log: io.StringIO
 ) -> None:
     shuffled = [t for t in TOPICS if t.id != "security"][::-1]  # reordered, one removed
-    bot = SubscriptionBot(TOKEN, tg, store, shuffled, FixedClock(MONDAY), monotonic=ticker)
+    bot = SubscriptionBot(
+        TOKEN, tg, store, shuffled, FixedClock(MONDAY), monotonic=ticker, public_signup=True
+    )
     bot.handle_update(msg("/start t40"))
     assert store.get_subscriber(CHAT).topics == ("ai_models",)  # type: ignore[union-attr]
     bot.handle_update(msg("/start t3", uid=2))  # bit 1 (security) is gone -> picker

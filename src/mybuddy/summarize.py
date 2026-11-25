@@ -58,6 +58,16 @@ class Provider:
     model: str
 
 
+def providers_for(settings: Settings) -> list[Provider]:
+    """Groq first, then Gemini, each only when its key is set."""
+    out = []
+    if settings.groq_api_key:
+        out.append(Provider("groq", GROQ_URL, settings.groq_api_key, settings.groq_model))
+    if settings.gemini_api_key:
+        out.append(Provider("gemini", GEMINI_URL, settings.gemini_api_key, settings.gemini_model))
+    return out
+
+
 def clean_text(text: str, limit: int) -> str:
     """Collapse whitespace, strip any URLs the model slipped in, and cap length."""
     text = _URL_RE.sub("", text)
@@ -177,13 +187,7 @@ class Summarizer:
         print(f"[mybuddy] {msg}", file=self.log or sys.stderr)
 
     def providers(self) -> list[Provider]:
-        out = []
-        s = self.settings
-        if s.groq_api_key:
-            out.append(Provider("groq", GROQ_URL, s.groq_api_key, s.groq_model))
-        if s.gemini_api_key:
-            out.append(Provider("gemini", GEMINI_URL, s.gemini_api_key, s.gemini_model))
-        return out
+        return providers_for(self.settings)
 
     # ---- prompt
     def build_messages(

@@ -20,7 +20,8 @@ each report on Telegram (and optionally Discord). Every item links to its source
 
 ## Public subscriptions (Telegram)
 
-Anyone can subscribe through the bot [@myBuddy_update_bot](https://t.me/myBuddy_update_bot).
+When public signup is on (see [Chat and access](#chat-and-access)), anyone can subscribe
+through the bot [@myBuddy_update_bot](https://t.me/myBuddy_update_bot).
 Visitors pick topics on the website, which opens
 `https://t.me/myBuddy_update_bot?start=<payload>`; the bot subscribes them when they tap Start.
 
@@ -40,6 +41,34 @@ Visitors pick topics on the website, which opens
   `mybuddy subscribers` prints counts per topic; `mybuddy check` shows the active total.
 * `mybuddy telegram-setup` and the bot both read updates, so stop `mybuddy-bot` before running
   it.
+
+## Chat and access
+
+MyBuddy is **private by default**: only the owner (`TELEGRAM_CHAT_ID`) and chats in
+`CHAT_ALLOWLIST` can subscribe or chat. Anyone else gets one polite "private" reply (at most every
+10 minutes; no AI call, nothing stored). People who subscribed earlier keep getting reports and
+can always `/stop`.
+
+Allowed chats can ask about the latest reports: send a plain question or `/ask <question>`. Groq
+answers (Gemini only as a fallback, if set) from the saved reports only, citing items like
+`[security #2]`; the bot adds those items' stored links and removes any other URL. Messages and
+feed text are treated as data, the model has no tools, and nothing is remembered between
+messages (`/reset` just confirms that). Logs show masked chat ids and sizes, never text.
+
+| Setting | Default | Meaning |
+| --- | --- | --- |
+| `PUBLIC_SIGNUP` | `false` | `true` lets anyone subscribe (chat stays owner + allowlist) |
+| `CHAT_ALLOWLIST` | empty | extra chat ids, comma separated (the owner is always allowed) |
+| `CHAT_ENABLED` | `true` if `GROQ_API_KEY` is set | `false` turns chat off |
+| `CHAT_RATE_PER_MIN` | `5` | messages per minute per chat |
+| `CHAT_DAILY_CAP` | `30` | messages per chat per day (IST) |
+| `CHAT_DAILY_TOKEN_BUDGET` | `60000` | Groq tokens per day for all chat together, so reports keep their quota |
+
+Limits are counted in SQLite, so restarts don't reset them. To add someone: ask them to message
+the bot, get their chat id (e.g. from @userinfobot), then on the VM add
+`CHAT_ALLOWLIST=123456789,987654321` to `~/.config/mybuddy/env` and
+`sudo systemctl restart mybuddy-bot`. To open signup to everyone, add `PUBLIC_SIGNUP=true` the
+same way. `mybuddy check` prints the current mode, allowlist size and limits.
 
 ## Develop and test
 

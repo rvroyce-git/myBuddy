@@ -25,6 +25,12 @@ MAX_TOPIC_BIT = 59  # payload is at most 15 hex digits = 60 bits
 DEFAULT_MAX_SUBSCRIBERS = 100
 MAX_SUBSCRIBERS_CEILING = 10_000
 DEFAULT_BOT_USERNAME = "myBuddy_update_bot"
+# Chat with the bot (owner + CHAT_ALLOWLIST only). Groq's free tier is shared with the
+# scheduled reports, so chat gets its own small daily token budget.
+DEFAULT_CHAT_RATE_PER_MIN = 5
+DEFAULT_CHAT_DAILY_CAP = 30
+DEFAULT_CHAT_DAILY_TOKEN_BUDGET = 60_000
+_CHAT_ID_RE = re.compile(r"-?[0-9]{1,20}")
 _BOT_USERNAME_RE = re.compile(r"^[A-Za-z][A-Za-z0-9_]{3,31}$")
 
 _TOPIC_KEYS = {
@@ -108,6 +114,17 @@ class Settings:
     fake: bool = False
     max_subscribers: int = DEFAULT_MAX_SUBSCRIBERS
     bot_username: str = DEFAULT_BOT_USERNAME
+    # Access: private by default. The owner (telegram_chat_id) is always allowed.
+    public_signup: bool = False
+    chat_allowlist: tuple[int, ...] = field(default=(), repr=False)  # extra chat ids
+    chat_enabled: bool = True  # only takes effect with an AI key (see chat_active)
+    chat_rate_per_min: int = DEFAULT_CHAT_RATE_PER_MIN
+    chat_daily_cap: int = DEFAULT_CHAT_DAILY_CAP
+    chat_daily_token_budget: int = DEFAULT_CHAT_DAILY_TOKEN_BUDGET
+
+    @property
+    def chat_active(self) -> bool:
+        return self.chat_enabled and bool(self.groq_api_key or self.gemini_api_key)
 
     @classmethod
     def from_env(cls, env: Mapping[str, str] | None = None) -> Settings:
@@ -135,7 +152,55 @@ class Settings:
             fake=(get("MYBUDDY_FAKE") or "").lower() in {"1", "true", "yes", "on"},
             max_subscribers=_max_subscribers_or_default(get("MYBUDDY_MAX_SUBSCRIBERS")),
             bot_username=_bot_username_or_default(get("MYBUDDY_BOT_USERNAME")),
+            public_signup=parse_flag(get("PUBLIC_SIGNUP"), default=False),
+            chat_allowlist=parse_chat_allowlist(get("CHAT_ALLOWLIST"))[0],
+            chat_enabled=parse_flag(get("CHAT_ENABLED"), default=bool(get("GROQ_API_KEY"))),
+            chat_rate_per_min=parse_count(
+                get("CHAT_RATE_PER_MIN"), DEFAULT_CHAT_RATE_PER_MIN, 1000
+            ),
+            chat_daily_cap=parse_count(get("CHAT_DAILY_CAP"), DEFAULT_CHAT_DAILY_CAP, 100_000),
+            chat_daily_token_budget=parse_count(
+                get("CHAT_DAILY_TOKEN_BUDGET"), DEFAULT_CHAT_DAILY_TOKEN_BUDGET, 10_000_000
+            ),
         )
+
+
+_TRUE = {"1", "true", "yes", "on"}
+_FALSE = {"0", "false", "no", "off"}
+
+
+def parse_flag(raw: str | None, *, default: bool) -> bool:
+    """true/false, yes/no, on/off, 1/0; anything else (or unset) means the default."""
+    value = (raw or "").strip().lower()
+    if value in _TRUE:
+        return True
+    if value in _FALSE:
+        return False
+    return default
+
+
+def parse_count(raw: str | None, default: int, ceiling: int) -> int:
+    """A whole number 0..ceiling; anything else means the default (`mybuddy check` warns)."""
+    value = (raw or "").strip()
+    if re.fullmatch(r"[0-9]{1,9}", value) and int(value) <= ceiling:
+        return int(value)
+    return default
+
+
+def parse_chat_allowlist(raw: str | None) -> tuple[tuple[int, ...], int]:
+    """CHAT_ALLOWLIST "123, 456" -> ((123, 456), number of ignored invalid entries)."""
+    ids: list[int] = []
+    bad = 0
+    for part in (raw or "").split(","):
+        entry = part.strip()
+        if not entry:
+            continue
+        if _CHAT_ID_RE.fullmatch(entry):
+            if int(entry) not in ids:
+                ids.append(int(entry))
+        else:
+            bad += 1
+    return tuple(ids), bad
 
 
 def parse_max_subscribers(raw: str | None) -> int:
@@ -178,6 +243,12 @@ SETTING_ENV_VARS: tuple[tuple[str, bool], ...] = (
     ("MYBUDDY_FAKE", False),
     ("MYBUDDY_MAX_SUBSCRIBERS", False),
     ("MYBUDDY_BOT_USERNAME", False),
+    ("PUBLIC_SIGNUP", False),
+    ("CHAT_ALLOWLIST", False),
+    ("CHAT_ENABLED", False),
+    ("CHAT_RATE_PER_MIN", False),
+    ("CHAT_DAILY_CAP", False),
+    ("CHAT_DAILY_TOKEN_BUDGET", False),
 )
 
 

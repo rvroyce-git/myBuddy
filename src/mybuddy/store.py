@@ -43,9 +43,21 @@ CREATE TABLE IF NOT EXISTS subscribers (
     created_at TEXT NOT NULL,
     updated_at TEXT NOT NULL
 );
+-- Bot chat usage, for rate limits and daily caps: when, which chat, IST day, tokens used.
+-- Never the message text. Rows older than CHAT_USAGE_RETENTION_DAYS are pruned.
+CREATE TABLE IF NOT EXISTS chat_usage (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    chat_id INTEGER NOT NULL,
+    at TEXT NOT NULL,
+    day TEXT NOT NULL,
+    tokens INTEGER NOT NULL DEFAULT 0
+);
+CREATE INDEX IF NOT EXISTS chat_usage_chat ON chat_usage(chat_id, at);
+CREATE INDEX IF NOT EXISTS chat_usage_day ON chat_usage(day);
 """
 
 BOT_STATE_KEY = "telegram:bot"
+CHAT_USAGE_RETENTION_DAYS = 3
 
 
 @dataclass(frozen=True)
@@ -265,3 +277,41 @@ class Store:
 
     def save_bot_offset(self, offset: int) -> None:
         self.save_snapshot(BOT_STATE_KEY, {"offset": int(offset)})
+
+    # ---- bot chat usage (limits survive restarts; no message text is stored)
+    def record_chat_use(self, chat_id: int, now: datetime, day: str, tokens: int = 0) -> int:
+        """Count one chat message for `chat_id` on IST `day`. Prunes old rows. Returns row id."""
+        cutoff = _utc_stamp(now - timedelta(days=CHAT_USAGE_RETENTION_DAYS))
+        with self._db:
+            self._db.execute("DELETE FROM chat_usage WHERE at < ?", (cutoff,))
+            cur = self._db.execute(
+                "INSERT INTO chat_usage(chat_id, at, day, tokens) VALUES (?, ?, ?, ?)",
+                (chat_id, _utc_stamp(now), day, max(0, int(tokens))),
+            )
+        return int(cur.lastrowid or 0)
+
+    def set_chat_tokens(self, row_id: int, tokens: int) -> None:
+        with self._db:
+            self._db.execute(
+                "UPDATE chat_usage SET tokens=? WHERE id=?", (max(0, int(tokens)), row_id)
+            )
+
+    def chat_uses_since(self, chat_id: int, since: datetime) -> int:
+        row = self._db.execute(
+            "SELECT COUNT(*) FROM chat_usage WHERE chat_id=? AND at > ?",
+            (chat_id, _utc_stamp(since)),
+        ).fetchone()
+        return int(row[0])
+
+    def chat_uses_on(self, chat_id: int, day: str) -> int:
+        row = self._db.execute(
+            "SELECT COUNT(*) FROM chat_usage WHERE chat_id=? AND day=?", (chat_id, day)
+        ).fetchone()
+        return int(row[0])
+
+    def chat_tokens_on(self, day: str) -> int:
+        """Tokens used by chat on IST `day`, all chats together."""
+        row = self._db.execute(
+            "SELECT COALESCE(SUM(tokens), 0) FROM chat_usage WHERE day=?", (day,)
+        ).fetchone()
+        return int(row[0])

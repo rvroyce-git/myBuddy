@@ -114,3 +114,10 @@ Visitors pick topics on the website and subscribe to the existing bot `@myBuddy_
   Telegram chat id and topic ids are stored — no names, usernames or phone numbers.
 * **Limit**: `MYBUDDY_MAX_SUBSCRIBERS` (default 100) active subscribers; new ones beyond that get a
   polite "full" message. Per-chat flood guard: ignore more than 10 commands (or 40 picker taps) per minute.
+* **Access** (phase 2): private by default (`PUBLIC_SIGNUP=false`). Only the owner and
+  `CHAT_ALLOWLIST` chats can start a new subscription; others get a fixed "private" reply (at most
+  once per 10 minutes, no store write). Existing subscribers keep their reports, can change topics
+  and can always `/stop`. With `PUBLIC_SIGNUP=true` the flow above applies to everyone.
+* **Chat**: owner + `CHAT_ALLOWLIST` only. Plain text or `/ask <question>` is answered from the
+  latest saved reports (stateless; `/reset` just says so). Usage counts live in SQLite
+  `chat_usage(chat_id, at, day, tokens)` (no text), pruned after 3 days.
