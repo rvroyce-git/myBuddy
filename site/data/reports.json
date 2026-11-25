@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-11-25T07:45:06+05:30",
+  "generated_at": "2026-11-25T08:00:06+05:30",
   "topics": [
     {
       "id": "ai_news",
@@ -259,51 +259,51 @@
       "schedule": "Daily · 08:00 IST",
       "bit": 5,
       "report": {
-        "created_at": "2026-11-24T08:00:05+05:30",
-        "headline": "Major funding rounds and new AI tools dominate startup news this week",
-        "summary": "Sierra secures over $1.7 B, while Myriota, Supertake and invoiceQ raise sizable rounds. New AI‑powered products Inkling 2 Mini and FigmaMCP aim to simplify coding and design.",
+        "created_at": "2026-11-25T08:00:05+05:30",
+        "headline": "AI‑focused startups secure major funding while new productivity tools launch",
+        "summary": "Maple and Matters.AI raise multi‑million rounds to protect data, and several iOS tools—Willow, Agenda Hero, Hourly Journal, and Finer Screenshot—hit the market to streamline work.",
         "items": [
           {
-            "title": "Bret Taylor’s Sierra Finalizing More Than $1.75 Billion Round",
-            "url": "https://news.google.com/rss/articles/CBMisAFBVV95cUxQM1BneUJiNjdrRDZtLTJibnlJVmdERE1wQkwxdzctbHVZVkJWT1puMzhYa2g4bGNSemJRU2hRdUZMSkhLS3ByQUZQR3JkYXo0Umg2T3NHUFdKQm9DbXNRUktJd0hJNmtkQjVBN2hQYUVnOWZEM0N6Q2ZIVEd5M2V6ZFNSbkkwbHNMREotQ0tFZi00N0s5RXFJaGQ4Rzd1blltdUQxX0dvYUgtcWVodFJmYg?oc=5",
-            "source": "Bloomberg.com",
-            "blurb": "Sierra, Bret Taylor’s venture, finalizing over $1.75 B round, fueling its tech platform growth.",
-            "published": "2026-11-23T18:34:12+00:00"
-          },
-          {
-            "title": "Myriota secures $60m in first Series C close to scale satellite connectivity",
-            "url": "https://news.google.com/rss/articles/CBMi5gFBVV95cUxNUXE0NV9EdXZNOWppX0wzZ0RHZEtpOWJtYnNMQnJPVDBuVC0zRVVaYVJCazlkSnVGM1ZoU3RiYUp6WkpvNjN2Yl9rSk5mRzFVOFl6UGpqRm5lc0VlVTB1NXdKV3QyYUFrbjRvZ3lZdlR1dzRSclk1SzY4TU9YalYtU3N2eHF1SC0ydEFIRU5POVVwQTVaRGY1UEhBekQxcW1PNTlRWnBDeXNBZWtJeEdHRy1nSEpjRl91UFRQcXd5X0l0Tzd6VzdFTHBKRHZZZWlUNVV2aU1PbEhwUFh5NGY0Q2k3QkJqZw?oc=5",
-            "source": "Capital Brief",
-            "blurb": "Myriota raises $60 M Series C to expand satellite connectivity for IoT devices.",
-            "published": "2026-11-23T21:53:00+00:00"
-          },
-          {
-            "title": "Supertake raises $20M to let AI agents turn your market predictions into stock portfolios",
-            "url": "https://techcrunch.com/2026/11/23/supertake-raises-20m-to-let-ai-agents-turn-your-market-predictions-into-stock-portfolios/",
+            "title": "Maple raises $5.3M to build AI products that protect your data, even from itself",
+            "url": "https://techcrunch.com/2026/11/24/maple-raises-5-3m-to-build-ai-products-that-protect-your-data-even-from-itself/",
             "source": "TechCrunch Startups",
-            "blurb": "Supertake secures $20 M to let AI agents turn market forecasts into ready‑made portfolios.",
-            "published": "2026-11-23T22:02:05+00:00"
+            "blurb": "Maple raises $5.3M to build encrypted AI that keeps user data private, even from itself.",
+            "published": "2026-11-24T21:19:52+00:00"
           },
           {
-            "title": "Jordanian Startup invoiceQ Raises $5 Million in Series A Funding to Expand Across MENA",
-            "url": "https://news.google.com/rss/articles/CBMiugFBVV95cUxPWl9JcllndmMwcUd5SEZqaFRCREs2enJrWkJ3VDBMQ1NCYTZOcTkzOTVDUGswMXRLRC1TQ0VxSkNwTFVSVkNFSUFUQnRrTzE5VnJxaGVrRTQ3NS02Rllrdjg2ZXJRQ2ZzQjJ4TWxsRW11UWtRU1ZvSXFETjVqVmliLVNJZi1hV0FuejNDaERUd2RfeFp6UnY1dTlpR0p6YWozUzJySTliM1BCTXAwRm9mWTlZa003R1ZCcGc?oc=5",
-            "source": "entARABI",
-            "blurb": "InvoiceQ obtains $5 M Series A to broaden its invoicing platform across MENA.",
-            "published": "2026-11-23T15:53:20+00:00"
+            "title": "Matters.AI Raises ₹115 Crore in Pre-Series A Round to Strengthen Enterprise Data Security",
+            "url": "https://news.google.com/rss/articles/CBMi1AFBVV95cUxOMW92dVlYa2xoQmxDMXg1V1hXbFF3Z01sUWVnSEZDYldBNGNlb0hGOVROUzBvQlhhcmlzMmYwT2REU0RGM2Z6dXMtUHVlZDR1QThzb3dtcFZiOFZsQlhxWjVaMGR1OUNXVjFPaW1tcDNYcnNEOGdWNzVpNUNCcXp3TldkeWcyUmRTVl9BSDVqWVQxM1ZHcV9xZGozcTFORm5KMlZ3d1RNQ2EwT2ZoNGtZYTk0X0YtN3BzZDI0N011cmNwbG9wTHM4clRCeU0weEhPZUE5Ng?oc=5",
+            "source": "Indian Startup Times",
+            "blurb": "Matters.AI secures ₹115 Crore pre‑Series A to boost enterprise data‑security solutions.",
+            "published": "2026-11-24T13:52:48+00:00"
           },
           {
-            "title": "Inkling 2 Mini",
-            "url": "https://www.producthunt.com/products/tinker-2",
+            "title": "Willow iOS 2.0",
+            "url": "https://www.producthunt.com/products/willow-voice",
             "source": "Product Hunt",
-            "blurb": "Inkling 2 Mini launches a 26‑billion‑parameter coding model for laptop developers.",
-            "published": "2026-11-23T03:37:24+00:00"
+            "blurb": "Willow iOS 2.0 lets you dictate without switching apps, easing mobile note‑taking.",
+            "published": "2026-11-24T06:38:15+00:00"
           },
           {
-            "title": "FigmaMCP",
-            "url": "https://www.producthunt.com/products/figmamcp",
+            "title": "Agenda Hero Magic Labs",
+            "url": "https://www.producthunt.com/products/agenda-hero-magic",
             "source": "Product Hunt",
-            "blurb": "FigmaMCP lets Claude Code or Codex edit open Figma files, streamlining design‑code workflow.",
-            "published": "2026-11-22T23:28:02+00:00"
+            "blurb": "Agenda Hero Magic Labs offers flexible scheduling layouts for any style, simplifying calendar planning.",
+            "published": "2026-11-24T06:26:55+00:00"
+          },
+          {
+            "title": "Hourly Journal",
+            "url": "https://www.producthunt.com/products/hourly-journal",
+            "source": "Product Hunt",
+            "blurb": "Hourly Journal tracks work hours and daily patterns, helping users understand time use.",
+            "published": "2026-11-24T04:54:41+00:00"
+          },
+          {
+            "title": "Finer Screenshot",
+            "url": "https://www.producthunt.com/products/finer-screenshot",
+            "source": "Product Hunt",
+            "blurb": "Finer Screenshot adds readable text overlay on any background, improving visual clarity.",
+            "published": "2026-11-24T04:45:20+00:00"
           }
         ]
       }
