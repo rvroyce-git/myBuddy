@@ -38,7 +38,7 @@ sudo install -m 644 /home/mybuddy/app/deploy/mybuddy-publish.path /etc/systemd/s
 sudo systemctl daemon-reload
 sudo systemctl enable --now mybuddy mybuddy-bot
 # Publishing to GitHub Pages needs the server's deploy key added on GitHub first.
-if sudo test -f /home/mybuddy/.ssh/github_deploy; then
+if sudo test -f /home/mybuddy/.ssh/github_data_deploy; then
   sudo systemctl enable --now mybuddy-publish.path
 fi
 sudo systemctl restart mybuddy mybuddy-bot
