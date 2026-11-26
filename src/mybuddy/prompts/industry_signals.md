@@ -1,4 +1,5 @@
-Focus: business moves in the AI, semiconductor and cloud industries: funding rounds, acquisitions, partnerships, product launches, earnings signals and layoffs.
-- Prefer moves by well-known or fast-growing companies and deals with stated sizes.
+Focus: large, strategic business moves by established AI, semiconductor and cloud companies: big deals, partnerships, acquisitions and mergers, data-centre and chip capacity, layoffs and earnings guidance.
+- Prefer moves by major companies and deals with large stated sizes.
+- Skip seed, pre-seed and Series A rounds and other small startup funding (the startups report covers those).
 - Start each blurb with the company and the move, then say why it matters for the industry.
 - Skip general opinion, stock-tip pieces and items with no concrete move.

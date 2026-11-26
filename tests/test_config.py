@@ -195,3 +195,20 @@ def test_env_file_does_not_override(tmp_path: Path) -> None:
     with pytest.raises(ConfigError, match=":1:"):
         load_env_file(f, env)
     assert "GROQ_API_KEY" not in os.environ or os.environ["GROQ_API_KEY"] != "from-file"
+
+
+def test_policy_and_industry_prompts_and_feeds() -> None:
+    from mybuddy.sources import source_hosts
+
+    topics = {t.id: t for t in load_topics(DEFAULT_CONFIG_PATH)}
+    prompts = DEFAULT_CONFIG_PATH.parent.parent / "src" / "mybuddy" / "prompts"
+    policy = (prompts / "policy_watch.md").read_text(encoding="utf-8")
+    assert "Skip product launches" in policy and "enforcement" in policy
+    industry = (prompts / "industry_signals.md").read_text(encoding="utf-8")
+    assert "Series A" in industry and "established" in industry
+    # EE Times answers 403 to the app; DatacenterDynamics replaces it.
+    hosts: set[str] = set()
+    for spec in topics["industry_signals"].sources:
+        hosts |= source_hosts(dict(spec))
+    assert "www.datacenterdynamics.com" in hosts
+    assert "www.eetimes.com" not in hosts
