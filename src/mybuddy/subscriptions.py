@@ -1,13 +1,14 @@
 """Pure subscription logic shared by the website contract, the Telegram bot and delivery.
 
-* Website topics = topics with `ai: true` (export.py filters the same way). Each has a
+* Website topics = `ai: true` topics unless they set `website: false` (Topic.on_website;
+  export.py filters the same way). Each has a
   permanent `bit:` in topics.yaml (contract v2), so payloads survive reordering and removal.
 * Start-link payload = "t" + lowercase hex bitmask; bit n set for each chosen topic's `bit`.
   Today (ai_news 0 ... ai_models 6): all -> "t7f", ai_news + security -> "t3".
   Bits that no current topic owns make the payload invalid (the bot shows the picker).
-* Audience: an AI topic's reports go to its own subscribers; a non-AI topic with
-  `audience: <ai topic id>` in topics.yaml (kev_alerts -> security) goes to that topic's
-  subscribers; any other non-AI topic goes to the owner only.
+* Audience: a website topic's reports go to its own subscribers; any other topic with
+  `audience: <website topic id>` in topics.yaml (kev_alerts -> security) goes to that topic's
+  subscribers; any other topic (e.g. the health check) goes to the owner only.
 """
 
 from __future__ import annotations
@@ -26,7 +27,7 @@ TopicBits = Mapping[str, int]  # website topic id -> permanent bit, in config (d
 
 
 def website_topics(topics: Sequence[Topic]) -> list[Topic]:
-    return [t for t in topics if t.ai]
+    return [t for t in topics if t.on_website]
 
 
 def topic_order(topics: Sequence[Topic]) -> list[str]:
@@ -86,16 +87,16 @@ def decode_payload(payload: str, bits: TopicBits) -> list[str] | None:
 
 def audience_map(topics: Sequence[Topic]) -> dict[str, str]:
     """Report topic id -> the subscription topic id whose subscribers receive it."""
-    out = {t.id: t.id for t in topics if t.ai}
+    out = {t.id: t.id for t in topics if t.on_website}
     for t in topics:
-        if not t.ai and t.audience and t.audience in out:
+        if not t.on_website and t.audience and t.audience in out:
             out[t.id] = t.audience
     return out
 
 
 def followers_of(topic_id: str, topics: Sequence[Topic]) -> list[Topic]:
-    """Non-AI topics delivered along with `topic_id` (e.g. kev_alerts with security)."""
-    return [t for t in topics if not t.ai and t.audience == topic_id]
+    """Non-website topics delivered along with `topic_id` (e.g. kev_alerts with security)."""
+    return [t for t in topics if not t.on_website and t.audience == topic_id]
 
 
 def mask_chat_id(chat_id: int | str) -> str:

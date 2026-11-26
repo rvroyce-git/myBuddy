@@ -40,7 +40,13 @@ _TOPIC_KEYS = {
     "max_items",
     "audience",
     "bit",
+    "website",
+    "kind",
+    "dedupe_with",
 }
+# news: collect from `sources`. digest/weekly: built from stored reports (no fetching).
+# health: the app's own state, owner only. Only news topics can be on the website.
+TOPIC_KINDS: tuple[str, ...] = ("news", "digest", "weekly", "health")
 _REQUIRED_TOPIC_KEYS = ("id", "title", "emoji", "description", "schedule", "ai")
 _SCHEDULE_KEYS = {"time", "days", "every_minutes"}
 _ROTATION_KEYS = {"title", "sources"}
@@ -91,6 +97,15 @@ class Topic:
     # AI (website) topics only: permanent bit in Telegram start-link payloads. Never change or
     # reuse a bit, even when topics are reordered or removed.
     bit: int | None = None
+    # Shown on the website (and subscribable there). None = the old rule: AI topics only.
+    website: bool | None = None
+    kind: str = "news"
+    # News topics only: skip items another topic has already delivered (cheap URL check).
+    dedupe_with: tuple[str, ...] = ()
+
+    @property
+    def on_website(self) -> bool:
+        return self.ai if self.website is None else self.website
 
 
 @dataclass(frozen=True)
@@ -333,6 +348,10 @@ def _parse_topic(
     if not isinstance(max_items, int) or isinstance(max_items, bool) or not 1 <= max_items <= 50:
         raise ConfigError(f"{where}.max_items: must be an integer between 1 and 50")
 
+    kind = data.get("kind", "news")
+    if kind not in TOPIC_KINDS:
+        raise ConfigError(f"{where}.kind: must be one of {', '.join(TOPIC_KINDS)}")
+
     sources: tuple[dict[str, Any], ...] = ()
     if "sources" in data:
         sources = _parse_sources(data["sources"], f"{where}.sources", source_types)
@@ -354,24 +373,54 @@ def _parse_topic(
                 title=_require_str(entry.get("title"), f"{w}.title"),
                 sources=_parse_sources(entry.get("sources"), f"{w}.sources", source_types),
             )
-    if not sources and not rotation:
+    if kind == "news" and not sources and not rotation:
         raise ConfigError(f"{where}: needs 'sources' or 'rotation'")
+    if kind != "news" and (sources or rotation):
+        raise ConfigError(f"{where}: {kind} topics use stored state; remove sources/rotation")
+
+    website = data.get("website", ai)
+    if not isinstance(website, bool):
+        raise ConfigError(f"{where}.website: must be true or false")
+    if website and not ai:
+        raise ConfigError(f"{where}.website: only AI topics can be shown on the website")
 
     bit: int | None = None
-    if ai:
+    if website:
         if "bit" not in data:
-            raise ConfigError(f"{where}: ai topics need a permanent 'bit' (0..{MAX_TOPIC_BIT})")
+            raise ConfigError(
+                f"{where}: website topics need a permanent 'bit' (0..{MAX_TOPIC_BIT})"
+            )
         bit = data["bit"]
         if not isinstance(bit, int) or isinstance(bit, bool) or not 0 <= bit <= MAX_TOPIC_BIT:
             raise ConfigError(f"{where}.bit: must be an integer between 0 and {MAX_TOPIC_BIT}")
     elif "bit" in data:
-        raise ConfigError(f"{where}.bit: only AI (website) topics have a subscription bit")
+        raise ConfigError(f"{where}.bit: only AI website topics have a subscription bit")
+
+    if kind != "news" and website:
+        raise ConfigError(f"{where}: {kind} topics are Telegram-only; set website: false")
+    if kind in ("digest", "weekly") and not ai:
+        raise ConfigError(f"{where}: {kind} topics need ai: true and a prompt")
+    if kind == "health" and ai:
+        raise ConfigError(f"{where}: health topics do not use AI; set ai: false")
 
     audience: str | None = None
     if "audience" in data:
         audience = _require_str(data["audience"], f"{where}.audience")
-        if ai:
-            raise ConfigError(f"{where}.audience: only non-AI topics can borrow an audience")
+        if website:
+            raise ConfigError(f"{where}.audience: only non-website topics can borrow an audience")
+        if kind == "health":
+            raise ConfigError(f"{where}.audience: health reports go to the owner only")
+
+    dedupe_with: tuple[str, ...] = ()
+    if "dedupe_with" in data:
+        raw_dedupe = data["dedupe_with"]
+        if not isinstance(raw_dedupe, list) or not all(
+            isinstance(d, str) and d.strip() for d in raw_dedupe
+        ):
+            raise ConfigError(f"{where}.dedupe_with: must be a list of topic ids")
+        if kind != "news":
+            raise ConfigError(f"{where}.dedupe_with: only news topics collect items")
+        dedupe_with = tuple(d.strip() for d in raw_dedupe)
 
     return Topic(
         id=topic_id,
@@ -386,6 +435,9 @@ def _parse_topic(
         max_items=max_items,
         audience=audience,
         bit=bit,
+        website=website,
+        kind=kind,
+        dedupe_with=dedupe_with,
     )
 
 
@@ -448,13 +500,19 @@ def parse_topics(
             bits[topic.bit] = topic.id
         seen.add(topic.id)
         topics.append(topic)
-    ai_ids = {t.id for t in topics if t.ai}
+    website_ids = {t.id for t in topics if t.on_website}
     for i, topic in enumerate(topics):
-        if topic.audience is not None and topic.audience not in ai_ids:
+        if topic.audience is not None and topic.audience not in website_ids:
             raise ConfigError(
                 f"{origin}: topics[{i}] ({topic.id}).audience: {topic.audience!r} must be the "
-                "id of an AI topic in this file"
+                "id of a website topic in this file"
             )
+        for other in topic.dedupe_with:
+            if other not in seen or other == topic.id:
+                raise ConfigError(
+                    f"{origin}: topics[{i}] ({topic.id}).dedupe_with: {other!r} must be the "
+                    "id of another topic in this file"
+                )
     return topics
 
 

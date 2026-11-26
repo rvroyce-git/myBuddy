@@ -1,0 +1,82 @@
+{
+ "description": "Documents matching '\"artificial intelligence\"', published on or after 11/19/2026, and of type Rule, Proposed Rule, and Presidential Document",
+ "count": 4,
+ "total_pages": 1,
+ "results": [
+  {
+   "title": "Addressing Remote Access to Advanced Semiconductors",
+   "abstract": "In this interim final rule (IFR), the Department of Commerce is establishing new rules to prevent certain foreign actors from leveraging advanced computing power based on U.S. technology to threaten U.S. national security and foreign policy interests. First, this rule establishes new restrictions which will apply for exports, reexports, or transfers (in-country) to overseas data centers that remot",
+   "html_url": "https://www.federalregister.gov/documents/2026/11/19/2026-23529/addressing-remote-access-to-advanced-semiconductors",
+   "publication_date": "2026-11-19",
+   "type": "Rule",
+   "agencies": [
+    {
+     "raw_name": "DEPARTMENT OF COMMERCE",
+     "name": "Commerce Department",
+     "id": 54
+    },
+    {
+     "raw_name": "Bureau of Industry and Security",
+     "name": "Industry and Security Bureau",
+     "id": 241
+    }
+   ],
+   "document_number": "2026-23529"
+  },
+  {
+   "title": "Executive Compensation Disclosure Reform",
+   "abstract": "The Securities and Exchange Commission (\"Commission\") is proposing amendments to its executive and director compensation disclosure rules to make the requirements more principles-based and to reduce compliance burdens for registrants, while maintaining the disclosure of material information to investors. The proposed amendments would focus the disclosures on the principal executive officer (\"PEO\")",
+   "html_url": "https://www.federalregister.gov/documents/2026/11/19/2026-23555/executive-compensation-disclosure-reform",
+   "publication_date": "2026-11-19",
+   "type": "Proposed Rule",
+   "agencies": [
+    {
+     "raw_name": "SECURITIES AND EXCHANGE COMMISSION",
+     "name": "Securities and Exchange Commission",
+     "id": 466
+    }
+   ],
+   "document_number": "2026-23555"
+  },
+  {
+   "title": "Employee or Independent Contractor Status Under the Fair Labor Standards Act, Family and Medical Leave Act, and Migrant and Seasonal Agricultural Worker Protection Act",
+   "abstract": "This final rule rescinds the analysis for determining employee or independent contractor status under the Fair Labor Standards Act (FLSA or Act) set forth in the Department of Labor's (Department) regulations and replaces it with an analysis similar to what it published in a final rule promulgated in 2021, with several modifications and enhancements. In addition, this final rule amends provisions ",
+   "html_url": "https://www.federalregister.gov/documents/2026/11/23/2026-23777/employee-or-independent-contractor-status-under-the-fair-labor-standards-act-family-and-medical",
+   "publication_date": "2026-11-23",
+   "type": "Rule",
+   "agencies": [
+    {
+     "raw_name": "DEPARTMENT OF LABOR",
+     "name": "Labor Department",
+     "id": 271
+    },
+    {
+     "raw_name": "Wage and Hour Division",
+     "name": "Wage and Hour Division",
+     "id": 524
+    }
+   ],
+   "document_number": "2026-23777"
+  },
+  {
+   "title": "Medicare Program; Contract Year 2028 Policy and Technical Changes to the Medicare Advantage Program, Medicare Prescription Drug Benefit Program, and Programs of All-Inclusive Care for the Elderly",
+   "abstract": "This proposed rule would revise the Medicare Advantage (Part C), Medicare Prescription Drug Benefit (Part D), and Programs of All- Inclusive Care for the Elderly regulations to implement changes related to marketing and communications, drug coverage, enrollment processes, special needs plans, and other programmatic areas. Additionally, it would establish and implement a mandatory Medicare Advantag",
+   "html_url": "https://www.federalregister.gov/documents/2026/11/25/2026-23960/medicare-program-contract-year-2028-policy-and-technical-changes-to-the-medicare-advantage-program",
+   "publication_date": "2026-11-25",
+   "type": "Proposed Rule",
+   "agencies": [
+    {
+     "raw_name": "DEPARTMENT OF HEALTH AND HUMAN SERVICES",
+     "name": "Health and Human Services Department",
+     "id": 221
+    },
+    {
+     "raw_name": "Centers for Medicare & Medicaid Services",
+     "name": "Centers for Medicare & Medicaid Services",
+     "id": 45
+    }
+   ],
+   "document_number": "2026-23960"
+  }
+ ]
+}

@@ -10,7 +10,8 @@ from pathlib import Path
 from typing import Any, TextIO
 from urllib.parse import urlsplit
 
-from mybuddy.config import Topic
+from mybuddy import reports
+from mybuddy.config import Settings, Topic
 from mybuddy.deliver import Deliverer, format_report
 from mybuddy.export import export, report_to_dict
 from mybuddy.models import Clock, HttpClient, Item, Report, Source
@@ -66,6 +67,7 @@ class Deps:
     build_source: SourceBuilder = _default_build_source
     log: TextIO | None = None
     out: TextIO | None = None  # dry-run output
+    settings: Settings | None = None  # for the health check (which services are configured)
 
 
 @dataclass
@@ -137,6 +139,8 @@ def collect(
             _log(deps, msg)
             errors.append(msg)
             snapshots.pop(snapshot_key(topic.id, name), None)
+            if persist_state:  # real runs only: the health check lists recent failures
+                _record_failure(deps, topic.id, name, f"{type(exc).__name__}: {exc}")
             continue
         groups.append(items)
     merged: list[Item] = []
@@ -149,7 +153,84 @@ def collect(
     return merged, snapshots, errors
 
 
+def _record_failure(deps: Deps, topic_id: str, source: str, error: str) -> None:
+    try:
+        deps.store.record_source_failure(topic_id, source, deps.clock.now(), error)
+    except Exception as exc:  # bookkeeping must never break a run
+        _log(deps, f"{topic_id}: could not record source failure: {type(exc).__name__}")
+
+
 def run_topic(topic: Topic, deps: Deps, *, dry_run: bool = False) -> RunResult:
+    """Run one topic. Real runs are written to the run log the health check reads."""
+    if topic.kind == "news":
+        result = _run_news(topic, deps, dry_run=dry_run)
+    else:
+        result = _run_compiled(topic, deps, dry_run=dry_run)
+    if not dry_run:
+        try:
+            deps.store.record_run(
+                topic.id,
+                deps.clock.now(),
+                result.status,
+                collected=result.collected,
+                new=result.new,
+            )
+        except Exception as exc:
+            _log(deps, f"{topic.id}: could not record run: {type(exc).__name__}")
+    return result
+
+
+def _compiled_items(topic: Topic, deps: Deps) -> list[Item]:
+    now = deps.clock.now()
+    if topic.kind == "digest":
+        return reports.digest_items(deps.topics, deps.store, now, topic.id)
+    return reports.weekly_items(deps.topics, deps.store, now, topic.id)
+
+
+def _run_compiled(topic: Topic, deps: Deps, *, dry_run: bool) -> RunResult:
+    """Digest / weekly review (from stored reports) and health check (from app state)."""
+    if topic.kind == "health":
+        settings = deps.settings or deps.summarizer.settings
+        health = reports.collect_health(
+            deps.topics, deps.store, settings, deps.clock.now(), self_id=topic.id
+        )
+        report = reports.health_report(topic.id, topic.title, health, deps.clock.now())
+        result = RunResult(topic.id, "no_new_items", report=report)
+    else:
+        items = [i for i in _compiled_items(topic, deps) if _usable(i)]
+        result = RunResult(topic.id, "no_new_items", collected=len(items), new=len(items))
+        if not items:
+            _log(deps, f"{topic.id}: no stored reports to build from")
+            return result
+        report = deps.summarizer.summarize(
+            topic, items, title=topic.title, fake=True if dry_run else None
+        )
+        result.report = report
+    return _finish(topic, deps, result, report, dry_run=dry_run)
+
+
+def _finish(
+    topic: Topic, deps: Deps, result: RunResult, report: Report, *, dry_run: bool
+) -> RunResult:
+    if dry_run:
+        print(format_report(report, topic.emoji), file=deps.out or sys.stdout, flush=True)
+        result.status = "dry_run"
+        return result
+    try:
+        deps.deliverer.deliver(report, topic.emoji)
+    except Exception as exc:
+        msg = f"{topic.id}: delivery failed: {type(exc).__name__}: {exc}"
+        _log(deps, msg)
+        result.errors.append(msg)
+        result.status = "failed"
+        return result
+    deps.store.save_report(topic.id, report.created_at, report_to_dict(report))
+    result.status = "delivered"
+    _log(deps, f"{topic.id}: delivered")
+    return result
+
+
+def _run_news(topic: Topic, deps: Deps, *, dry_run: bool = False) -> RunResult:
     resolved = resolve_run(topic, deps)
     if resolved is None:
         _log(deps, f"{topic.id}: no rotation entry for {weekday_key(deps.clock.now())}; skipping")
@@ -158,6 +239,8 @@ def run_topic(topic: Topic, deps: Deps, *, dry_run: bool = False) -> RunResult:
 
     items, snapshots, errors = collect(topic, specs, deps, persist_state=not dry_run)
     fresh_urls = deps.store.unseen(topic.id, [i.url for i in items])
+    for other in topic.dedupe_with:  # already delivered by a related topic
+        fresh_urls &= deps.store.unseen(other, fresh_urls)
     fresh = [i for i in items if i.url in fresh_urls]
     result = RunResult(
         topic.id, "no_new_items", collected=len(items), new=len(fresh), errors=errors
