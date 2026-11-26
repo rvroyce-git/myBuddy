@@ -878,3 +878,20 @@ def test_invite_only_line_under_button(ui, theme):
     btn_box = page.locator("#subsBtn").bounding_box()
     box = line.bounding_box()
     assert box["y"] >= btn_box["y"] + btn_box["height"]
+
+
+@pytest.mark.parametrize(
+    ("signup", "text"),
+    [
+        ("open", "Tap Start, pick topics, ask anything."),
+        ("private", "Invite-only for now — tap Start to ask for access."),
+        (MISSING, "Invite-only for now — tap Start to ask for access."),
+        ("weird", "Invite-only for now — tap Start to ask for access."),
+    ],
+)
+def test_invite_line_follows_signup_field(ui, signup, text):
+    doc = _doc([(i, DEFAULT_BITS[i]) for i in IDS])
+    if signup is not MISSING:
+        doc["signup"] = signup
+    page = _open_with(ui, doc)
+    expect(page.locator("#subsInvite")).to_have_text(text)

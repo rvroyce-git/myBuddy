@@ -476,6 +476,13 @@ class Store:
         ).fetchone()
         return int(row[0])
 
+    def chat_users_on(self, day: str) -> int:
+        """Distinct chats that used chat on IST `day`."""
+        row = self._db.execute(
+            "SELECT COUNT(DISTINCT chat_id) FROM chat_usage WHERE day=?", (day,)
+        ).fetchone()
+        return int(row[0])
+
     def chat_tokens_on(self, day: str) -> int:
         """Tokens used by chat on IST `day`, all chats together."""
         row = self._db.execute(

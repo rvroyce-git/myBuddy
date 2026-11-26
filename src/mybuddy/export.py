@@ -85,8 +85,10 @@ def _contract_report(data: dict[str, Any] | None) -> dict[str, Any] | None:
     return out
 
 
-def build_export(topics: Sequence[Topic], store: Store, now: datetime) -> dict[str, Any]:
-    return {
+def build_export(
+    topics: Sequence[Topic], store: Store, now: datetime, *, signup: str | None = None
+) -> dict[str, Any]:
+    out: dict[str, Any] = {
         "generated_at": now.astimezone(IST).isoformat(timespec="seconds"),
         "topics": [
             {
@@ -105,6 +107,13 @@ def build_export(topics: Sequence[Topic], store: Store, now: datetime) -> dict[s
             if t.on_website
         ],
     }
+    if signup is not None:  # "open" | "private" (optional field; site treats missing as private)
+        out["signup"] = signup
+    return out
+
+
+def signup_mode(public_signup: bool) -> str:
+    return "open" if public_signup else "private"
 
 
 def write_json_atomic(path: Path, data: Any) -> None:
@@ -124,7 +133,14 @@ def write_json_atomic(path: Path, data: Any) -> None:
         raise
 
 
-def export(topics: Sequence[Topic], store: Store, path: Path, now: datetime) -> dict[str, Any]:
-    data = build_export(topics, store, now)
+def export(
+    topics: Sequence[Topic],
+    store: Store,
+    path: Path,
+    now: datetime,
+    *,
+    signup: str | None = None,
+) -> dict[str, Any]:
+    data = build_export(topics, store, now, signup=signup)
     write_json_atomic(path, data)
     return data

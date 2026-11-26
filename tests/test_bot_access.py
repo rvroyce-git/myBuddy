@@ -609,3 +609,90 @@ def test_chat_settings_from_env() -> None:
     assert s.chat_allowlist == (12, 34, -56)
     assert (s.chat_rate_per_min, s.chat_daily_cap, s.chat_daily_token_budget) == (2, 30, 1000)
     assert "chat_allowlist" not in repr(s)
+
+
+# --------------------------------------------------------------------------- public chat
+
+
+def test_public_chat_and_signup_end_to_end(
+    tg: TgHttp,
+    store: Store,
+    ticker: Ticker,
+    log: io.StringIO,
+    aihttp: FakeHttp,
+    clock: FixedClock,
+) -> None:
+    from mybuddy.bot import CHAT_WELCOME, OWNER_ONLY, WELCOME
+
+    seed_reports(store)
+    bot = make(tg, store, ticker, log, aihttp, clock, public_signup=True, chat_public=True)
+    bot.handle_update(msg("/start", chat=STRANGER))
+    assert tg.texts()[-1] == WELCOME + CHAT_WELCOME
+    bot.handle_update(msg("/start t3", chat=STRANGER, uid=2))
+    assert store.active_subscribers("security") == [STRANGER]
+    aihttp.post_responses = [ai("Patch routers [security #1].")]
+    bot.handle_update(msg("security news?", chat=STRANGER, uid=3))
+    assert tg.texts()[-1].startswith("Patch routers") and len(aihttp.posts) == 1
+    bot.handle_update(msg("/help", chat=STRANGER, uid=4))
+    assert tg.texts()[-1] == HELP + CHAT_HELP
+    bot.handle_update(msg("/config", chat=STRANGER, uid=5))
+    bot.handle_update(msg("/note hi", chat=STRANGER, uid=6))
+    assert tg.texts()[-2:] == [OWNER_ONLY, OWNER_ONLY]
+
+
+def test_public_chat_without_signup_chats_but_cannot_subscribe(
+    tg: TgHttp,
+    store: Store,
+    ticker: Ticker,
+    log: io.StringIO,
+    aihttp: FakeHttp,
+    clock: FixedClock,
+) -> None:
+    seed_reports(store)
+    bot = make(tg, store, ticker, log, aihttp, clock, chat_public=True)
+    aihttp.post_responses = [ai("Hi.")]
+    bot.handle_update(msg("news?", chat=STRANGER))
+    assert tg.texts() == ["Hi."]
+    bot.handle_update(msg("/start t1", chat=STRANGER, uid=2))
+    assert tg.texts()[-1] == PRIVATE and store.get_subscriber(STRANGER) is None
+
+
+def test_private_chat_default_keeps_strangers_out(bot: SubscriptionBot, tg: TgHttp) -> None:
+    assert Settings.from_env({}).chat_public is False
+    assert Settings.from_env({"CHAT_PUBLIC": "true"}).chat_public is True
+    assert Settings.from_env({}).chat_max_users_per_day == 50
+    bot.handle_update(msg("hi", chat=STRANGER))
+    assert tg.texts() == [PRIVATE]
+
+
+def test_distinct_users_per_day_cap(
+    tg: TgHttp,
+    store: Store,
+    ticker: Ticker,
+    log: io.StringIO,
+    aihttp: FakeHttp,
+    clock: FixedClock,
+) -> None:
+    seed_reports(store)
+    settings = chat_settings(chat_max_users_per_day=2)
+    bot = make(tg, store, ticker, log, aihttp, clock, settings=settings, chat_public=True)
+    aihttp.post_responses = [ai(f"A{i}.") for i in range(10)]
+    bot.handle_update(msg("q", chat=FRIEND))
+    bot.handle_update(msg("q", chat=STRANGER))
+    bot.handle_update(msg("q", chat=CHAT))  # third person today: turned away, no AI call
+    assert tg.texts()[-1] == chatmod.USERS_LIMIT and len(aihttp.posts) == 2
+    bot.handle_update(msg("again", chat=STRANGER, uid=2))  # people already chatting continue
+    bot.handle_update(msg("me too", chat=OWNER))  # the owner is never capped
+    assert len(aihttp.posts) == 4
+    clock.advance(days=1)
+    bot.handle_update(msg("new day", chat=CHAT, uid=3))
+    assert len(aihttp.posts) == 5
+
+
+def test_check_shows_public_chat_mode() -> None:
+    from mybuddy.cli.check import access_lines
+
+    on = access_lines(Settings.from_env({"CHAT_PUBLIC": "1"}), users_today=7)
+    assert ("info", "public chat: on (anyone; 7/50 people/day)") in on
+    off = access_lines(Settings.from_env({}))
+    assert ("info", "public chat: off (owner + allowlist only)") in off

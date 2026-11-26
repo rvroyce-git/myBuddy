@@ -153,3 +153,14 @@ def test_shipped_topics_export_their_permanent_bits(tmp_path: Path) -> None:
         "startups": 5,
         "ai_models": 6,
     }
+
+
+def test_signup_field_is_optional(tmp_path: Path) -> None:
+    from mybuddy.export import signup_mode
+
+    topics = [make_topic(ai=True, bit=0)]
+    with Store(tmp_path / "d") as store:
+        assert "signup" not in export(topics, store, tmp_path / "a.json", MONDAY)
+        data = export(topics, store, tmp_path / "b.json", MONDAY, signup=signup_mode(True))
+    assert data["signup"] == "open" and signup_mode(False) == "private"
+    assert json.loads((tmp_path / "b.json").read_text())["signup"] == "open"

@@ -7,10 +7,12 @@ chat ids. The topic picker is stateless: each button's callback data carries the
 selection as a hex mask, so nothing is stored until the user taps Save.
 
 Access (private by default): the owner (TELEGRAM_CHAT_ID) and CHAT_ALLOWLIST chats may
-subscribe and chat. Other chats may subscribe only when PUBLIC_SIGNUP is on; otherwise they
-get one polite fixed reply now and then (no AI call, no store write). Existing subscribers
+subscribe and chat. CHAT_PUBLIC lets any private chat use AI chat (within the per-person
+limits and the daily cap on distinct chatting people). Other chats may subscribe only
+when PUBLIC_SIGNUP is on; otherwise they get one polite fixed reply now and then (no AI
+call, no store write). Existing subscribers
 keep their reports and can always /stop or change topics. Chat (plain text, /ask, /reset)
-is answered by mybuddy.chat for the owner and allowlisted chats only.
+is answered by mybuddy.chat for the owner and allowlisted chats (everyone with CHAT_PUBLIC).
 """
 
 from __future__ import annotations
@@ -94,6 +96,7 @@ PRIVATE_TEMPLATE = (
 PRIVATE = PRIVATE_TEMPLATE.format(site_url=DEFAULT_SITE_URL)  # with the default SITE_URL
 PRIVATE_TAP = "MyBuddy is private for now."
 CHAT_HELP = "\n\nAsk me about the latest reports: just send a question, or /ask <question>."
+CHAT_WELCOME = "\nYou can also ask me anything about the latest reports – just send a question."
 CHAT_UNAVAILABLE = "Chat isn't available here. Send /help to see what I can do."
 OWNER_ONLY = "That command is for the owner only."
 CONFIG_OFF = "Config changes from chat aren't set up on this server."
@@ -167,6 +170,7 @@ class SubscriptionBot:
         poll_timeout: int = POLL_TIMEOUT_SECONDS,
         public_signup: bool = False,
         chat_allowlist: Sequence[int] = (),
+        chat_public: bool = False,
         chat: ChatResponder | None = None,
         editor: ConfigEditor | None = None,
         site_url: str = DEFAULT_SITE_URL,
@@ -197,6 +201,7 @@ class SubscriptionBot:
         self.allowed: frozenset[int] = frozenset(chat_allowlist) | (
             {self.owner} if self.owner is not None else set()
         )
+        self.chat_public = chat_public
         self.chat = chat
         self.editor = editor
         self._denied: dict[int, float] = {}  # chat -> when it last got the PRIVATE reply
@@ -258,6 +263,9 @@ class SubscriptionBot:
         sub = self.store.get_subscriber(chat_id)
         return sub is not None and sub.active
 
+    def _can_chat(self, chat_id: int) -> bool:
+        return self.chat is not None and (self.chat_public or chat_id in self.allowed)
+
     def _may_subscribe(self, chat_id: int) -> bool:
         """New subscriptions need PUBLIC_SIGNUP or the allowlist; existing ones always stay."""
         return self.public_signup or chat_id in self.allowed or self._is_subscriber(chat_id)
@@ -283,7 +291,7 @@ class SubscriptionBot:
         self._send(chat_id, self.private_reply)
 
     def _chat(self, chat_id: int, question: str) -> None:
-        if self.chat is None or chat_id not in self.allowed:
+        if self.chat is None or not self._can_chat(chat_id):
             self._send(chat_id, CHAT_UNAVAILABLE)
             return
         self._send(chat_id, self.chat.answer(chat_id, question))
@@ -327,7 +335,8 @@ class SubscriptionBot:
     def _access_lines(self) -> list[str]:
         lines = [
             f"Signup: {'public' if self.public_signup else 'private'}; "
-            f"{len(self.allowed)} allowed chat(s)",
+            f"{len(self.allowed)} allowed chat(s); "
+            f"public chat {'on' if self.chat_public else 'off'}",
         ]
         if self.chat is not None:
             limits = self.chat.limits()
@@ -361,7 +370,7 @@ class SubscriptionBot:
 
     def _help(self, chat_id: int) -> str:
         text = HELP
-        if self.chat is not None and chat_id in self.allowed:
+        if self._can_chat(chat_id):
             text += CHAT_HELP
         if self.owner is not None and chat_id == self.owner:
             text += OWNER_HELP
@@ -451,10 +460,10 @@ class SubscriptionBot:
         if command == "stop":
             self._stop(chat_id)
             return
-        if not self._may_subscribe(chat_id):
+        can_chat = self._can_chat(chat_id)
+        if not self._may_subscribe(chat_id) and not can_chat:
             self._deny(chat_id)
             return
-        can_chat = self.chat is not None and chat_id in self.allowed
         if command in OWNER_COMMANDS:
             self._owner_command(chat_id, command, arg)
         elif command is None and text and not text.startswith("/") and can_chat:
@@ -468,7 +477,7 @@ class SubscriptionBot:
             if topic_ids:
                 self._subscribe(chat_id, topic_ids)
             else:
-                self._show_picker(chat_id, WELCOME)
+                self._show_picker(chat_id, WELCOME + (CHAT_WELCOME if can_chat else ""))
         elif command == "topics":
             self._show_picker(chat_id, PICKER)
         elif command == "help":

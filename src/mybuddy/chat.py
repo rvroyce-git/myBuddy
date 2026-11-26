@@ -58,6 +58,10 @@ GREETING = (
 )
 RATE_LIMITED = "You're sending messages quickly. Please wait a minute and try again."
 DAILY_LIMIT = "Daily limit reached, back tomorrow."
+USERS_LIMIT = (
+    "Lots of people are chatting today, so new chats are paused until tomorrow. "
+    "Reports still arrive as usual."
+)
 BUDGET_LIMIT = "Daily chat limit reached for today, back tomorrow. Reports still arrive as usual."
 NO_REPORTS = "There are no saved reports yet, so I have nothing to answer from."
 FAILED = "Sorry, I can't answer right now. Please try again later."
@@ -347,6 +351,7 @@ class ChatResponder:
         self.rate_per_min = settings.chat_rate_per_min
         self.daily_cap = settings.chat_daily_cap
         self.token_budget = settings.chat_daily_token_budget
+        self.max_users_per_day = settings.chat_max_users_per_day
         owner = (settings.telegram_chat_id or "").strip()
         self.owner = int(owner) if re.fullmatch(r"-?[0-9]{1,20}", owner) else None
         self._secrets = tuple(
@@ -384,6 +389,13 @@ class ChatResponder:
             return RATE_LIMITED
         if self.store.chat_uses_on(chat_id, ist_day(self.clock)) >= limits["chat_daily_cap"]:
             return DAILY_LIMIT
+        day = ist_day(self.clock)
+        if (
+            chat_id != self.owner
+            and self.store.chat_uses_on(chat_id, day) == 0
+            and self.store.chat_users_on(day) >= self.max_users_per_day
+        ):
+            return USERS_LIMIT
         return None
 
     def answer(self, chat_id: int, question: str) -> str:
