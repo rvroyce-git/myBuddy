@@ -847,7 +847,9 @@ def test_panel_text_stays_short(ui):
         """n => { const c = n.cloneNode(true); c.querySelectorAll('.tchip, #subsNote').forEach(x => x.remove());
                   return c.textContent.trim().split(/\\s+/).length; }"""
     )
-    assert words <= 26  # the Security note (5 words) only shows when Security is picked
+    assert (
+        words <= 35
+    )  # +9: the invite-only line. The Security note (5 words) only shows when Security is picked
 
 
 def test_privacy_section_mentions_subscribers(ui):
@@ -861,3 +863,18 @@ def test_privacy_section_mentions_subscribers(ui):
     expect(flow.locator(".leaves")).to_contain_text(
         "Finished summary to subscribers’ phones, as private alerts"
     )
+
+
+@pytest.mark.parametrize("theme", ["dark", "light"])
+def test_invite_only_line_under_button(ui, theme):
+    page = ui.open()
+    if theme == "light":
+        page.locator("#themeBtn").click()
+        expect(page.locator("html")).to_have_attribute("data-mode", "light")
+    line = page.locator("#subsInvite")
+    expect(line).to_be_visible()
+    expect(line).to_have_text("Invite-only for now — tap Start to ask for access.")
+    assert line.evaluate("n => n.tagName") == "P"
+    btn_box = page.locator("#subsBtn").bounding_box()
+    box = line.bounding_box()
+    assert box["y"] >= btn_box["y"] + btn_box["height"]

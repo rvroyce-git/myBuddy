@@ -126,7 +126,7 @@ def test_works_when_storage_throws(ui, script):
     expect(page.locator("#hlList .hl-item")).to_have_count(N + 1)
     _view(page, 2)
     _assert_seen(page, {2})  # kept in memory for this visit
-    page.locator("#themeBtn").click()  # opens dark; switches to light for this visit
+    page.locator("#themeBtn").click()  # opens dark; switches to light (kept in memory)
     expect(page.locator("html")).to_have_attribute("data-mode", "light")
     list_item(page, 0).click()
     assert story_index(page) == 0
@@ -151,7 +151,7 @@ def _bg(page):
 
 
 @pytest.mark.parametrize("scheme", ["light", "dark", "no-preference"])
-def test_always_opens_dark(ui, scheme):
+def test_opens_dark_by_default(ui, scheme):
     page = ui.open(color_scheme=scheme)
     assert _mode(page) == ["dark", "dark"]
     assert _bg(page) == DARK_BG
@@ -175,17 +175,25 @@ def test_first_paint_is_dark(ui):
     assert _bg(page) == DARK_BG
 
 
-def test_old_saved_light_theme_is_ignored_and_cleared(ui):
+def test_saved_light_theme_is_applied_before_first_paint(ui):
+    ui.allow_console(r"ERR_FAILED|Failed to load")
     ctx = ui.new_context(
-        color_scheme="light", init_scripts=("localStorage.setItem('mybuddy.theme', 'light');",)
+        color_scheme="dark", init_scripts=("localStorage.setItem('mybuddy.theme', 'light');",)
     )
+    ctx.route("**/assets/app.js", lambda route: route.abort())  # head script only
+    page = ui.open(context=ctx, wait=False)
+    page.wait_for_load_state()
+    assert page.evaluate("document.documentElement.dataset.theme") == "light"
+    assert _bg(page) == LIGHT_BG
+
+
+def test_garbage_saved_theme_falls_back_to_dark(ui):
+    ctx = ui.new_context(init_scripts=("localStorage.setItem('mybuddy.theme', 'neon');",))
     page = ui.open(context=ctx)
     assert _mode(page) == ["dark", "dark"]
-    assert _bg(page) == DARK_BG
-    assert page.evaluate("localStorage.getItem('mybuddy.theme')") is None
 
 
-def test_toggle_switches_to_light_for_this_visit_only(ui):
+def test_toggle_choice_is_remembered(ui):
     page = ui.open(color_scheme="dark")
     btn = page.locator("#themeBtn")
     btn.click()
@@ -196,13 +204,23 @@ def test_toggle_switches_to_light_for_this_visit_only(ui):
         "bg => getComputedStyle(document.body).backgroundColor === bg", arg=LIGHT_BG
     )
     expect(page.locator('meta[name="theme-color"]')).to_have_attribute("content", "#F6F7FC")
-    assert page.evaluate("localStorage.getItem('mybuddy.theme')") is None  # not persisted
+    assert page.evaluate("localStorage.getItem('mybuddy.theme')") == "light"
 
-    btn.click()
+    # choose light -> reload -> still light
+    page.reload()
+    expect(page.locator("#hlList .hl-item")).to_have_count(N + 1)
+    assert _mode(page) == ["light", "light"]
+    assert _bg(page) == LIGHT_BG
+
+    # switching back to dark is saved too
+    page.locator("#themeBtn").click()
     expect(page.locator("html")).to_have_attribute("data-mode", "dark")
-    btn.click()
-    expect(page.locator("html")).to_have_attribute("data-mode", "light")
+    assert page.evaluate("localStorage.getItem('mybuddy.theme')") == "dark"
 
+    # clear storage -> dark default
+    page.locator("#themeBtn").click()
+    expect(page.locator("html")).to_have_attribute("data-mode", "light")
+    page.evaluate("localStorage.clear()")
     page.reload()
     expect(page.locator("#hlList .hl-item")).to_have_count(N + 1)
     assert _mode(page) == ["dark", "dark"]

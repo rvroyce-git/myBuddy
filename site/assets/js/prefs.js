@@ -1,4 +1,4 @@
-/* Visitor preferences: colour palette, light/dark theme (never saved) and seen stories. */
+/* Visitor preferences: colour palette, light/dark theme (saved choice, dark by default) and seen stories. */
 
 import { $, doc, root, RM, store } from './util.js';
 import { refreshBubbles } from './bubbles.js';
@@ -14,12 +14,12 @@ export function initPalette(palettes, fallback) {
 }
 
 /* ---------- theme ----------
-   Always opens dark. The toggle switches for this visit only (never saved). */
+   Opens dark unless the visitor chose light; the toggle's choice is saved. */
+const THEME_KEY = 'mybuddy.theme';
 export function initTheme() {
   const themeBtn = $('#themeBtn');
   const metaTheme = doc.querySelector('meta[name="theme-color"]');
-  store.remove('mybuddy.theme'); // old saved choice from earlier versions
-  root.setAttribute('data-theme', 'dark');
+  root.setAttribute('data-theme', store.get(THEME_KEY) === 'light' ? 'light' : 'dark');
   const effectiveDark = () => root.getAttribute('data-theme') !== 'light';
   function syncTheme() {
     const dark = effectiveDark();
@@ -32,6 +32,7 @@ export function initTheme() {
   themeBtn.addEventListener('click', () => {
     const next = effectiveDark() ? 'light' : 'dark';
     const apply = () => { root.setAttribute('data-theme', next); syncTheme(); };
+    store.set(THEME_KEY, next);
     if (!RM && doc.startViewTransition) {
       const r = themeBtn.getBoundingClientRect();
       const x = r.left + r.width / 2, y = r.top + r.height / 2;
