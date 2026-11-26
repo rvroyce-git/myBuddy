@@ -1,5 +1,5 @@
 """Command line: mybuddy list | run <topic|all> [--dry-run] | serve | check | export |
-telegram-setup [--save] | bot | subscribers."""
+telegram-setup [--save] | bot | subscribers | health."""
 
 from __future__ import annotations
 
@@ -89,6 +89,9 @@ def _parser() -> argparse.ArgumentParser:
     tg.add_argument("--save", action="store_true", help="write TELEGRAM_CHAT_ID to the env file")
     sub.add_parser("bot", help="run the Telegram bot that lets visitors subscribe to topics")
     sub.add_parser("subscribers", help="count public Telegram subscribers per topic")
+    sub.add_parser(
+        "health", help="print the health check (last runs, failed sources, disk, memory)"
+    )
     return p
 
 
@@ -116,6 +119,7 @@ def _build_deps(
         deliverer=make_deliverer(settings, http, clock, store=store, topics=topics),
         topics=list(topics),
         export_path=settings.site_data,
+        settings=settings,
     )
 
 
@@ -123,11 +127,12 @@ def cmd_list(topics: Sequence[Topic], clock: Clock) -> int:
     now = clock.now()
     for t in topics:
         nxt = next_run(t.schedule, now)
-        n_sources = len(t.sources) or len(next(iter((t.rotation or {}).values())).sources)
-        kind = "ai" if t.ai else "plain"
+        rotation = list((t.rotation or {}).values())
+        n_sources = len(t.sources) or (len(rotation[0].sources) if rotation else 0)
+        kind = t.kind if t.kind != "news" else "ai" if t.ai else "plain"
         print(
             f"{t.emoji} {t.id:<16} {t.title:<34} {schedule_label(t.schedule):<22} "
-            f"{kind:<5} {n_sources} src  next {nxt:%a %d %b %H:%M}"
+            f"{kind:<6} {n_sources} src  next {nxt:%a %d %b %H:%M}"
         )
     return 0
 
@@ -443,13 +448,26 @@ def cmd_subscribers(topics: Sequence[Topic], settings: Settings) -> int:
         active = store.active_subscriber_count()
     print(f"active subscribers: {active} (limit {settings.max_subscribers})")
     for t in website_topics(topics):
-        extra = [f.id for f in topics if not f.ai and f.audience == t.id]
+        extra = [f.id for f in topics if not f.on_website and f.audience == t.id]
         note = f"  (+ {', '.join(extra)})" if extra else ""
         print(f"  {t.emoji} {t.id:<16} {counts.get(t.id, 0):>5}{note}")
     mask = full_mask(topic_bits(topics))
     if mask:
         print(f"start link (all topics): https://t.me/{settings.bot_username}?start=t{mask:x}")
     return 0
+
+
+def cmd_health(topics: Sequence[Topic], settings: Settings, clock: Clock) -> int:
+    """Print the health check. Exit 1 when something is stale or a source failed."""
+    from mybuddy.reports import collect_health, health_report, health_text
+
+    health_topic = next((t for t in topics if t.kind == "health"), None)
+    title = health_topic.title if health_topic else "Health check"
+    now = clock.now()
+    with Store(settings.data_dir) as store:
+        health = collect_health(topics, store, settings, now)
+    print(health_text(health_report("health", title, health, now)), end="")
+    return 1 if health.stale or health.failures else 0
 
 
 def main(argv: Sequence[str] | None = None) -> int:
@@ -498,6 +516,8 @@ def _dispatch(
         return cmd_bot(topics, settings, clock)
     if args.command == "subscribers":
         return cmd_subscribers(topics, settings)
+    if args.command == "health":
+        return cmd_health(topics, settings, clock)
     return 2  # pragma: no cover - argparse enforces choices
 
 

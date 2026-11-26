@@ -18,6 +18,21 @@ each report on Telegram (and optionally Discord). Every item links to its source
 | Startup & product launches | Daily 08:00 |
 | New open-source AI models | Daily 08:15 |
 
+Telegram-only reports (`website: false` in `config/topics.yaml`; not on the website):
+
+| Report | When (IST) | Goes to |
+| --- | --- | --- |
+| Morning digest (from today's reports, no fetching) | Daily 08:30 | owner |
+| Health check (no AI; also `mybuddy health`, exit 1 if stale/failing) | Daily 09:00 | owner only |
+| Tech policy watch (India, US, EU) | Daily 09:15 | owner + AI news subscribers |
+| Product recalls (FDA drugs/devices, CPSC) | Daily 09:30 | owner |
+| Industry signals (AI, chips, cloud) | Daily 09:45 | owner + startup subscribers |
+| Weekly review (last 7 days of reports) | Sun 10:00 | owner |
+
+At most 11 Groq calls a day go to scheduled reports (about 50K tokens; free tier 1K req / 200K
+tokens), 15 minutes apart. A topic with no successful run for over 26 h (longer for weekday or
+weekly topics) is flagged STALE in the health check.
+
 ## Public subscriptions (Telegram)
 
 Anyone can subscribe through the bot [@myBuddy_update_bot](https://t.me/myBuddy_update_bot).

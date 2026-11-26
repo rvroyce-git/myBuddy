@@ -92,7 +92,7 @@ Every source returns `Item`s with absolute https URLs. Verify each endpoint with
 Visitors pick topics on the website and subscribe to the existing bot `@myBuddy_update_bot`
 (Telegram cannot message a phone number; the visitor must open the bot and tap Start).
 
-* **Stable topic bits** (v2): every website topic (`ai: true`) has a permanent `bit:` in
+* **Stable topic bits** (v2): every website topic (`ai: true`, unless `website: false`) has a permanent `bit:` in
   `config/topics.yaml` — unique, 0–59, never changed or reused, even if topics are reordered or
   removed. Today: `ai_news 0, security 1, github_trending 2, deep_dive 3, research_papers 4,
   startups 5, ai_models 6` (identical to the old positional order, so existing links stay valid).
@@ -108,7 +108,10 @@ Visitors pick topics on the website and subscribe to the existing bot `@myBuddy_
   topic, plus "Save"), `/stop` (unsubscribe), `/help`. Replies are short, friendly English.
 * **Delivery**: each AI topic's report goes to the owner (`TELEGRAM_CHAT_ID`, all topics) and to
   every active subscriber of that topic; duplicates removed. `kev_alerts` (non-AI, hourly) goes to
-  the owner and to subscribers of `security`. A subscriber error never blocks the owner's delivery;
+  the owner and to subscribers of `security`. Telegram-only topics (`website: false`: digest,
+  policy watch, recalls, industry signals, weekly review, health check) have no bit and are not
+  in `reports.json`; they go to the owner, plus the subscribers of their `audience:` topic if
+  set (the health check never has one). A subscriber error never blocks the owner's delivery;
   a subscriber who blocked the bot (HTTP 403) is marked inactive.
 * **Storage**: SQLite `subscribers(chat_id, topics, active, created_at, updated_at)`. Only the
   Telegram chat id and topic ids are stored — no names, usernames or phone numbers.

@@ -15,6 +15,9 @@ EXPECTED = {
     "hf_papers",
     "hf_models",
     "cisa_kev",
+    "federal_register",
+    "openfda_recalls",
+    "cpsc_recalls",
 }
 
 VALID = {
@@ -27,6 +30,9 @@ VALID = {
     "hf_papers": {},
     "hf_models": {},
     "cisa_kev": {},
+    "federal_register": {"term": "artificial intelligence"},
+    "openfda_recalls": {"category": "drug"},
+    "cpsc_recalls": {},
 }
 
 

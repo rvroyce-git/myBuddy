@@ -15,6 +15,8 @@ from typing import Any
 
 SEEN_RETENTION_DAYS = 30
 REPORTS_PER_TOPIC = 30
+RUNS_RETENTION_DAYS = 14  # run log and source failures, for the health check
+ERROR_TEXT_MAX = 200
 
 _SCHEMA = """
 CREATE TABLE IF NOT EXISTS seen (
@@ -43,9 +45,42 @@ CREATE TABLE IF NOT EXISTS subscribers (
     created_at TEXT NOT NULL,
     updated_at TEXT NOT NULL
 );
+-- Run log for the health check: one row per real (non dry-run) topic run.
+CREATE TABLE IF NOT EXISTS runs (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    topic_id TEXT NOT NULL,
+    at TEXT NOT NULL,
+    status TEXT NOT NULL,
+    collected INTEGER NOT NULL DEFAULT 0,
+    new INTEGER NOT NULL DEFAULT 0
+);
+CREATE INDEX IF NOT EXISTS runs_topic ON runs(topic_id, at);
+CREATE TABLE IF NOT EXISTS source_failures (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    topic_id TEXT NOT NULL,
+    source TEXT NOT NULL,
+    at TEXT NOT NULL,
+    error TEXT NOT NULL
+);
+CREATE INDEX IF NOT EXISTS source_failures_at ON source_failures(at);
 """
 
 BOT_STATE_KEY = "telegram:bot"
+
+
+@dataclass(frozen=True)
+class StoredReport:
+    topic_id: str
+    created_at: datetime  # timezone-aware
+    data: dict[str, Any]
+
+
+@dataclass(frozen=True)
+class SourceFailure:
+    topic_id: str
+    source: str
+    at: datetime
+    error: str
 
 
 @dataclass(frozen=True)
@@ -83,6 +118,18 @@ def ensure_private_dir(path: Path) -> Path:
 def _utc_stamp(when: datetime) -> str:
     """Fixed-width UTC ISO string so text comparison in SQL orders correctly."""
     return when.astimezone(UTC).strftime("%Y-%m-%dT%H:%M:%SZ")
+
+
+def _parse_stamp(value: object) -> datetime | None:
+    """Parse a stored ISO timestamp (ours, or a report's created_at); aware UTC or None."""
+    if not isinstance(value, str):
+        return None
+    text = value[:-1] + "+00:00" if value.endswith("Z") else value
+    try:
+        when = datetime.fromisoformat(text)
+    except ValueError:
+        return None
+    return when.replace(tzinfo=UTC) if when.tzinfo is None else when.astimezone(UTC)
 
 
 class Store:
@@ -191,9 +238,75 @@ class Store:
             return None
         return data if isinstance(data, dict) else None
 
+    def reports_since(self, since: datetime) -> list[StoredReport]:
+        """Saved reports created at or after `since`, oldest first; damaged rows skipped.
+        The table is small (REPORTS_PER_TOPIC per topic), so filtering happens in Python."""
+        rows = self._db.execute("SELECT topic_id, created_at, json FROM reports ORDER BY id")
+        out: list[StoredReport] = []
+        for topic_id, created, raw in rows.fetchall():
+            when = _parse_stamp(created)
+            if when is None or when < since:
+                continue
+            try:
+                data = json.loads(raw)
+            except (ValueError, RecursionError):
+                continue
+            if isinstance(data, dict):
+                out.append(StoredReport(str(topic_id), when, data))
+        return out
+
+    def report_counts(self) -> dict[str, int]:
+        rows = self._db.execute("SELECT topic_id, COUNT(*) FROM reports GROUP BY topic_id")
+        return {str(t): int(n) for t, n in rows.fetchall()}
+
     def count_reports(self, topic_id: str) -> int:
         row = self._db.execute("SELECT COUNT(*) FROM reports WHERE topic_id=?", (topic_id,))
         return int(row.fetchone()[0])
+
+    # ---- run log (health check)
+    def record_run(
+        self, topic_id: str, at: datetime, status: str, *, collected: int = 0, new: int = 0
+    ) -> None:
+        cutoff = _utc_stamp(at - timedelta(days=RUNS_RETENTION_DAYS))
+        with self._db:
+            self._db.execute(
+                "INSERT INTO runs(topic_id, at, status, collected, new) VALUES (?, ?, ?, ?, ?)",
+                (topic_id, _utc_stamp(at), status, collected, new),
+            )
+            self._db.execute("DELETE FROM runs WHERE at < ?", (cutoff,))
+
+    def last_run(self, topic_id: str, statuses: Iterable[str]) -> datetime | None:
+        """Time of the newest run of `topic_id` with one of `statuses`, or None."""
+        wanted = list(statuses)
+        if not wanted:
+            return None
+        marks = ",".join("?" * len(wanted))
+        row = self._db.execute(
+            f"SELECT MAX(at) FROM runs WHERE topic_id=? AND status IN ({marks})",  # noqa: S608
+            (topic_id, *wanted),
+        ).fetchone()
+        return _parse_stamp(row[0]) if row and row[0] else None
+
+    def record_source_failure(self, topic_id: str, source: str, at: datetime, error: str) -> None:
+        cutoff = _utc_stamp(at - timedelta(days=RUNS_RETENTION_DAYS))
+        with self._db:
+            self._db.execute(
+                "INSERT INTO source_failures(topic_id, source, at, error) VALUES (?, ?, ?, ?)",
+                (topic_id, source[:100], _utc_stamp(at), error[:ERROR_TEXT_MAX]),
+            )
+            self._db.execute("DELETE FROM source_failures WHERE at < ?", (cutoff,))
+
+    def source_failures_since(self, since: datetime) -> list[SourceFailure]:
+        rows = self._db.execute(
+            "SELECT topic_id, source, at, error FROM source_failures WHERE at >= ? ORDER BY id",
+            (_utc_stamp(since),),
+        ).fetchall()
+        out: list[SourceFailure] = []
+        for topic_id, source, at, error in rows:
+            when = _parse_stamp(at)
+            if when is not None:
+                out.append(SourceFailure(str(topic_id), str(source), when, str(error)))
+        return out
 
     # ---- Telegram subscribers
     def get_subscriber(self, chat_id: int) -> Subscriber | None:

@@ -9,6 +9,7 @@ from mybuddy.http import url_host
 from mybuddy.models import Clock, HttpClient, Source
 from mybuddy.sources.arxiv import ARXIV_API, build_arxiv
 from mybuddy.sources.cisa_kev import KEV_URL, build_cisa_kev
+from mybuddy.sources.federal_register import FR_API, build_federal_register
 from mybuddy.sources.github_trending import SEARCH_API, build_github_trending
 from mybuddy.sources.hackernews import HN_API, build_hackernews
 from mybuddy.sources.huggingface import (
@@ -16,6 +17,12 @@ from mybuddy.sources.huggingface import (
     MODELS_API,
     build_hf_models,
     build_hf_papers,
+)
+from mybuddy.sources.recalls import (
+    CPSC_API,
+    OPENFDA_API,
+    build_cpsc_recalls,
+    build_openfda_recalls,
 )
 from mybuddy.sources.reddit import REDDIT_BASE, build_reddit
 from mybuddy.sources.rss import GOOGLE_NEWS_RSS, build_google_news, build_rss
@@ -32,6 +39,9 @@ SOURCE_TYPES: dict[str, SourceBuilder] = {
     "hf_papers": build_hf_papers,
     "hf_models": build_hf_models,
     "cisa_kev": build_cisa_kev,
+    "federal_register": build_federal_register,
+    "openfda_recalls": build_openfda_recalls,
+    "cpsc_recalls": build_cpsc_recalls,
 }
 
 
@@ -51,6 +61,9 @@ SOURCE_HOSTS: dict[str, tuple[str, ...]] = {
     "hf_papers": _hosts(DAILY_PAPERS_API),
     "hf_models": _hosts(MODELS_API),
     "cisa_kev": _hosts(KEV_URL),
+    "federal_register": _hosts(FR_API),
+    "openfda_recalls": _hosts(OPENFDA_API),
+    "cpsc_recalls": _hosts(CPSC_API),
 }
 
 # Keys each type must have besides ``type`` and ``name``.
@@ -64,6 +77,9 @@ REQUIRED_KEYS: dict[str, tuple[str, ...]] = {
     "hf_papers": (),
     "hf_models": (),
     "cisa_kev": (),
+    "federal_register": ("term",),
+    "openfda_recalls": ("category",),
+    "cpsc_recalls": (),
 }
 
 

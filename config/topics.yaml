@@ -138,3 +138,84 @@ topics:
     sources:
       - {type: hf_models, name: Hugging Face Trending, limit: 10}
       - {type: rss, name: Hugging Face Blog, url: "https://huggingface.co/blog/feed.xml", max_age_hours: 72}
+
+  # ---- Telegram-only reports (`website: false`: not on the website, no start-link bit).
+  # Delivered to the owner; `audience: <website topic>` also sends them to that topic's
+  # subscribers. Runs are 15 min apart to stay far under Groq's per-minute limits.
+  # Groq budget for all scheduled reports: at most 11 AI runs a day (7 website topics, 4 of
+  # these; weekly_review replaces deep_dive's slot on Sundays), 1 call each, 2 with a 429
+  # retry: <= 22 requests and ~50K tokens a day (each call <= ~2.5K in + 2K out) against the
+  # free 1K requests / 200K tokens, leaving most of the quota for chat.
+
+  - id: morning_digest
+    title: Morning digest
+    emoji: "☀️"
+    description: One short summary of this morning's reports, with the top items across topics.
+    schedule: {time: "08:30", days: daily}
+    ai: true
+    website: false
+    kind: digest  # built from today's stored reports; no fetching
+    prompt: morning_digest.md
+
+  - id: health_check
+    title: Health check
+    emoji: "🩺"
+    description: Is MyBuddy working? Last runs, failed sources, disk and memory. Owner only.
+    schedule: {time: "09:00", days: daily}
+    ai: false
+    website: false
+    kind: health  # owner only (an audience is not allowed); also `mybuddy health`
+
+  - id: policy_watch
+    title: Tech policy watch
+    emoji: "⚖️"
+    description: New tech, AI, cybersecurity and data rules from India, the US and the EU.
+    schedule: {time: "09:15", days: daily}
+    ai: true
+    website: false
+    audience: ai_news
+    prompt: policy_watch.md
+    sources:
+      - {type: federal_register, name: US Federal Register (AI), term: '"artificial intelligence"', days: 7, limit: 4}
+      - {type: federal_register, name: US Federal Register (cyber & privacy), term: 'cybersecurity | "data privacy"', days: 7, limit: 4}
+      - {type: rss, name: European Commission, url: "https://ec.europa.eu/commission/presscorner/api/rss?language=en&text=artificial%20intelligence", max_age_hours: 72, limit: 5}
+      - {type: google_news, name: Google News India policy, query: 'MeitY OR CERT-In OR DPDP', max_age_hours: 48, limit: 6}
+
+  - id: product_recalls
+    title: Product recalls
+    emoji: "⚠️"
+    description: New US recalls of medicines, medical devices and household products.
+    schedule: {time: "09:30", days: daily}
+    ai: true
+    website: false
+    prompt: product_recalls.md
+    sources:
+      - {type: openfda_recalls, name: FDA drug recalls, category: drug, days: 14, limit: 4}
+      - {type: openfda_recalls, name: FDA device recalls, category: device, days: 14, limit: 4}
+      - {type: cpsc_recalls, name: CPSC recalls, days: 7, limit: 6}
+
+  - id: industry_signals
+    title: Industry signals
+    emoji: "📈"
+    description: Funding, deals, launches and layoffs across AI, chips and cloud.
+    schedule: {time: "09:45", days: daily}
+    ai: true
+    website: false
+    audience: startups
+    dedupe_with: [startups, ai_news]  # skip links those reports already sent
+    prompt: industry_signals.md
+    sources:
+      - {type: google_news, name: Google News AI deals, query: '(AI OR "artificial intelligence") (raises OR acquires OR acquisition OR partnership OR layoffs)', limit: 6}
+      - {type: google_news, name: Google News chips & cloud, query: '(semiconductor OR chipmaker OR Nvidia OR TSMC OR AWS OR Azure OR "Google Cloud") (deal OR partnership OR launch OR layoffs OR investment)', limit: 6}
+      - {type: rss, name: TechCrunch AI, url: "https://techcrunch.com/category/artificial-intelligence/feed/", max_age_hours: 48, limit: 5}
+      - {type: rss, name: EE Times, url: "https://www.eetimes.com/feed/", max_age_hours: 48, limit: 5}
+
+  - id: weekly_review
+    title: Weekly review
+    emoji: "🗓️"
+    description: The week's top themes and most important stories, every Sunday.
+    schedule: {time: "10:00", days: [sun]}
+    ai: true
+    website: false
+    kind: weekly  # built from the last 7 days of stored reports; no fetching
+    prompt: weekly_review.md

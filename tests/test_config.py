@@ -49,7 +49,26 @@ def test_shipped_config_is_valid() -> None:
         "research_papers",
         "startups",
         "ai_models",
+        "morning_digest",
+        "health_check",
+        "policy_watch",
+        "product_recalls",
+        "industry_signals",
+        "weekly_review",
     ]
+    # The website keeps exactly its 7 topics; the new reports are Telegram-only.
+    assert [t.id for t in topics if t.on_website] == [
+        "ai_news",
+        "security",
+        "github_trending",
+        "deep_dive",
+        "research_papers",
+        "startups",
+        "ai_models",
+    ]
+    assert all(t.bit is None for t in topics if not t.on_website)
+    times = {t.schedule.time for t in topics if t.schedule.time}
+    assert len(times) == len([t for t in topics if t.schedule.time])  # no two AI runs at once
     for t in topics:
         assert t.emoji and t.description
         assert len(t.sources) <= 4
