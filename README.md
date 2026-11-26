@@ -132,6 +132,23 @@ current file first, so a second `/undo` re-applies what the first one undid. To 
 `ls ~/.config/mybuddy/config/backups/`, then `cp <backup> ~/.config/mybuddy/config/topics.yaml`
 and `touch ~/.local/share/mybuddy/reload-config`, as the `mybuddy` user.
 
+**Plain English (owner only).** The owner can also just type a request; it is matched by fixed
+patterns (no AI) and answered with the same preview and change id. Reply `yes` to apply the
+**most recent** pending change (or `/approve <id>`), `no` to cancel it; after 10 minutes it
+expires. Text that matches none of these goes to normal chat; nobody else's text is ever
+treated as a config request.
+
+| You type | Change |
+| --- | --- |
+| `stop ai_news` / `disable the security report` | topic off |
+| `enable startups` / `start startups` | topic on |
+| `send security at 08:30` | daily time 08:30 IST |
+| `make policy_watch weekly` / `… daily` | weekly = Sundays at the same time |
+| `add https://example.org/feed.xml to ai_news` | add an RSS source |
+| `remove TechCrunch AI from industry_signals` | remove a source |
+| `stop reddit` | remove every source whose name contains "reddit", in all topics |
+| `track quantum computing news daily` | add a Google News search to industry_signals |
+
 On the VM both services use `MYBUDDY_CONFIG=~/.config/mybuddy/config/topics.yaml`, a writable
 copy that `deploy.sh` seeds once from `config/topics.yaml`. Later repo changes to the topics
 file are **not** copied over it (deploy prints a note when they differ): merge them by hand, or
@@ -147,6 +164,13 @@ anonymous to anyone who can read it (see [docs/privacy.md](docs/privacy.md)). `/
 `/note <text>` (owner) saves a note that shows in `/feedback` and is never sent to the AI. The
 summariser gets one short line per topic built from vote counts and report lengths only, e.g.
 "Readers liked 4 of 5 recent briefs; disliked ones were longer, so keep it tight."
+
+Weekly check-in: on Sundays at 19:00 IST the bot asks the owner "What was useful this week,
+and what should change?". The owner's next free-text reply within 24 h, or `/feedback <text>`
+at any time, is saved as a reader preference (max 500 characters each; the last 10 are kept).
+Summariser prompts include them as a short, fenced "Reader preferences (not facts)" block of at
+most ~600 characters, treated as data. Only the owner's text is ever used. `/feedback` with no
+text shows the vote summary and the saved preferences.
 
 ## Setup
 
