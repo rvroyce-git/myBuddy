@@ -13,3 +13,4 @@ __pycache__/
 # Live reports live on the `data` branch (written by the server), never on main.
 site/data/reports.json
 .claude/
+node_modules/

@@ -5,6 +5,12 @@ Runs as its own small process (`mybuddy bot`, systemd unit `mybuddy-bot`). Comma
 stored are the chat id and the chosen topic ids. Logs never contain message text or full
 chat ids. The topic picker is stateless: each button's callback data carries the current
 selection as a hex mask, so nothing is stored until the user taps Save.
+
+Access (private by default): the owner (TELEGRAM_CHAT_ID) and CHAT_ALLOWLIST chats may
+subscribe and chat. Other chats may subscribe only when PUBLIC_SIGNUP is on; otherwise they
+get one polite fixed reply now and then (no AI call, no store write). Existing subscribers
+keep their reports and can always /stop or change topics. Chat (plain text, /ask, /reset)
+is answered by mybuddy.chat for the owner and allowlisted chats only.
 """
 
 from __future__ import annotations
@@ -19,11 +25,14 @@ from collections.abc import Callable, Sequence
 from types import FrameType
 from typing import Any, TextIO
 
-from mybuddy.config import DEFAULT_BOT_USERNAME, DEFAULT_MAX_SUBSCRIBERS, Topic
+from mybuddy.chat import RESET, ChatResponder
+from mybuddy.config import DEFAULT_BOT_USERNAME, DEFAULT_MAX_SUBSCRIBERS, DEFAULT_SITE_URL, Topic
+from mybuddy.configedit import ConfigEditor
 from mybuddy.deliver import TOKEN_RE, chat_is_gone, telegram_description, telegram_url
+from mybuddy.feedback import CALLBACK_RE, weekly_summary
 from mybuddy.http import HttpError
 from mybuddy.models import Clock, HttpClient
-from mybuddy.store import Store
+from mybuddy.store import Store, report_chars
 from mybuddy.subscriptions import (
     decode_payload,
     followers_of,
@@ -46,6 +55,7 @@ CALLBACK_FLOOD_LIMIT = 40  # picker taps per chat per window (a picker needs ~10
 FLOOD_WINDOW_SECONDS = 60.0
 FLOOD_TRACKED_CHATS = 1000
 CALLBACK_MAX_BYTES = 64
+DENY_REPLY_INTERVAL_SECONDS = 600.0  # a chat that isn't allowed hears "private" at most this often
 
 _TOGGLE_RE = re.compile(r"tog:([0-9a-f]{1,15}):([a-z][a-z0-9_]{0,39})")
 _SAVE_RE = re.compile(r"save:([0-9a-f]{1,15})")
@@ -77,6 +87,37 @@ EXPIRED = "That button has expired. Send /topics to try again."
 PICK_ONE = "Pick at least one topic first (or send /stop)."
 SAVED = "Saved ✅"
 SLOW_DOWN = "Too many taps – please wait a moment."
+PRIVATE_TEMPLATE = (
+    "Thanks for stopping by! MyBuddy is private for now and isn't taking new subscribers. "
+    "The daily reports are on the website: {site_url}"
+)
+PRIVATE = PRIVATE_TEMPLATE.format(site_url=DEFAULT_SITE_URL)  # with the default SITE_URL
+PRIVATE_TAP = "MyBuddy is private for now."
+CHAT_HELP = "\n\nAsk me about the latest reports: just send a question, or /ask <question>."
+CHAT_UNAVAILABLE = "Chat isn't available here. Send /help to see what I can do."
+OWNER_ONLY = "That command is for the owner only."
+CONFIG_OFF = "Config changes from chat aren't set up on this server."
+NOTE_SAVED = "Note saved. It shows in /feedback and is never sent to the AI."
+THANKS = "Thanks for the feedback!"
+ALREADY_VOTED = "Already counted. Thanks!"
+OWNER_HELP = "\n\nOwner: /config, /set (config changes), /changes, /feedback, /note <text>"
+TELEGRAM_TEXT_MAX = 4000
+OWNER_COMMANDS = frozenset(
+    {
+        "config",
+        "set",
+        "topic",
+        "time",
+        "source",
+        "limit",
+        "approve",
+        "reject",
+        "changes",
+        "undo",
+        "feedback",
+        "note",
+    }
+)
 
 
 def parse_command(text: str, bot_username: str = DEFAULT_BOT_USERNAME) -> tuple[str | None, str]:
@@ -124,6 +165,11 @@ class SubscriptionBot:
         stop: threading.Event | None = None,
         log: TextIO | None = None,
         poll_timeout: int = POLL_TIMEOUT_SECONDS,
+        public_signup: bool = False,
+        chat_allowlist: Sequence[int] = (),
+        chat: ChatResponder | None = None,
+        editor: ConfigEditor | None = None,
+        site_url: str = DEFAULT_SITE_URL,
     ) -> None:
         if not TOKEN_RE.fullmatch(token):
             raise ValueError("TELEGRAM_BOT_TOKEN does not look like a bot token")
@@ -147,6 +193,14 @@ class SubscriptionBot:
         self.offset = store.load_bot_offset()
         self._flood: dict[int, deque[float]] = {}
         self._callback_flood: dict[int, deque[float]] = {}
+        self.public_signup = public_signup
+        self.allowed: frozenset[int] = frozenset(chat_allowlist) | (
+            {self.owner} if self.owner is not None else set()
+        )
+        self.chat = chat
+        self.editor = editor
+        self._denied: dict[int, float] = {}  # chat -> when it last got the PRIVATE reply
+        self.private_reply = PRIVATE_TEMPLATE.format(site_url=site_url)
 
     # ------------------------------------------------------------------ plumbing
     def _log(self, msg: str) -> None:
@@ -199,6 +253,120 @@ class SubscriptionBot:
                 del book[cid]
         return True
 
+    # ------------------------------------------------------------------ access
+    def _is_subscriber(self, chat_id: int) -> bool:
+        sub = self.store.get_subscriber(chat_id)
+        return sub is not None and sub.active
+
+    def _may_subscribe(self, chat_id: int) -> bool:
+        """New subscriptions need PUBLIC_SIGNUP or the allowlist; existing ones always stay."""
+        return self.public_signup or chat_id in self.allowed or self._is_subscriber(chat_id)
+
+    def _deny(self, chat_id: int, callback_id: str | None = None) -> None:
+        """Polite fixed reply, at most once per interval per chat. No AI call, no store write."""
+        if callback_id is not None:  # always stop the button spinner
+            self._answer(callback_id, chat_id, PRIVATE_TAP)
+            self._log(f"chat {mask_chat_id(chat_id)}: not allowed (private mode), button")
+            return
+        now = self.monotonic()
+        last = self._denied.get(chat_id)
+        if last is not None and now - last < DENY_REPLY_INTERVAL_SECONDS:
+            self._log(f"chat {mask_chat_id(chat_id)}: not allowed (private mode), no reply")
+            return
+        self._denied[chat_id] = now
+        if len(self._denied) > FLOOD_TRACKED_CHATS:
+            for cid in [
+                c for c, t in self._denied.items() if now - t >= DENY_REPLY_INTERVAL_SECONDS
+            ]:
+                del self._denied[cid]
+        self._log(f"chat {mask_chat_id(chat_id)}: not allowed (private mode), replied")
+        self._send(chat_id, self.private_reply)
+
+    def _chat(self, chat_id: int, question: str) -> None:
+        if self.chat is None or chat_id not in self.allowed:
+            self._send(chat_id, CHAT_UNAVAILABLE)
+            return
+        self._send(chat_id, self.chat.answer(chat_id, question))
+
+    # ------------------------------------------------------------------ owner tools
+    def _owner_command(self, chat_id: int, command: str, arg: str) -> None:
+        """Config changes, feedback and notes: the owner only, never allowlisted chats."""
+        if self.owner is None or chat_id != self.owner:
+            self._log(f"chat {mask_chat_id(chat_id)}: owner-only /{command} refused")
+            self._send(chat_id, OWNER_ONLY)
+            return
+        now = self.clock.now()
+        if command == "feedback":
+            self._send(chat_id, weekly_summary(self.store, self.all_topics, now))
+            return
+        if command == "note":
+            note = " ".join(arg.split())
+            if not note:
+                self._send(chat_id, "Usage: /note <text> (stored for /feedback, never sent to AI)")
+                return
+            self.store.add_note(note, now)
+            self._log(f"owner note stored ({len(note)} chars)")
+            self._send(chat_id, NOTE_SAVED)
+            return
+        if self.editor is None:
+            self._send(chat_id, CONFIG_OFF)
+            return
+        words = arg.split()
+        if command == "config":
+            reply = self.editor.show(self._access_lines())
+        elif command == "approve":
+            reply = self.editor.approve(arg)
+        elif command == "reject":
+            reply = self.editor.reject(arg)
+        elif command == "changes":
+            reply = self.editor.changes()
+        else:  # set, topic, time, source, limit, undo
+            reply = self.editor.request(command, words)
+        self._send(chat_id, reply[:TELEGRAM_TEXT_MAX])
+
+    def _access_lines(self) -> list[str]:
+        lines = [
+            f"Signup: {'public' if self.public_signup else 'private'}; "
+            f"{len(self.allowed)} allowed chat(s)",
+        ]
+        if self.chat is not None:
+            limits = self.chat.limits()
+            lines.append(
+                f"Chat: on, {limits['chat_rate_per_min']}/min, {limits['chat_daily_cap']}/day "
+                f"per chat, {limits['chat_daily_token_budget']} tokens/day"
+            )
+        else:
+            lines.append("Chat: off")
+        return lines
+
+    def _vote(self, callback_id: str, chat_id: int, vote: str, topic_id: str, ref: str) -> None:
+        """👍/👎 from the owner, allowlisted chats or subscribers; one vote per chat+report."""
+        if chat_id not in self.allowed and not self._is_subscriber(chat_id):
+            self._answer(callback_id, chat_id, PRIVATE_TAP)
+            return
+        report = self.store.report_by_ref(topic_id, ref)
+        if report is None:
+            self._answer(callback_id, chat_id, EXPIRED)
+            return
+        changed = self.store.record_vote(
+            topic_id,
+            ref,
+            self.store.voter_id(chat_id),
+            1 if vote == "u" else -1,
+            report_chars(report),
+            self.clock.now(),
+        )
+        self._log(f"chat {mask_chat_id(chat_id)}: feedback on {topic_id}")
+        self._answer(callback_id, chat_id, THANKS if changed else ALREADY_VOTED)
+
+    def _help(self, chat_id: int) -> str:
+        text = HELP
+        if self.chat is not None and chat_id in self.allowed:
+            text += CHAT_HELP
+        if self.owner is not None and chat_id == self.owner:
+            text += OWNER_HELP
+        return text
+
     # ------------------------------------------------------------------ views
     def picker_markup(self, mask: int) -> dict[str, Any]:
         rows: list[list[dict[str, str]]] = []
@@ -231,6 +399,9 @@ class SubscriptionBot:
     def _subscribe(self, chat_id: int, topic_ids: Sequence[str]) -> bool:
         current = self.store.get_subscriber(chat_id)
         already = current is not None and current.active
+        if not already and not self._may_subscribe(chat_id):
+            self._deny(chat_id)
+            return False
         if (
             not already
             and chat_id != self.owner
@@ -248,7 +419,10 @@ class SubscriptionBot:
         self._send(chat_id, intro, self.picker_markup(self._current_mask(chat_id)))
 
     def _stop(self, chat_id: int) -> None:
-        if self.store.deactivate_subscriber(chat_id, self.clock.now()):
+        # Always available to everyone (never trap a subscriber); no write for non-subscribers.
+        if self._is_subscriber(chat_id) and self.store.deactivate_subscriber(
+            chat_id, self.clock.now()
+        ):
             self._log(f"chat {mask_chat_id(chat_id)} unsubscribed")
             text = STOPPED
         else:
@@ -271,9 +445,25 @@ class SubscriptionBot:
         if not self._allow(chat_id):
             self._log(f"chat {mask_chat_id(chat_id)}: flood guard, message ignored")
             return
-        text = msg.get("text")
-        command, arg = parse_command(text if isinstance(text, str) else "", self.bot_username)
-        if command == "start":
+        raw = msg.get("text")
+        text = raw.strip() if isinstance(raw, str) else ""
+        command, arg = parse_command(text, self.bot_username)
+        if command == "stop":
+            self._stop(chat_id)
+            return
+        if not self._may_subscribe(chat_id):
+            self._deny(chat_id)
+            return
+        can_chat = self.chat is not None and chat_id in self.allowed
+        if command in OWNER_COMMANDS:
+            self._owner_command(chat_id, command, arg)
+        elif command is None and text and not text.startswith("/") and can_chat:
+            self._chat(chat_id, text)
+        elif command == "ask":
+            self._chat(chat_id, arg)
+        elif command == "reset":
+            self._send(chat_id, RESET if can_chat else UNKNOWN)
+        elif command == "start":
             topic_ids = decode_payload(arg, self.bits) if arg else None
             if topic_ids:
                 self._subscribe(chat_id, topic_ids)
@@ -281,10 +471,8 @@ class SubscriptionBot:
                 self._show_picker(chat_id, WELCOME)
         elif command == "topics":
             self._show_picker(chat_id, PICKER)
-        elif command == "stop":
-            self._stop(chat_id)
         elif command == "help":
-            self._send(chat_id, HELP)
+            self._send(chat_id, self._help(chat_id))
         else:
             self._send(chat_id, UNKNOWN)
 
@@ -302,6 +490,13 @@ class SubscriptionBot:
             self._answer(callback_id, chat_id, SLOW_DOWN)
             return
         data = cq.get("data")
+        vote = CALLBACK_RE.fullmatch(data) if isinstance(data, str) else None
+        if vote:
+            self._vote(callback_id, chat_id, vote.group(1), vote.group(2), vote.group(3))
+            return
+        if not self._may_subscribe(chat_id):
+            self._deny(chat_id, callback_id)
+            return
         message_id = _int_id(msg.get("message_id"))
         if not isinstance(data, str) or len(data.encode("utf-8")) > CALLBACK_MAX_BYTES:
             self._answer(callback_id, chat_id, EXPIRED)
@@ -376,7 +571,9 @@ class SubscriptionBot:
         """Poll until stopped. Network/API errors back off 1 s -> 30 s. Returns polls made."""
         self._log(
             f"started: {len(self.topics)} topics, limit {self.max_subscribers} subscribers, "
-            f"{self.store.active_subscriber_count()} active"
+            f"{self.store.active_subscriber_count()} active; "
+            f"{'public' if self.public_signup else 'private'} signup, "
+            f"{len(self.allowed)} allowed chat(s), chat {'on' if self.chat else 'off'}"
         )
         delay = BACKOFF_START_SECONDS
         polls = 0

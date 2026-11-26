@@ -1,9 +1,11 @@
 #!/usr/bin/env bash
 # Runs on the VM as the mybuddy user whenever site/data/reports.json changes (see
-# mybuddy-publish.path). Commits only reports.json to the repository's `data` branch; a
-# workflow on that branch then rebuilds the website. The `main` branch is never touched.
-# Uses its own deploy key (~/.ssh/github_data_deploy); branch protection on `main` stops
-# that key from writing anywhere that matters.
+# mybuddy-publish.path). Commits only reports.json to the repository's `data` branch; the
+# scheduled "Publish website" workflow on `main` then rebuilds the website (within ~10 min).
+# The `main` branch is never touched. Uses its own deploy key (~/.ssh/github_data_deploy);
+# branch protection stops that key from writing `main` (see SECURITY.md for what it CAN write).
+# GitHub's host keys are pinned in ~/.ssh/github_known_hosts (copied by deploy.sh from
+# deploy/github_known_hosts): an unknown or changed host key makes the push fail.
 set -euo pipefail
 
 REPO_URL=${MYBUDDY_PAGES_REPO:-git@github.com:rvroyce-git/myBuddy.git}
@@ -11,7 +13,9 @@ BRANCH=${MYBUDDY_DATA_BRANCH:-data}
 REPO_DIR=$HOME/data-repo
 SRC=$HOME/app/site/data/reports.json
 KEY=${MYBUDDY_DATA_KEY:-$HOME/.ssh/github_data_deploy}
-export GIT_SSH_COMMAND="ssh -i $KEY -o IdentitiesOnly=yes -o StrictHostKeyChecking=accept-new"
+KNOWN_HOSTS=${MYBUDDY_GITHUB_KNOWN_HOSTS:-$HOME/.ssh/github_known_hosts}
+[ -s "$KNOWN_HOSTS" ] || { echo "missing $KNOWN_HOSTS (run deploy/deploy.sh)" >&2; exit 1; }
+export GIT_SSH_COMMAND="ssh -i $KEY -o IdentitiesOnly=yes -o UserKnownHostsFile=$KNOWN_HOSTS -o StrictHostKeyChecking=yes"
 
 [ -f "$SRC" ] || { echo "no $SRC yet"; exit 0; }
 python3 -c 'import json,sys; json.load(open(sys.argv[1]))' "$SRC"   # never publish broken JSON

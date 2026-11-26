@@ -99,9 +99,10 @@ def build_export(topics: Sequence[Topic], store: Store, now: datetime) -> dict[s
                 "bit": t.bit,
                 "report": _contract_report(store.latest_report(t.id)),
             }
-            # Non-AI topics (the hourly KEV alert) are Discord-only pings, not website widgets.
+            # Non-AI topics (the hourly KEV alert) and `website: false` topics (digest,
+            # health check, policy watch ...) are Telegram/Discord-only, not website widgets.
             for t in topics
-            if t.ai
+            if t.on_website
         ],
     }
 

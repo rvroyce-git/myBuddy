@@ -19,3 +19,12 @@ updates:
     groups:
       actions:
         patterns: ["*"]
+
+  # Dev-only ESLint tooling (package-lock.json).
+  - package-ecosystem: npm
+    directory: /
+    schedule:
+      interval: weekly
+    groups:
+      npm:
+        patterns: ["*"]

@@ -6,15 +6,18 @@ import contextlib
 import hashlib
 import json
 import os
+import secrets
 import sqlite3
 from collections.abc import Iterable
 from dataclasses import dataclass
-from datetime import UTC, datetime, timedelta
+from datetime import UTC, datetime, timedelta, timezone
 from pathlib import Path
 from typing import Any
 
 SEEN_RETENTION_DAYS = 30
 REPORTS_PER_TOPIC = 30
+RUNS_RETENTION_DAYS = 14  # run log and source failures, for the health check
+ERROR_TEXT_MAX = 200
 
 _SCHEMA = """
 CREATE TABLE IF NOT EXISTS seen (
@@ -43,9 +46,107 @@ CREATE TABLE IF NOT EXISTS subscribers (
     created_at TEXT NOT NULL,
     updated_at TEXT NOT NULL
 );
+-- Run log for the health check: one row per real (non dry-run) topic run.
+CREATE TABLE IF NOT EXISTS runs (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    topic_id TEXT NOT NULL,
+    at TEXT NOT NULL,
+    status TEXT NOT NULL,
+    collected INTEGER NOT NULL DEFAULT 0,
+    new INTEGER NOT NULL DEFAULT 0
+);
+CREATE INDEX IF NOT EXISTS runs_topic ON runs(topic_id, at);
+CREATE TABLE IF NOT EXISTS source_failures (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    topic_id TEXT NOT NULL,
+    source TEXT NOT NULL,
+    at TEXT NOT NULL,
+    error TEXT NOT NULL
+);
+CREATE INDEX IF NOT EXISTS source_failures_at ON source_failures(at);
+-- Bot chat usage, for rate limits and daily caps: when, which chat, IST day, tokens used.
+-- Never the message text. Rows older than CHAT_USAGE_RETENTION_DAYS are pruned.
+CREATE TABLE IF NOT EXISTS chat_usage (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    chat_id INTEGER NOT NULL,
+    at TEXT NOT NULL,
+    day TEXT NOT NULL,
+    tokens INTEGER NOT NULL DEFAULT 0
+);
+CREATE INDEX IF NOT EXISTS chat_usage_chat ON chat_usage(chat_id, at);
+CREATE INDEX IF NOT EXISTS chat_usage_day ON chat_usage(day);
+-- 👍/👎 on delivered reports: one vote per (report, voter); voter is a salted hash, never the
+-- chat id. report_chars is the report's length, used for the summariser's preference hint.
+CREATE TABLE IF NOT EXISTS feedback (
+    topic_id TEXT NOT NULL,
+    report_ref TEXT NOT NULL,
+    voter TEXT NOT NULL,
+    vote INTEGER NOT NULL,
+    report_chars INTEGER NOT NULL DEFAULT 0,
+    at TEXT NOT NULL,
+    PRIMARY KEY (topic_id, report_ref, voter)
+);
+CREATE INDEX IF NOT EXISTS feedback_at ON feedback(at);
+-- The owner's /note text. Shown in /feedback only; never sent to an AI model.
+CREATE TABLE IF NOT EXISTS notes (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    at TEXT NOT NULL,
+    text TEXT NOT NULL
+);
+-- Config changes requested from the bot (fixed-format summaries, no secrets, no chat ids).
+CREATE TABLE IF NOT EXISTS config_changes (
+    seq INTEGER PRIMARY KEY AUTOINCREMENT,
+    change_id TEXT NOT NULL,
+    at TEXT NOT NULL,
+    summary TEXT NOT NULL,
+    status TEXT NOT NULL
+);
 """
 
 BOT_STATE_KEY = "telegram:bot"
+CHAT_USAGE_RETENTION_DAYS = 3
+FEEDBACK_SALT_KEY = "feedback:salt"
+LIMIT_OVERRIDES_KEY = "chat:limits"
+FEEDBACK_RETENTION_DAYS = 90
+NOTES_KEPT = 50
+NOTE_MAX_CHARS = 500
+CONFIG_CHANGES_KEPT = 100
+IST = timezone(timedelta(hours=5, minutes=30), "IST")  # India has no DST
+
+
+def report_ref(created_at: datetime) -> str:
+    """Short, stable reference of one report run: its IST time as yymmddHHMM."""
+    return created_at.astimezone(IST).strftime("%y%m%d%H%M")
+
+
+def report_chars(data: dict[str, Any]) -> int:
+    """Rough length of a stored report (headline, summary, titles and blurbs)."""
+    total = 0
+    for key in ("headline", "summary"):
+        value = data.get(key)
+        total += len(value) if isinstance(value, str) else 0
+    items = data.get("items")
+    for item in items if isinstance(items, list) else []:
+        if isinstance(item, dict):
+            for key in ("title", "blurb"):
+                value = item.get(key)
+                total += len(value) if isinstance(value, str) else 0
+    return total
+
+
+@dataclass(frozen=True)
+class StoredReport:
+    topic_id: str
+    created_at: datetime  # timezone-aware
+    data: dict[str, Any]
+
+
+@dataclass(frozen=True)
+class SourceFailure:
+    topic_id: str
+    source: str
+    at: datetime
+    error: str
 
 
 @dataclass(frozen=True)
@@ -83,6 +184,18 @@ def ensure_private_dir(path: Path) -> Path:
 def _utc_stamp(when: datetime) -> str:
     """Fixed-width UTC ISO string so text comparison in SQL orders correctly."""
     return when.astimezone(UTC).strftime("%Y-%m-%dT%H:%M:%SZ")
+
+
+def _parse_stamp(value: object) -> datetime | None:
+    """Parse a stored ISO timestamp (ours, or a report's created_at); aware UTC or None."""
+    if not isinstance(value, str):
+        return None
+    text = value[:-1] + "+00:00" if value.endswith("Z") else value
+    try:
+        when = datetime.fromisoformat(text)
+    except ValueError:
+        return None
+    return when.replace(tzinfo=UTC) if when.tzinfo is None else when.astimezone(UTC)
 
 
 class Store:
@@ -191,9 +304,75 @@ class Store:
             return None
         return data if isinstance(data, dict) else None
 
+    def reports_since(self, since: datetime) -> list[StoredReport]:
+        """Saved reports created at or after `since`, oldest first; damaged rows skipped.
+        The table is small (REPORTS_PER_TOPIC per topic), so filtering happens in Python."""
+        rows = self._db.execute("SELECT topic_id, created_at, json FROM reports ORDER BY id")
+        out: list[StoredReport] = []
+        for topic_id, created, raw in rows.fetchall():
+            when = _parse_stamp(created)
+            if when is None or when < since:
+                continue
+            try:
+                data = json.loads(raw)
+            except (ValueError, RecursionError):
+                continue
+            if isinstance(data, dict):
+                out.append(StoredReport(str(topic_id), when, data))
+        return out
+
+    def report_counts(self) -> dict[str, int]:
+        rows = self._db.execute("SELECT topic_id, COUNT(*) FROM reports GROUP BY topic_id")
+        return {str(t): int(n) for t, n in rows.fetchall()}
+
     def count_reports(self, topic_id: str) -> int:
         row = self._db.execute("SELECT COUNT(*) FROM reports WHERE topic_id=?", (topic_id,))
         return int(row.fetchone()[0])
+
+    # ---- run log (health check)
+    def record_run(
+        self, topic_id: str, at: datetime, status: str, *, collected: int = 0, new: int = 0
+    ) -> None:
+        cutoff = _utc_stamp(at - timedelta(days=RUNS_RETENTION_DAYS))
+        with self._db:
+            self._db.execute(
+                "INSERT INTO runs(topic_id, at, status, collected, new) VALUES (?, ?, ?, ?, ?)",
+                (topic_id, _utc_stamp(at), status, collected, new),
+            )
+            self._db.execute("DELETE FROM runs WHERE at < ?", (cutoff,))
+
+    def last_run(self, topic_id: str, statuses: Iterable[str]) -> datetime | None:
+        """Time of the newest run of `topic_id` with one of `statuses`, or None."""
+        wanted = list(statuses)
+        if not wanted:
+            return None
+        marks = ",".join("?" * len(wanted))
+        row = self._db.execute(
+            f"SELECT MAX(at) FROM runs WHERE topic_id=? AND status IN ({marks})",  # noqa: S608
+            (topic_id, *wanted),
+        ).fetchone()
+        return _parse_stamp(row[0]) if row and row[0] else None
+
+    def record_source_failure(self, topic_id: str, source: str, at: datetime, error: str) -> None:
+        cutoff = _utc_stamp(at - timedelta(days=RUNS_RETENTION_DAYS))
+        with self._db:
+            self._db.execute(
+                "INSERT INTO source_failures(topic_id, source, at, error) VALUES (?, ?, ?, ?)",
+                (topic_id, source[:100], _utc_stamp(at), error[:ERROR_TEXT_MAX]),
+            )
+            self._db.execute("DELETE FROM source_failures WHERE at < ?", (cutoff,))
+
+    def source_failures_since(self, since: datetime) -> list[SourceFailure]:
+        rows = self._db.execute(
+            "SELECT topic_id, source, at, error FROM source_failures WHERE at >= ? ORDER BY id",
+            (_utc_stamp(since),),
+        ).fetchall()
+        out: list[SourceFailure] = []
+        for topic_id, source, at, error in rows:
+            when = _parse_stamp(at)
+            if when is not None:
+                out.append(SourceFailure(str(topic_id), str(source), when, str(error)))
+        return out
 
     # ---- Telegram subscribers
     def get_subscriber(self, chat_id: int) -> Subscriber | None:
@@ -265,3 +444,155 @@ class Store:
 
     def save_bot_offset(self, offset: int) -> None:
         self.save_snapshot(BOT_STATE_KEY, {"offset": int(offset)})
+
+    # ---- bot chat usage (limits survive restarts; no message text is stored)
+    def record_chat_use(self, chat_id: int, now: datetime, day: str, tokens: int = 0) -> int:
+        """Count one chat message for `chat_id` on IST `day`. Prunes old rows. Returns row id."""
+        cutoff = _utc_stamp(now - timedelta(days=CHAT_USAGE_RETENTION_DAYS))
+        with self._db:
+            self._db.execute("DELETE FROM chat_usage WHERE at < ?", (cutoff,))
+            cur = self._db.execute(
+                "INSERT INTO chat_usage(chat_id, at, day, tokens) VALUES (?, ?, ?, ?)",
+                (chat_id, _utc_stamp(now), day, max(0, int(tokens))),
+            )
+        return int(cur.lastrowid or 0)
+
+    def set_chat_tokens(self, row_id: int, tokens: int) -> None:
+        with self._db:
+            self._db.execute(
+                "UPDATE chat_usage SET tokens=? WHERE id=?", (max(0, int(tokens)), row_id)
+            )
+
+    def chat_uses_since(self, chat_id: int, since: datetime) -> int:
+        row = self._db.execute(
+            "SELECT COUNT(*) FROM chat_usage WHERE chat_id=? AND at > ?",
+            (chat_id, _utc_stamp(since)),
+        ).fetchone()
+        return int(row[0])
+
+    def chat_uses_on(self, chat_id: int, day: str) -> int:
+        row = self._db.execute(
+            "SELECT COUNT(*) FROM chat_usage WHERE chat_id=? AND day=?", (chat_id, day)
+        ).fetchone()
+        return int(row[0])
+
+    def chat_tokens_on(self, day: str) -> int:
+        """Tokens used by chat on IST `day`, all chats together."""
+        row = self._db.execute(
+            "SELECT COALESCE(SUM(tokens), 0) FROM chat_usage WHERE day=?", (day,)
+        ).fetchone()
+        return int(row[0])
+
+    # ---- report feedback (👍/👎)
+    def voter_id(self, chat_id: int) -> str:
+        """Salted hash of a chat id: dedupes votes without storing who voted."""
+        salt = self.load_snapshot(FEEDBACK_SALT_KEY).get("salt")
+        if not isinstance(salt, str) or len(salt) < 16:
+            salt = secrets.token_hex(16)
+            self.save_snapshot(FEEDBACK_SALT_KEY, {"salt": salt})
+        return hashlib.sha256(f"{salt}:{chat_id}".encode()).hexdigest()[:16]
+
+    def report_by_ref(self, topic_id: str, ref: str) -> dict[str, Any] | None:
+        rows = self._db.execute(
+            "SELECT created_at, json FROM reports WHERE topic_id=? ORDER BY id DESC", (topic_id,)
+        ).fetchall()
+        for created, raw in rows:
+            try:
+                if report_ref(datetime.fromisoformat(created)) != ref:
+                    continue
+                data = json.loads(raw)
+            except (ValueError, RecursionError):
+                continue
+            return data if isinstance(data, dict) else None
+        return None
+
+    def record_vote(
+        self, topic_id: str, ref: str, voter: str, vote: int, chars: int, now: datetime
+    ) -> bool:
+        """Store or change one vote (+1/-1). Returns False when it was already this vote."""
+        row = self._db.execute(
+            "SELECT vote FROM feedback WHERE topic_id=? AND report_ref=? AND voter=?",
+            (topic_id, ref, voter),
+        ).fetchone()
+        if row is not None and int(row[0]) == vote:
+            return False
+        cutoff = _utc_stamp(now - timedelta(days=FEEDBACK_RETENTION_DAYS))
+        with self._db:
+            self._db.execute("DELETE FROM feedback WHERE at < ?", (cutoff,))
+            self._db.execute(
+                "INSERT INTO feedback(topic_id, report_ref, voter, vote, report_chars, at) "
+                "VALUES (?, ?, ?, ?, ?, ?) ON CONFLICT(topic_id, report_ref, voter) "
+                "DO UPDATE SET vote=excluded.vote, at=excluded.at",
+                (topic_id, ref, voter, vote, max(0, chars), _utc_stamp(now)),
+            )
+        return True
+
+    def vote_totals(self, since: datetime) -> dict[str, tuple[int, int]]:
+        """topic id -> (👍, 👎) for votes cast since `since`."""
+        rows = self._db.execute(
+            "SELECT topic_id, SUM(vote > 0), SUM(vote < 0) FROM feedback WHERE at >= ? "
+            "GROUP BY topic_id ORDER BY topic_id",
+            (_utc_stamp(since),),
+        ).fetchall()
+        return {str(r[0]): (int(r[1]), int(r[2])) for r in rows}
+
+    def report_votes(
+        self, topic_id: str, since: datetime, limit: int = 10
+    ) -> list[tuple[int, int, int]]:
+        """Most recent rated reports of a topic: (👍, 👎, report_chars) each."""
+        rows = self._db.execute(
+            "SELECT SUM(vote > 0), SUM(vote < 0), MAX(report_chars) FROM feedback "
+            "WHERE topic_id=? AND at >= ? GROUP BY report_ref ORDER BY report_ref DESC LIMIT ?",
+            (topic_id, _utc_stamp(since), limit),
+        ).fetchall()
+        return [(int(r[0]), int(r[1]), int(r[2])) for r in rows]
+
+    # ---- owner notes (never sent to an AI model)
+    def add_note(self, text: str, now: datetime) -> None:
+        with self._db:
+            self._db.execute(
+                "INSERT INTO notes(at, text) VALUES (?, ?)",
+                (_utc_stamp(now), text[:NOTE_MAX_CHARS]),
+            )
+            self._db.execute(
+                "DELETE FROM notes WHERE id NOT IN (SELECT id FROM notes ORDER BY id DESC LIMIT ?)",
+                (NOTES_KEPT,),
+            )
+
+    def notes_since(self, since: datetime, limit: int = 5) -> list[str]:
+        rows = self._db.execute(
+            "SELECT text FROM notes WHERE at >= ? ORDER BY id DESC LIMIT ?",
+            (_utc_stamp(since), limit),
+        ).fetchall()
+        return [str(r[0]) for r in rows]
+
+    # ---- config changes requested from the bot
+    def log_config_change(self, change_id: str, summary: str, status: str, now: datetime) -> None:
+        with self._db:
+            self._db.execute(
+                "INSERT INTO config_changes(change_id, at, summary, status) VALUES (?, ?, ?, ?)",
+                (change_id, _utc_stamp(now), summary[:200], status),
+            )
+            self._db.execute(
+                "DELETE FROM config_changes WHERE seq NOT IN "
+                "(SELECT seq FROM config_changes ORDER BY seq DESC LIMIT ?)",
+                (CONFIG_CHANGES_KEPT,),
+            )
+
+    def config_changes(self, limit: int = 10) -> list[tuple[str, str, str, str]]:
+        """Newest first: (change id, UTC time, summary, status)."""
+        rows = self._db.execute(
+            "SELECT change_id, at, summary, status FROM config_changes ORDER BY seq DESC LIMIT ?",
+            (limit,),
+        ).fetchall()
+        return [(str(a), str(b), str(c), str(d)) for a, b, c, d in rows]
+
+    # ---- chat limit overrides set by the owner from the bot (non-secret, bounded)
+    def limit_overrides(self) -> dict[str, int]:
+        data = self.load_snapshot(LIMIT_OVERRIDES_KEY)
+        return {k: v for k, v in data.items() if isinstance(v, int) and not isinstance(v, bool)}
+
+    def set_limit_override(self, name: str, value: int) -> None:
+        data = self.limit_overrides()
+        data[name] = int(value)
+        self.save_snapshot(LIMIT_OVERRIDES_KEY, data)
