@@ -204,6 +204,18 @@ class Summarizer:
             self._log(f"{topic_id}: feedback hint unavailable ({type(exc).__name__})")
             return ""
 
+    def _preferences_block(self) -> str:
+        """The owner's fenced reader preferences ("" without a store or preferences)."""
+        if self.store is None:
+            return ""
+        from mybuddy.feedback import preferences_block
+
+        try:
+            return preferences_block(self.store)
+        except Exception as exc:  # feedback must never break a report
+            self._log(f"reader preferences unavailable ({type(exc).__name__})")
+            return ""
+
     # ---- prompt
     def build_messages(
         self, topic: Topic, title: str, items: Sequence[Item]
@@ -229,6 +241,9 @@ class Summarizer:
         hint = self._preference_hint(topic.id)
         if hint:
             lines += ["", f"Reader feedback (from vote counts only): {hint}"]
+        prefs = self._preferences_block()
+        if prefs:
+            lines += ["", prefs]
         lines += [
             "",
             "Reply with only a JSON object of this exact shape:",

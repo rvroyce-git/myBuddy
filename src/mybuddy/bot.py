@@ -29,9 +29,18 @@ from typing import Any, TextIO
 
 from mybuddy.chat import RESET, ChatResponder
 from mybuddy.config import DEFAULT_BOT_USERNAME, DEFAULT_MAX_SUBSCRIBERS, DEFAULT_SITE_URL, Topic
-from mybuddy.configedit import ConfigEditor
+from mybuddy.configedit import NL_HELP, ConfigEditor
 from mybuddy.deliver import TOKEN_RE, chat_is_gone, telegram_description, telegram_url
-from mybuddy.feedback import CALLBACK_RE, weekly_summary
+from mybuddy.feedback import (
+    CALLBACK_RE,
+    CHECKIN_TEXT,
+    PREF_SAVED,
+    add_preference,
+    checkin_due,
+    mark_checkin_sent,
+    take_checkin_reply,
+    weekly_summary,
+)
 from mybuddy.http import HttpError
 from mybuddy.models import Clock, HttpClient
 from mybuddy.store import Store, report_chars
@@ -103,7 +112,12 @@ CONFIG_OFF = "Config changes from chat aren't set up on this server."
 NOTE_SAVED = "Note saved. It shows in /feedback and is never sent to the AI."
 THANKS = "Thanks for the feedback!"
 ALREADY_VOTED = "Already counted. Thanks!"
-OWNER_HELP = "\n\nOwner: /config, /set (config changes), /changes, /feedback, /note <text>"
+OWNER_HELP = (
+    "\n\nOwner: /config, /set (config changes), /changes, /feedback [text], /note <text>\n\n"
+    + NL_HELP
+)
+_YES = frozenset({"yes", "y", "yes please", "approve", "ok apply"})
+_NO = frozenset({"no", "n", "cancel", "reject"})
 TELEGRAM_TEXT_MAX = 4000
 OWNER_COMMANDS = frozenset(
     {
@@ -305,7 +319,11 @@ class SubscriptionBot:
             return
         now = self.clock.now()
         if command == "feedback":
-            self._send(chat_id, weekly_summary(self.store, self.all_topics, now))
+            if arg.strip() and add_preference(self.store, arg, now):
+                self._log("owner reader preference stored")
+                self._send(chat_id, PREF_SAVED)
+            else:
+                self._send(chat_id, weekly_summary(self.store, self.all_topics, now))
             return
         if command == "note":
             note = " ".join(arg.split())
@@ -331,6 +349,42 @@ class SubscriptionBot:
         else:  # set, topic, time, source, limit, undo
             reply = self.editor.request(command, words)
         self._send(chat_id, reply[:TELEGRAM_TEXT_MAX])
+
+    def _owner_text(self, chat_id: int, text: str) -> bool:
+        """Owner plain text: yes/no on the newest pending change, a plain-English config
+        request, or the reply to the weekly check-in. False -> normal chat. Never for others."""
+        if self.owner is None or chat_id != self.owner:
+            return False
+        lowered = " ".join(text.lower().strip(" .!").split())
+        if self.editor is not None and (lowered in _YES or lowered in _NO):
+            latest = self.editor.latest_pending()
+            if latest is not None:
+                decide = self.editor.approve if lowered in _YES else self.editor.reject
+                self._send(chat_id, decide(latest)[:TELEGRAM_TEXT_MAX])
+                return True
+        if self.editor is not None:
+            preview = self.editor.natural(text)
+            if preview is not None:
+                self._send(chat_id, preview[:TELEGRAM_TEXT_MAX])
+                return True
+        now = self.clock.now()
+        if take_checkin_reply(self.store, now) and add_preference(self.store, text, now):
+            self._log("owner check-in reply stored as a reader preference")
+            self._send(chat_id, PREF_SAVED)
+            return True
+        return False
+
+    def maybe_checkin(self) -> bool:
+        """Send the weekly feedback check-in to the owner (only) when it's due."""
+        if self.owner is None:
+            return False
+        now = self.clock.now()
+        if not checkin_due(self.store, now):
+            return False
+        mark_checkin_sent(self.store, now)
+        self._send(self.owner, CHECKIN_TEXT)
+        self._log("weekly feedback check-in sent to the owner")
+        return True
 
     def _access_lines(self) -> list[str]:
         lines = [
@@ -466,6 +520,13 @@ class SubscriptionBot:
             return
         if command in OWNER_COMMANDS:
             self._owner_command(chat_id, command, arg)
+        elif (
+            command is None
+            and text
+            and not text.startswith("/")
+            and self._owner_text(chat_id, text)
+        ):
+            pass  # handled as an owner config request, yes/no or check-in reply
         elif command is None and text and not text.startswith("/") and can_chat:
             self._chat(chat_id, text)
         elif command == "ask":
@@ -574,6 +635,10 @@ class SubscriptionBot:
         if updates:
             self.offset = max(int(u["update_id"]) for u in updates) + 1
             self.store.save_bot_offset(self.offset)
+        try:
+            self.maybe_checkin()
+        except Exception as exc:  # the check-in must never stop the bot
+            self._log(f"weekly check-in failed: {type(exc).__name__}")
         return len(updates)
 
     def run(self, max_polls: int | None = None) -> int:
