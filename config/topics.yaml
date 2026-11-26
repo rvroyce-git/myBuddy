@@ -197,7 +197,7 @@ topics:
   - id: industry_signals
     title: Industry signals
     emoji: "📈"
-    description: Funding, deals, launches and layoffs across AI, chips and cloud.
+    description: Big deals, partnerships, capacity and layoffs across AI, chips and cloud.
     schedule: {time: "09:45", days: daily}
     ai: true
     website: false
@@ -208,7 +208,7 @@ topics:
       - {type: google_news, name: Google News AI deals, query: '(AI OR "artificial intelligence") (raises OR acquires OR acquisition OR partnership OR layoffs)', limit: 6}
       - {type: google_news, name: Google News chips & cloud, query: '(semiconductor OR chipmaker OR Nvidia OR TSMC OR AWS OR Azure OR "Google Cloud") (deal OR partnership OR launch OR layoffs OR investment)', limit: 6}
       - {type: rss, name: TechCrunch AI, url: "https://techcrunch.com/category/artificial-intelligence/feed/", max_age_hours: 48, limit: 5}
-      - {type: rss, name: EE Times, url: "https://www.eetimes.com/feed/", max_age_hours: 48, limit: 5}
+      - {type: rss, name: DatacenterDynamics, url: "https://www.datacenterdynamics.com/en/rss/", max_age_hours: 48, limit: 5}
 
   - id: weekly_review
     title: Weekly review
