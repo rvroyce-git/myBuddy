@@ -6,6 +6,7 @@
 
 from __future__ import annotations
 
+import re
 from datetime import UTC, date, datetime, timedelta
 from typing import Any
 from urllib.parse import quote, urlencode
@@ -32,6 +33,37 @@ FDA_RECALL_PAGE = (
     "?event=ires.dspBriefRecallNumber&RecallNumber="
 )
 CPSC_API = "https://www.saferproducts.gov/RestWebServices/Recall"
+FDA_TITLE_MAX = 90
+# Where a product description stops naming the product and starts listing codes/details.
+_PRODUCT_DETAIL = re.compile(
+    r"[,;]|\s(?:\d+(?:\.\d+)?\s?(?:oz|ml|mg|g|kg|lb|count|ct)\b\.?"
+    r"|(?:lot|ndc|upc|ref|sku|model|catalog|part|item|product description|rx only)\b"
+    r"|#)",
+    re.IGNORECASE,
+)
+_PARENS = re.compile(r"\([^()]*\)|\[[^\[\]]*\]")
+
+
+def short_product(description: str) -> str:
+    """A short product name: drop parentheticals, stop at the first comma/code/size."""
+    text = collapse(_PARENS.sub(" ", description))
+    match = _PRODUCT_DETAIL.search(text)
+    short = (text[: match.start()] if match else text).strip(" ,.;:-")
+    return short or collapse(description)
+
+
+def fda_title(firm: str, description: str, classification: str) -> str:
+    """``<firm>: <short product> (Class X)`` within FDA_TITLE_MAX characters."""
+    suffix = f" ({classification})" if classification else ""
+    product = short_product(description) if description else ""
+    if firm and product:
+        prefix = f"{clip(firm, 40)}: "
+    else:
+        prefix, product = "", product or firm
+    if not product:
+        return ""
+    room = FDA_TITLE_MAX - len(prefix) - len(suffix)
+    return prefix + clip(product, max(room, 20)) + suffix
 
 
 def _text(entry: dict[str, Any], key: str) -> str:
@@ -101,15 +133,14 @@ class OpenFdaRecallsSource:
             if not number or number in seen:
                 continue
             seen.add(number)
-            firm = _text(entry, "recalling_firm")
-            product = clip(_text(entry, "product_description"), 140)
-            title = f"{firm}: {product}" if firm and product else firm or product
+            description = _text(entry, "product_description")
+            classification = _text(entry, "classification")
+            title = fda_title(_text(entry, "recalling_firm"), description, classification)
             if not title:
                 continue
-            parts = [
-                _text(entry, "classification"),
-                _text(entry, "reason_for_recall"),
-            ]
+            parts = [classification, _text(entry, "reason_for_recall")]
+            if description:
+                parts.append(f"Product: {clip(description, 140)}")
             where = _text(entry, "distribution_pattern")
             if where:
                 parts.append(f"Distribution: {clip(where, 80)}")
@@ -120,7 +151,7 @@ class OpenFdaRecallsSource:
                     source=self.name,
                     published=_fda_date(_text(entry, "report_date")),
                     snippet=clean_snippet(" · ".join(p for p in parts if p)),
-                    extra={"classification": _text(entry, "classification") or None},
+                    extra={"classification": classification or None},
                 )
             )
         return newest_first(items)[: self.limit]
