@@ -28,8 +28,8 @@ def format_report(report: Report, emoji: str) -> str:
     lines = [f"{emoji} **{escape_md(report.title)}**"]
     if report.headline:
         lines.append(f"**{escape_md(report.headline)}**")
-    if report.summary:
-        lines += ["", escape_md(report.summary)]
+    if report.summary:  # AI summaries are one line; the health check's has several
+        lines += ["", *(escape_md(line) for line in report.summary.split("\n"))]
     lines.append("")
     for n, item in enumerate(report.items, start=1):
         parts = [f"{n}. [{escape_md(item.title)}](<{safe_link_url(item.url)}>)"]

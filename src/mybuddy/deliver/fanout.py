@@ -28,6 +28,7 @@ from mybuddy.deliver.telegram import (
     telegram_description,
     telegram_url,
 )
+from mybuddy.feedback import feedback_markup
 from mybuddy.http import HttpError
 from mybuddy.models import Clock, HttpClient, Report
 from mybuddy.store import Store, ensure_private_dir
@@ -134,7 +135,9 @@ class TelegramSubscribers(_SubscriberBase):
                     break
                 sent_any = True
                 try:
-                    post_telegram(self.http, self._url, _html_message(chat, part), self.sleep)
+                    markup = feedback_markup(report) if n == len(parts) - 1 else None
+                    payload = _html_message(chat, part, markup)
+                    post_telegram(self.http, self._url, payload, self.sleep)
                     network_errors = 0
                 except HttpError as exc:
                     if exc.status is None or exc.status >= 500:

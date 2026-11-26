@@ -17,6 +17,7 @@ from mybuddy.deliver.base import (
     split_message,
 )
 from mybuddy.deliver.format import format_telegram
+from mybuddy.feedback import feedback_markup
 from mybuddy.http import HttpError
 from mybuddy.models import HttpClient, Report
 
@@ -46,9 +47,10 @@ class TelegramBot:
         self.sleep = sleep
         self.part_delay = part_delay
 
-    def _post(self, text: str) -> None:
+    def _post(self, text: str, markup: dict[str, Any] | None = None) -> None:
         try:
-            post_telegram(self.http, self._url, _html_message(self.chat_id, text), self.sleep)
+            payload = _html_message(self.chat_id, text, markup)
+            post_telegram(self.http, self._url, payload, self.sleep)
         except HttpError as exc:
             # Never include exc/url in the message: the URL contains the bot token.
             raise DeliveryError(
@@ -60,20 +62,26 @@ class TelegramBot:
         for i, part in enumerate(parts):
             if i:
                 self.sleep(self.part_delay)
-            self._post(part)
+            # 👍/👎 under the last part only (see feedback.py)
+            self._post(part, feedback_markup(report) if i == len(parts) - 1 else None)
 
 
 def telegram_url(token: str, method: str) -> str:
     return f"{TELEGRAM_API}/bot{token}/{method}"
 
 
-def _html_message(chat_id: str | int, text: str) -> dict[str, Any]:
-    return {
+def _html_message(
+    chat_id: str | int, text: str, markup: dict[str, Any] | None = None
+) -> dict[str, Any]:
+    payload: dict[str, Any] = {
         "chat_id": chat_id,
         "text": text,
         "parse_mode": "HTML",
         "link_preview_options": {"is_disabled": True},
     }
+    if markup is not None:
+        payload["reply_markup"] = markup
+    return payload
 
 
 def post_telegram(

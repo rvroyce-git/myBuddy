@@ -1,0 +1,60 @@
+{
+ "meta": {
+  "disclaimer": "Do not rely on openFDA to make decisions regarding medical care. While we make every effort to ensure that data is accurate, you should assume all results are unvalidated. We may limit or otherwise restrict your access to the API in line with our Terms of Service.",
+  "terms": "https://open.fda.gov/terms/",
+  "license": "https://open.fda.gov/license/",
+  "last_updated": "2026-11-18",
+  "results": {
+   "skip": 0,
+   "limit": 5,
+   "total": 88
+  }
+ },
+ "results": [
+  {
+   "status": "Ongoing",
+   "classification": "Class II",
+   "product_type": "Devices",
+   "event_id": "100216",
+   "recalling_firm": "IMRIS Imaging Inc",
+   "distribution_pattern": "Distribution to US and China",
+   "recall_number": "Z-0443-2027",
+   "product_description": "IMRIS Operating Suite iMRI 3T S, Model Number 116118-000, IMRIS  Product Description ORT400 Table, IMRIS Part Number 119900-000; Floor System, Skyra Magnet; scanner",
+   "reason_for_recall": "Operating suite contains TruSystem Surgical Tables which are being recalled by Baxter.",
+   "recall_initiation_date": "20261016",
+   "report_date": "20261118",
+   "state": "MN",
+   "country": "United States"
+  },
+  {
+   "status": "Ongoing",
+   "classification": "Class I",
+   "product_type": "Devices",
+   "event_id": "100001",
+   "recalling_firm": "3B Medical, Inc.",
+   "distribution_pattern": "US nationwide distribution including Puerto Rico.  No OUS distribution.",
+   "recall_number": "Z-0409-2027",
+   "product_description": "Luna G3 BPAP System  Model/Catalog Number: LG3800-30VT  Product Description: The Luna G3 BPAP System is a Bi-level PAP (Bi-level Positive Airway Pressure) device designed for the treatment of adult Obstructive Sleep Apnea (OSA).",
+   "reason_for_recall": "The configured IPAP value is recorded and transmitted instead of the actual delivered inspiratory pressure when Targeted VT is enabled.",
+   "recall_initiation_date": "20261008",
+   "report_date": "20261118",
+   "state": "OH",
+   "country": "United States"
+  },
+  {
+   "status": "Ongoing",
+   "classification": "Class II",
+   "product_type": "Devices",
+   "event_id": "99935",
+   "recalling_firm": "Physitemp Instruments, LLC",
+   "distribution_pattern": "Worldwide - US Nationwide distribution in the states of AR, MA, CA, PA, NY, IN, MD, KS, FL, LA, WA, WI, FL, CT, VA, OH, TX, MN, GA, UT and the countries of Japan, Canada, Australia, China, France, Sweden, England.",
+   "recall_number": "Z-0405-2027",
+   "product_description": "Physitemp TH-5 Thermalert Monitoring Thermometer  REF: TH-5",
+   "reason_for_recall": "Temperature monitors and associated probes have not been reviewed for safety and effectiveness for intended use.",
+   "recall_initiation_date": "20260928",
+   "report_date": "20261118",
+   "state": "NJ",
+   "country": "United States"
+  }
+ ]
+}

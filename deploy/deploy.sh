@@ -23,8 +23,18 @@ cd ~/app
 .venv/bin/pip install -q --upgrade pip
 .venv/bin/pip install -q --require-hashes -r requirements/runtime.txt   # exact, hash-checked versions
 .venv/bin/pip install -q --no-deps -e .
-install -d -m 700 ~/.local/share/mybuddy ~/.config/mybuddy
+install -d -m 700 ~/.local/share/mybuddy ~/.config/mybuddy ~/.config/mybuddy/config
 [ -f site/data/reports.json ] || cp site/data/reports.sample.json site/data/reports.json
+# The live topics file is a writable copy (the owner edits it from the bot with /approve),
+# seeded once from the repo default. Later repo changes to config/topics.yaml are NOT copied
+# over it: merge them by hand (or delete the copy to re-seed; backups/ keeps old versions).
+LIVE=~/.config/mybuddy/config/topics.yaml
+[ -f "$LIVE" ] || install -m 600 config/topics.yaml "$LIVE"
+cmp -s config/topics.yaml "$LIVE" || echo "note: $LIVE differs from the repo's config/topics.yaml"
+# Manual commands (mybuddy check, run ...) read the same file via the env file.
+ENVF=~/.config/mybuddy/env
+[ -f "$ENVF" ] || install -m 600 /dev/null "$ENVF"
+grep -q '^MYBUDDY_CONFIG=' "$ENVF" || echo "MYBUDDY_CONFIG=$LIVE" >> "$ENVF"
 .venv/bin/mybuddy list
 EOF
 
@@ -38,7 +48,7 @@ sudo install -m 644 /home/mybuddy/app/deploy/mybuddy-publish.path /etc/systemd/s
 sudo systemctl daemon-reload
 sudo systemctl enable --now mybuddy mybuddy-bot
 # Publishing to GitHub Pages needs the server's deploy key added on GitHub first.
-if sudo test -f /home/mybuddy/.ssh/github_deploy; then
+if sudo test -f /home/mybuddy/.ssh/github_data_deploy; then
   sudo systemctl enable --now mybuddy-publish.path
 fi
 sudo systemctl restart mybuddy mybuddy-bot

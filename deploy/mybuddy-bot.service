@@ -9,6 +9,8 @@ User=mybuddy
 Group=mybuddy
 WorkingDirectory=/home/mybuddy/app
 Environment=PYTHONUNBUFFERED=1
+# Writable copy of the topics file (seeded by deploy.sh); owner edits it via /approve.
+Environment=MYBUDDY_CONFIG=/home/mybuddy/.config/mybuddy/config/topics.yaml
 ExecStart=/home/mybuddy/app/.venv/bin/mybuddy bot
 Restart=on-failure
 RestartSec=30
@@ -19,7 +21,8 @@ TimeoutStopSec=45
 # Keep the tiny 1 GB VM healthy
 MemoryMax=150M
 CPUQuota=25%
-# Hardening (the bot only needs outbound HTTPS and its SQLite file)
+# Hardening (the bot only needs outbound HTTPS, its SQLite file and the topics file's own
+# folder; the env file with the secrets in ~/.config/mybuddy stays read-only)
 UMask=0077
 NoNewPrivileges=true
 CapabilityBoundingSet=
@@ -27,7 +30,7 @@ PrivateTmp=true
 PrivateDevices=true
 ProtectSystem=strict
 ProtectHome=read-only
-ReadWritePaths=/home/mybuddy/.local/share/mybuddy
+ReadWritePaths=/home/mybuddy/.local/share/mybuddy -/home/mybuddy/.config/mybuddy/config
 ProtectKernelTunables=true
 ProtectKernelModules=true
 ProtectKernelLogs=true

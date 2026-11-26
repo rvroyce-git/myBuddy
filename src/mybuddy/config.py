@@ -25,6 +25,12 @@ MAX_TOPIC_BIT = 59  # payload is at most 15 hex digits = 60 bits
 DEFAULT_MAX_SUBSCRIBERS = 100
 MAX_SUBSCRIBERS_CEILING = 10_000
 DEFAULT_BOT_USERNAME = "myBuddy_update_bot"
+# Chat with the bot (owner + CHAT_ALLOWLIST only). Groq's free tier is shared with the
+# scheduled reports, so chat gets its own small daily token budget.
+DEFAULT_CHAT_RATE_PER_MIN = 5
+DEFAULT_CHAT_DAILY_CAP = 30
+DEFAULT_CHAT_DAILY_TOKEN_BUDGET = 60_000
+_CHAT_ID_RE = re.compile(r"-?[0-9]{1,20}")
 _BOT_USERNAME_RE = re.compile(r"^[A-Za-z][A-Za-z0-9_]{3,31}$")
 
 _TOPIC_KEYS = {
@@ -40,7 +46,14 @@ _TOPIC_KEYS = {
     "max_items",
     "audience",
     "bit",
+    "website",
+    "kind",
+    "dedupe_with",
+    "enabled",
 }
+# news: collect from `sources`. digest/weekly: built from stored reports (no fetching).
+# health: the app's own state, owner only. Only news topics can be on the website.
+TOPIC_KINDS: tuple[str, ...] = ("news", "digest", "weekly", "health")
 _REQUIRED_TOPIC_KEYS = ("id", "title", "emoji", "description", "schedule", "ai")
 _SCHEDULE_KEYS = {"time", "days", "every_minutes"}
 _ROTATION_KEYS = {"title", "sources"}
@@ -91,6 +104,18 @@ class Topic:
     # AI (website) topics only: permanent bit in Telegram start-link payloads. Never change or
     # reuse a bit, even when topics are reordered or removed.
     bit: int | None = None
+    # Shown on the website (and subscribable there). None = the old rule: AI topics only.
+    website: bool | None = None
+    kind: str = "news"
+    # News topics only: skip items another topic has already delivered (cheap URL check).
+    dedupe_with: tuple[str, ...] = ()
+    # `enabled: false` keeps the topic in the config (and on the website) but the scheduler
+    # skips it. Owner can toggle it from the bot (/topic on|off <id>).
+    enabled: bool = True
+
+    @property
+    def on_website(self) -> bool:
+        return self.ai if self.website is None else self.website
 
 
 @dataclass(frozen=True)
@@ -108,6 +133,17 @@ class Settings:
     fake: bool = False
     max_subscribers: int = DEFAULT_MAX_SUBSCRIBERS
     bot_username: str = DEFAULT_BOT_USERNAME
+    # Access: private by default. The owner (telegram_chat_id) is always allowed.
+    public_signup: bool = False
+    chat_allowlist: tuple[int, ...] = field(default=(), repr=False)  # extra chat ids
+    chat_enabled: bool = True  # only takes effect with an AI key (see chat_active)
+    chat_rate_per_min: int = DEFAULT_CHAT_RATE_PER_MIN
+    chat_daily_cap: int = DEFAULT_CHAT_DAILY_CAP
+    chat_daily_token_budget: int = DEFAULT_CHAT_DAILY_TOKEN_BUDGET
+
+    @property
+    def chat_active(self) -> bool:
+        return self.chat_enabled and bool(self.groq_api_key or self.gemini_api_key)
 
     @classmethod
     def from_env(cls, env: Mapping[str, str] | None = None) -> Settings:
@@ -135,7 +171,55 @@ class Settings:
             fake=(get("MYBUDDY_FAKE") or "").lower() in {"1", "true", "yes", "on"},
             max_subscribers=_max_subscribers_or_default(get("MYBUDDY_MAX_SUBSCRIBERS")),
             bot_username=_bot_username_or_default(get("MYBUDDY_BOT_USERNAME")),
+            public_signup=parse_flag(get("PUBLIC_SIGNUP"), default=False),
+            chat_allowlist=parse_chat_allowlist(get("CHAT_ALLOWLIST"))[0],
+            chat_enabled=parse_flag(get("CHAT_ENABLED"), default=bool(get("GROQ_API_KEY"))),
+            chat_rate_per_min=parse_count(
+                get("CHAT_RATE_PER_MIN"), DEFAULT_CHAT_RATE_PER_MIN, 1000
+            ),
+            chat_daily_cap=parse_count(get("CHAT_DAILY_CAP"), DEFAULT_CHAT_DAILY_CAP, 100_000),
+            chat_daily_token_budget=parse_count(
+                get("CHAT_DAILY_TOKEN_BUDGET"), DEFAULT_CHAT_DAILY_TOKEN_BUDGET, 10_000_000
+            ),
         )
+
+
+_TRUE = {"1", "true", "yes", "on"}
+_FALSE = {"0", "false", "no", "off"}
+
+
+def parse_flag(raw: str | None, *, default: bool) -> bool:
+    """true/false, yes/no, on/off, 1/0; anything else (or unset) means the default."""
+    value = (raw or "").strip().lower()
+    if value in _TRUE:
+        return True
+    if value in _FALSE:
+        return False
+    return default
+
+
+def parse_count(raw: str | None, default: int, ceiling: int) -> int:
+    """A whole number 0..ceiling; anything else means the default (`mybuddy check` warns)."""
+    value = (raw or "").strip()
+    if re.fullmatch(r"[0-9]{1,9}", value) and int(value) <= ceiling:
+        return int(value)
+    return default
+
+
+def parse_chat_allowlist(raw: str | None) -> tuple[tuple[int, ...], int]:
+    """CHAT_ALLOWLIST "123, 456" -> ((123, 456), number of ignored invalid entries)."""
+    ids: list[int] = []
+    bad = 0
+    for part in (raw or "").split(","):
+        entry = part.strip()
+        if not entry:
+            continue
+        if _CHAT_ID_RE.fullmatch(entry):
+            if int(entry) not in ids:
+                ids.append(int(entry))
+        else:
+            bad += 1
+    return tuple(ids), bad
 
 
 def parse_max_subscribers(raw: str | None) -> int:
@@ -178,6 +262,12 @@ SETTING_ENV_VARS: tuple[tuple[str, bool], ...] = (
     ("MYBUDDY_FAKE", False),
     ("MYBUDDY_MAX_SUBSCRIBERS", False),
     ("MYBUDDY_BOT_USERNAME", False),
+    ("PUBLIC_SIGNUP", False),
+    ("CHAT_ALLOWLIST", False),
+    ("CHAT_ENABLED", False),
+    ("CHAT_RATE_PER_MIN", False),
+    ("CHAT_DAILY_CAP", False),
+    ("CHAT_DAILY_TOKEN_BUDGET", False),
 )
 
 
@@ -333,6 +423,10 @@ def _parse_topic(
     if not isinstance(max_items, int) or isinstance(max_items, bool) or not 1 <= max_items <= 50:
         raise ConfigError(f"{where}.max_items: must be an integer between 1 and 50")
 
+    kind = data.get("kind", "news")
+    if kind not in TOPIC_KINDS:
+        raise ConfigError(f"{where}.kind: must be one of {', '.join(TOPIC_KINDS)}")
+
     sources: tuple[dict[str, Any], ...] = ()
     if "sources" in data:
         sources = _parse_sources(data["sources"], f"{where}.sources", source_types)
@@ -354,26 +448,61 @@ def _parse_topic(
                 title=_require_str(entry.get("title"), f"{w}.title"),
                 sources=_parse_sources(entry.get("sources"), f"{w}.sources", source_types),
             )
-    if not sources and not rotation:
+    if kind == "news" and not sources and not rotation:
         raise ConfigError(f"{where}: needs 'sources' or 'rotation'")
+    if kind != "news" and (sources or rotation):
+        raise ConfigError(f"{where}: {kind} topics use stored state; remove sources/rotation")
+
+    website = data.get("website", ai)
+    if not isinstance(website, bool):
+        raise ConfigError(f"{where}.website: must be true or false")
+    if website and not ai:
+        raise ConfigError(f"{where}.website: only AI topics can be shown on the website")
 
     bit: int | None = None
-    if ai:
+    if website:
         if "bit" not in data:
-            raise ConfigError(f"{where}: ai topics need a permanent 'bit' (0..{MAX_TOPIC_BIT})")
+            raise ConfigError(
+                f"{where}: website topics need a permanent 'bit' (0..{MAX_TOPIC_BIT})"
+            )
         bit = data["bit"]
         if not isinstance(bit, int) or isinstance(bit, bool) or not 0 <= bit <= MAX_TOPIC_BIT:
             raise ConfigError(f"{where}.bit: must be an integer between 0 and {MAX_TOPIC_BIT}")
     elif "bit" in data:
-        raise ConfigError(f"{where}.bit: only AI (website) topics have a subscription bit")
+        raise ConfigError(f"{where}.bit: only AI website topics have a subscription bit")
+
+    if kind != "news" and website:
+        raise ConfigError(f"{where}: {kind} topics are Telegram-only; set website: false")
+    if kind in ("digest", "weekly") and not ai:
+        raise ConfigError(f"{where}: {kind} topics need ai: true and a prompt")
+    if kind == "health" and ai:
+        raise ConfigError(f"{where}: health topics do not use AI; set ai: false")
 
     audience: str | None = None
     if "audience" in data:
         audience = _require_str(data["audience"], f"{where}.audience")
-        if ai:
-            raise ConfigError(f"{where}.audience: only non-AI topics can borrow an audience")
+        if website:
+            raise ConfigError(f"{where}.audience: only non-website topics can borrow an audience")
+        if kind == "health":
+            raise ConfigError(f"{where}.audience: health reports go to the owner only")
+
+    dedupe_with: tuple[str, ...] = ()
+    if "dedupe_with" in data:
+        raw_dedupe = data["dedupe_with"]
+        if not isinstance(raw_dedupe, list) or not all(
+            isinstance(d, str) and d.strip() for d in raw_dedupe
+        ):
+            raise ConfigError(f"{where}.dedupe_with: must be a list of topic ids")
+        if kind != "news":
+            raise ConfigError(f"{where}.dedupe_with: only news topics collect items")
+        dedupe_with = tuple(d.strip() for d in raw_dedupe)
+
+    enabled = data.get("enabled", True)
+    if not isinstance(enabled, bool):
+        raise ConfigError(f"{where}.enabled: must be true or false")
 
     return Topic(
+        enabled=enabled,
         id=topic_id,
         title=title,
         emoji=emoji,
@@ -386,6 +515,9 @@ def _parse_topic(
         max_items=max_items,
         audience=audience,
         bit=bit,
+        website=website,
+        kind=kind,
+        dedupe_with=dedupe_with,
     )
 
 
@@ -448,14 +580,29 @@ def parse_topics(
             bits[topic.bit] = topic.id
         seen.add(topic.id)
         topics.append(topic)
-    ai_ids = {t.id for t in topics if t.ai}
+    website_ids = {t.id for t in topics if t.on_website}
     for i, topic in enumerate(topics):
-        if topic.audience is not None and topic.audience not in ai_ids:
+        if topic.audience is not None and topic.audience not in website_ids:
             raise ConfigError(
                 f"{origin}: topics[{i}] ({topic.id}).audience: {topic.audience!r} must be the "
-                "id of an AI topic in this file"
+                "id of a website topic in this file"
             )
+        for other in topic.dedupe_with:
+            if other not in seen or other == topic.id:
+                raise ConfigError(
+                    f"{origin}: topics[{i}] ({topic.id}).dedupe_with: {other!r} must be the "
+                    "id of another topic in this file"
+                )
     return topics
+
+
+def validate_config_text(text: str, *, origin: str = "topics.yaml") -> Config:
+    """Parse and validate topics.yaml text exactly as load_config would. Raises ConfigError."""
+    try:
+        data = yaml.safe_load(text)
+    except yaml.YAMLError as exc:
+        raise ConfigError(f"{origin}: invalid YAML: {exc}") from exc
+    return parse_config(data, origin=origin, source_types=_known_source_types())
 
 
 def load_topics(

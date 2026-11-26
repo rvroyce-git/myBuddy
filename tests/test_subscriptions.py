@@ -42,10 +42,11 @@ def test_shipped_bits_match_contract() -> None:
     topics = load_topics(DEFAULT_CONFIG_PATH)
     assert topic_order(topics) == ORDER
     assert topic_bits(topics) == BITS
-    assert audience_map(topics)["kev_alerts"] == "security"
-    assert {t: a for t, a in audience_map(topics).items() if t != "kev_alerts"} == {
-        t: t for t in ORDER
-    }
+    # Telegram-only topics that borrow an audience; the others go to the owner only.
+    borrowed = {"kev_alerts": "security", "policy_watch": "ai_news", "industry_signals": "startups"}
+    assert audience_map(topics) == {**{t: t for t in ORDER}, **borrowed}
+    for owner_only in ("morning_digest", "weekly_review", "health_check", "product_recalls"):
+        assert owner_only not in audience_map(topics)
     assert [t.id for t in followers_of("security", topics)] == ["kev_alerts"]
 
 
@@ -203,11 +204,11 @@ def test_audience_config_validation() -> None:
     assert topics[1].audience == "ai_news"
     assert audience_map(topics) == {"ai_news": "ai_news", "kev_alerts": "ai_news"}
     assert audience_map(_parse(_topic(), _kev())) == {"ai_news": "ai_news"}  # owner only
-    with pytest.raises(ConfigError, match="must be the id of an AI topic"):
+    with pytest.raises(ConfigError, match="must be the id of a website topic"):
         _parse(_topic(), _kev(audience="nope"))
-    with pytest.raises(ConfigError, match="must be the id of an AI topic"):
+    with pytest.raises(ConfigError, match="must be the id of a website topic"):
         _parse(_topic(), _kev(audience="kev_alerts"))
-    with pytest.raises(ConfigError, match="only non-AI topics"):
+    with pytest.raises(ConfigError, match="only non-website topics"):
         _parse(_topic(audience="ai_news"))
     with pytest.raises(ConfigError, match="non-empty string"):
         _parse(_topic(), _kev(audience=3))

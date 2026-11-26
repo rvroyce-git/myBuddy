@@ -131,6 +131,9 @@ def test_every_source_type_registers_its_hosts() -> None:
     assert SOURCE_HOSTS["google_news"] == ("news.google.com",)
     assert SOURCE_HOSTS["hackernews"] == ("hacker-news.firebaseio.com",)
     assert SOURCE_HOSTS["cisa_kev"] == ("www.cisa.gov",)
+    assert SOURCE_HOSTS["federal_register"] == ("www.federalregister.gov",)
+    assert SOURCE_HOSTS["openfda_recalls"] == ("api.fda.gov",)
+    assert SOURCE_HOSTS["cpsc_recalls"] == ("www.saferproducts.gov",)
 
 
 def test_allowlist_from_real_config_covers_every_source_and_provider() -> None:

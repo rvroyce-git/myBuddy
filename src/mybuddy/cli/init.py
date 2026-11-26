@@ -1,11 +1,16 @@
 """mybuddy init: guided setup that shows the complete plan and writes nothing until "yes".
 
-Interactive by default; `--answers FILE --yes` runs without prompts. It picks topics from the
-base topics file (default config/topics.yaml), the delivery channel and optional time changes
-(the timezone is always IST), validates the result with the normal config loader, then writes
-a private (0600) topics file and, if needed, points MYBUDDY_CONFIG at it in the env file.
+Interactive by default; `--answers FILE --yes` runs without prompts. It asks which topics to
+enable, the delivery channel and optional time changes (the timezone is always IST),
+validates the result with the normal config loader and writes the live config: the
+MYBUDDY_CONFIG path when set, else ~/.config/mybuddy/config/topics.yaml (the same file the
+services and the bot's approved /set changes use; mode 0600, folder 0700). Topics that are not
+chosen get `enabled: false` (kept in the file, and on the website), so nothing is lost and a
+later run can switch them back on. Overwriting keeps a backup in `backups/` (like the bot's
+changes, so /undo can restore it) and asks the running scheduler to reload.
+
 It never asks for, reads out or prints secret values: secrets are set with
-deploy/set-secrets.sh.
+deploy/set-secrets.sh. Without MYBUDDY_CONFIG it adds that one line to the env file.
 """
 
 from __future__ import annotations
@@ -15,6 +20,7 @@ import os
 import re
 from collections.abc import Sequence
 from dataclasses import dataclass, field
+from datetime import datetime
 from pathlib import Path
 from typing import Any
 
@@ -24,19 +30,21 @@ from mybuddy.allowlist import source_hosts, topic_source_specs
 from mybuddy.cli._common import _err, write_private
 from mybuddy.config import (
     DEFAULT_CONFIG_PATH,
-    REPO_ROOT,
     ConfigError,
+    Settings,
     Topic,
     load_config,
-    load_env_file,
     parse_config,
 )
+from mybuddy.configedit import BACKUP_DIR, RELOAD_MARKER
 from mybuddy.deliver import TELEGRAM_API
 from mybuddy.export import schedule_label
 from mybuddy.http import url_host
+from mybuddy.schedule import IST
+from mybuddy.store import ensure_private_dir
 from mybuddy.summarize import GROQ_URL
 
-DEFAULT_OUTPUT = REPO_ROOT / "config" / "topics.local.yaml"
+LIVE_CONFIG_PATH = Path("~/.config/mybuddy/config/topics.yaml")  # as seeded by deploy.sh
 CHANNELS = ("telegram", "discord", "outbox")
 ANSWER_KEYS = {"topics", "delivery", "schedule"}
 CHANNEL_ENV = {
@@ -64,12 +72,20 @@ class Answers:
     schedule: dict[str, str] = field(default_factory=dict)
 
 
+def default_output() -> Path:
+    """MYBUDDY_CONFIG (environment or env file) when set, else the live config path."""
+    env = os.environ.get("MYBUDDY_CONFIG", "").strip()
+    return Path(env).expanduser() if env else LIVE_CONFIG_PATH.expanduser()
+
+
 # ---------------------------------------------------------------------- answers
 
 
-def parse_topic_choice(raw: Any, available: Sequence[str]) -> list[str]:
-    """'all', blank, or ids / 1-based numbers separated by commas or spaces (or a YAML list)."""
-    if raw is None or (isinstance(raw, str) and raw.strip().lower() in {"", "all"}):
+def parse_topic_choice(raw: Any, available: Sequence[str], current: Sequence[str]) -> list[str]:
+    """Blank keeps `current`; 'all'; or ids / 1-based numbers (commas or spaces, or a list)."""
+    if raw is None or (isinstance(raw, str) and not raw.strip()):
+        return [t for t in available if t in current]
+    if isinstance(raw, str) and raw.strip().lower() == "all":
         return list(available)
     if isinstance(raw, str):
         tokens = [t for t in re.split(r"[,\s]+", raw.strip()) if t]
@@ -120,7 +136,7 @@ def parse_schedule(raw: Any) -> dict[str, str]:
     return result
 
 
-def load_answers(path: Path, available: Sequence[str]) -> Answers:
+def load_answers(path: Path, topics: Sequence[Topic]) -> Answers:
     try:
         data = yaml.safe_load(path.expanduser().read_text(encoding="utf-8"))
     except (OSError, UnicodeDecodeError) as exc:
@@ -133,11 +149,12 @@ def load_answers(path: Path, available: Sequence[str]) -> Answers:
     if unknown:
         # Secrets never belong here: they are set with deploy/set-secrets.sh.
         raise InitError(
-            f"{path}: unknown key(s): {', '.join(unknown)} (allowed: topics, "
-            "delivery, schedule; secrets go in deploy/set-secrets.sh)"
+            f"{path}: unknown key(s): {', '.join(unknown)} (allowed: topics, delivery, "
+            "schedule; secrets go in deploy/set-secrets.sh)"
         )
+    ids = [t.id for t in topics]
     return Answers(
-        topics=parse_topic_choice(data.get("topics"), available),
+        topics=parse_topic_choice(data.get("topics"), ids, [t.id for t in topics if t.enabled]),
         delivery=parse_delivery(data.get("delivery")),
         schedule=parse_schedule(data.get("schedule")),
     )
@@ -163,12 +180,14 @@ def _ask_until_valid(prompt: str, parse: Any) -> Any:
 
 def ask_answers(topics: Sequence[Topic]) -> Answers:
     ids = [t.id for t in topics]
+    current = [t.id for t in topics if t.enabled]
     print("Topics you can enable:")
     for n, t in enumerate(topics, start=1):
-        print(f"  {n}. {t.emoji} {t.id:<16} {t.title} ({schedule_label(t.schedule)})")
+        state = "on " if t.enabled else "off"
+        print(f"  {n:>2}. [{state}] {t.emoji} {t.id:<18} {t.title} ({schedule_label(t.schedule)})")
     chosen = _ask_until_valid(
-        "Topics to enable (ids or numbers, comma separated) [all]: ",
-        lambda raw: parse_topic_choice(raw, ids),
+        "Topics to enable (ids or numbers, comma separated; 'all'; Enter keeps the [on] ones): ",
+        lambda raw: parse_topic_choice(raw, ids, current),
     )
     delivery = _ask_until_valid(
         "Delivery channel (telegram / discord / outbox) [telegram]: ", parse_delivery
@@ -185,7 +204,8 @@ def ask_answers(topics: Sequence[Topic]) -> Answers:
 
 def build_config(base: dict[str, Any], answers: Answers) -> dict[str, Any]:
     data = copy.deepcopy(base)
-    by_id = {t.get("id"): t for t in data.get("topics", []) if isinstance(t, dict)}
+    entries = [t for t in data.get("topics", []) if isinstance(t, dict)]
+    by_id = {t.get("id"): t for t in entries}
     for topic_id, time in answers.schedule.items():
         if topic_id not in answers.topics:
             raise InitError(f"schedule.{topic_id[:40]}: not one of the enabled topics")
@@ -193,16 +213,19 @@ def build_config(base: dict[str, Any], answers: Answers) -> dict[str, Any]:
         if not isinstance(sched, dict) or "time" not in sched:
             raise InitError(f"schedule.{topic_id}: this topic runs on an interval, not a time")
         by_id[topic_id]["schedule"] = {**sched, "time": time}
-    data["topics"] = [t for t in data.get("topics", []) if t.get("id") in answers.topics]
+    for entry in entries:
+        if entry.get("id") in answers.topics:
+            entry.pop("enabled", None)  # enabled is the default
+        else:
+            entry["enabled"] = False
     return data
 
 
-def render(data: dict[str, Any], answers: Answers, base_path: Path) -> str:
+def render(data: dict[str, Any], answers: Answers) -> str:
     header = (
-        "# MyBuddy topics, written by `mybuddy init` (re-run it to change them).\n"
-        f"# Based on {base_path.name}. Delivery channel: {answers.delivery}. "
-        "Times are Asia/Kolkata (IST).\n"
-        "# Validate with: mybuddy doctor\n"
+        "# MyBuddy topics, written by `mybuddy init` (re-run it, or use /set in the bot).\n"
+        f"# Delivery channel: {answers.delivery}. Times are Asia/Kolkata (IST).\n"
+        "# Check with: mybuddy doctor\n"
     )
     body = yaml.safe_dump(data, sort_keys=False, allow_unicode=True, width=100)
     return header + body
@@ -218,34 +241,35 @@ class Plan:
     file_state: str  # new | overwrite | unchanged
     env_file: Path
     env_update: bool
+    env_points_elsewhere: str | None
+
+    @property
+    def enabled(self) -> list[Topic]:
+        return [t for t in self.topics if t.enabled]
 
     @property
     def nothing_to_do(self) -> bool:
         return self.file_state == "unchanged" and not self.env_update
 
 
-def make_plan(
-    base_path: Path, base: dict[str, Any], answers: Answers, output: Path, env_file: Path
-) -> Plan:
+def make_plan(base: dict[str, Any], answers: Answers, output: Path, env_file: Path) -> Plan:
     data = build_config(base, answers)
     try:
         config = parse_config(data, origin=str(output))
     except ConfigError as exc:
         raise InitError(f"the new topics file would be invalid: {exc}") from None
-    text = render(data, answers, base_path)
+    text = render(data, answers)
     try:
         current = output.read_text(encoding="utf-8") if output.exists() else None
     except (OSError, UnicodeDecodeError):
         current = ""
     state = "new" if current is None else "unchanged" if current == text else "overwrite"
-    env_update = False
-    if output.resolve() != DEFAULT_CONFIG_PATH.resolve():
-        values: dict[str, str] = {}
-        try:
-            load_env_file(env_file, values)
-        except ConfigError as exc:
-            raise InitError(f"env file: {exc}") from None
-        env_update = values.get("MYBUDDY_CONFIG") != str(output)
+    configured = os.environ.get("MYBUDDY_CONFIG", "").strip()
+    elsewhere = None
+    if configured and Path(configured).expanduser().absolute() != output:
+        elsewhere = configured
+    # Only add MYBUDDY_CONFIG when nothing sets it yet (never edit an existing setting).
+    env_update = not configured and output != DEFAULT_CONFIG_PATH.absolute()
     return Plan(
         output,
         text,
@@ -255,11 +279,12 @@ def make_plan(
         state,
         env_file,
         env_update,
+        elsewhere,
     )
 
 
 def needed_env(plan: Plan) -> list[str]:
-    names = ["GROQ_API_KEY"] if any(t.ai for t in plan.topics) else []
+    names = ["GROQ_API_KEY"] if any(t.ai for t in plan.enabled) else []
     return names + list(CHANNEL_ENV[plan.answers.delivery])
 
 
@@ -268,31 +293,42 @@ def print_plan(plan: Plan) -> None:
     print("MyBuddy setup plan")
     print("  Timezone: Asia/Kolkata (IST), fixed")
     print(f"  Delivery: {plan.answers.delivery}")
-    print(f"  Topics ({len(plan.topics)}):")
-    for t in plan.topics:
+    print(f"  Topics enabled ({len(plan.enabled)} of {len(plan.topics)}):")
+    for t in plan.enabled:
         names = [str(spec.get("name")) for _, spec in topic_source_specs([t])]
         hosts = sorted(source_hosts([t]))
-        print(f"    {t.emoji} {t.id:<16} {t.title:<34} {schedule_label(t.schedule)}")
-        print(f"       sources: {', '.join(names)}")
-        print(f"       hosts:   {', '.join(hosts) or '(fixed API hosts only)'}")
+        print(f"    {t.emoji} {t.id:<18} {t.title:<34} {schedule_label(t.schedule)}")
+        print(f"       sources: {', '.join(names) or '(built from other reports)'}")
+        print(f"       hosts:   {', '.join(hosts) or '(none)'}")
+    off = [t.id for t in plan.topics if not t.enabled]
+    if off:
+        print(f"  Turned off (kept in the file as enabled: false): {', '.join(off)}")
     service = []
-    if any(t.ai for t in plan.topics):
+    if any(t.ai for t in plan.enabled):
         service.append(url_host(GROQ_URL) or "api.groq.com")
     if plan.answers.delivery == "telegram":
         service.append(url_host(TELEGRAM_API) or "api.telegram.org")
     if plan.answers.delivery == "discord":
         service.append("your Discord webhook's host")
-    all_hosts = sorted(source_hosts(plan.topics) | set(plan.extra_hosts))
+    all_hosts = sorted(source_hosts(plan.enabled) | set(plan.extra_hosts))
     print(f"  Hosts the app may contact: {', '.join(all_hosts + service)}")
     print("  Files:")
     if plan.file_state == "unchanged":
         print(f"    keep    {plan.output} (already up to date)")
+    elif plan.file_state == "new":
+        print(f"    write   {plan.output} (mode 600, folder 700)")
     else:
-        verb = "write" if plan.file_state == "new" else "OVERWRITE"
-        print(f"    {verb:<7} {plan.output} (mode 600)")
+        print(f"    OVERWRITE {plan.output} (mode 600)")
+        print(f"            old version kept in {plan.output.parent / BACKUP_DIR}/ (mode 600)")
+        print("            a running scheduler reloads it within a minute")
     if plan.env_update:
-        print(f"    update  {plan.env_file.expanduser()}: MYBUDDY_CONFIG={plan.output}")
-        print("            (only that line changes; the file stays mode 600)")
+        print(f"    update  {plan.env_file.expanduser()}: add MYBUDDY_CONFIG={plan.output}")
+        print("            (only that line is added; the file stays mode 600)")
+    if plan.env_points_elsewhere:
+        print(
+            f"  Note: MYBUDDY_CONFIG is {plan.env_points_elsewhere}, so the app will not read "
+            "this file (the env file is left alone)."
+        )
     print("  Secrets and ids still needed (names only; never type them here):")
     names = needed_env(plan)
     for name in names:
@@ -306,11 +342,26 @@ def print_plan(plan: Plan) -> None:
     print()
 
 
-def apply_plan(plan: Plan) -> None:
+def apply_plan(plan: Plan, settings: Settings) -> None:
     if plan.file_state != "unchanged":
+        folder = plan.output.parent
+        if not folder.exists():
+            folder.mkdir(parents=True, mode=0o700)
+        if plan.file_state == "overwrite":
+            backups = ensure_private_dir(folder / BACKUP_DIR)
+            stamp = datetime.now(IST).strftime("%Y%m%d-%H%M%S")
+            backup = backups / f"{plan.output.name}.{stamp}"
+            n = 1
+            while backup.exists():
+                n += 1
+                backup = backups / f"{plan.output.name}.{stamp}-{n}"
+            write_private(backup, plan.output.read_text(encoding="utf-8"))
+            print(f"kept the old version as {backup}")
         write_private(plan.output, plan.text)
         load_config(plan.output)  # the file on disk must load exactly as validated
         print(f"wrote {plan.output}")
+        if plan.file_state == "overwrite" and settings.data_dir.is_dir():
+            write_private(settings.data_dir / RELOAD_MARKER, "init\n")  # the scheduler reloads
     if plan.env_update:
         path = plan.env_file.expanduser()
         lines = path.read_text(encoding="utf-8").splitlines() if path.exists() else []
@@ -325,17 +376,20 @@ def apply_plan(plan: Plan) -> None:
 
 def cmd_init(
     env_file: Path,
+    settings: Settings,
     *,
-    base_path: Path = DEFAULT_CONFIG_PATH,
-    output: Path = DEFAULT_OUTPUT,
+    base_path: Path | None = None,
+    output: Path | None = None,
     answers_file: Path | None = None,
     assume_yes: bool = False,
     force: bool = False,
 ) -> int:
-    output = output.expanduser().absolute()
+    output = (output or default_output()).expanduser().absolute()
     if assume_yes and answers_file is None:
         _err("--yes needs --answers FILE (the interactive setup always asks)")
         return 2
+    # Start from the current file so its sources, limits and bot changes are kept.
+    base_path = base_path or (output if output.exists() else DEFAULT_CONFIG_PATH)
     try:
         base_config = load_config(base_path)
         base = yaml.safe_load(base_path.expanduser().read_text(encoding="utf-8"))
@@ -344,10 +398,10 @@ def cmd_init(
         return 2
     try:
         if answers_file is not None:
-            answers = load_answers(answers_file, [t.id for t in base_config.topics])
+            answers = load_answers(answers_file, base_config.topics)
         else:
             answers = ask_answers(base_config.topics)
-        plan = make_plan(base_path, base, answers, output, env_file)
+        plan = make_plan(base, answers, output, env_file)
     except InitError as exc:
         _err(f"init: {exc}; nothing was written")
         return 2
@@ -371,7 +425,7 @@ def cmd_init(
             print("Cancelled; nothing was written.")
             return 1
     try:
-        apply_plan(plan)
+        apply_plan(plan, settings)
     except (OSError, UnicodeDecodeError, ConfigError) as exc:
         _err(f"init: could not write: {exc}")
         return 1

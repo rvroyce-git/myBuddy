@@ -16,7 +16,7 @@ def cmd_subscribers(topics: Sequence[Topic], settings: Settings) -> int:
         active = store.active_subscriber_count()
     print(f"active subscribers: {active} (limit {settings.max_subscribers})")
     for t in website_topics(topics):
-        extra = [f.id for f in topics if not f.ai and f.audience == t.id]
+        extra = [f.id for f in topics if not f.on_website and f.audience == t.id]
         note = f"  (+ {', '.join(extra)})" if extra else ""
         print(f"  {t.emoji} {t.id:<16} {counts.get(t.id, 0):>5}{note}")
     mask = full_mask(topic_bits(topics))

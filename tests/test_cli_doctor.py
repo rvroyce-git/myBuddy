@@ -5,7 +5,6 @@ from __future__ import annotations
 import json
 import re
 import shutil
-from datetime import timedelta
 from pathlib import Path
 from types import SimpleNamespace
 from typing import Any
@@ -17,7 +16,6 @@ from conftest import MONDAY, FakeHttp, FakeSource, FixedClock, make_item
 import mybuddy.sources
 from mybuddy import cli
 from mybuddy.cli import doctor
-from mybuddy.config import Schedule
 from mybuddy.deliver import TELEGRAM_API
 from mybuddy.http import HttpError
 from mybuddy.models import Clock, HttpClient, Source
@@ -58,6 +56,7 @@ MEMINFO_OK = "MemTotal:        1000000 kB\nMemFree:  100 kB\nMemAvailable:     5
 def env(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> dict[str, Any]:
     cfg = tmp_path / "topics.yaml"
     cfg.write_text(yaml.safe_dump(CONFIG, allow_unicode=True), encoding="utf-8")
+    cfg.chmod(0o600)
     for name, _ in cli.SETTING_ENV_VARS:
         monkeypatch.delenv(name, raising=False)
     data = tmp_path / "data"
@@ -83,7 +82,7 @@ def env(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> dict[str, Any]:
     # A healthy install: private data dir with runs recorded, fresh reports.json.
     with Store(data) as store:
         for topic_id in ("ai_news", "deep_dive"):
-            cli.run.record_run(store, topic_id, "delivered", clock)
+            store.record_run(topic_id, clock.now(), "delivered")
     site.parent.mkdir(parents=True)
     site.write_text(json.dumps({"generated_at": MONDAY.isoformat(), "topics": []}))
     return {
@@ -117,6 +116,9 @@ def test_healthy_install_passes(env: dict[str, Any], capsys: pytest.CaptureFixtu
     assert code == 0
     for name in (
         "config",
+        "live config",
+        "access",
+        "sources",
         "env file",
         "data dir",
         "data writable",
@@ -199,6 +201,79 @@ def test_never_ran_warns(env: dict[str, Any], capsys: pytest.CaptureFixture[str]
     assert code == 0 and lines["last run ai_news"] == "WARN never ran"
 
 
+def test_access_mode_is_reported_without_chat_ids(
+    env: dict[str, Any], capsys: pytest.CaptureFixture[str], monkeypatch: pytest.MonkeyPatch
+) -> None:
+    code, lines = _doctor(env, capsys)
+    assert (
+        lines["access"].startswith("PASS") and "private (owner + allowlist only)" in lines["access"]
+    )
+    monkeypatch.setenv("CHAT_ALLOWLIST", "777001,nonsense")
+    code, lines = _doctor(env, capsys)
+    assert code == 0 and lines["access"].startswith("WARN")
+    assert "1 invalid entry" in lines["access"] and "777001" not in lines["access"]
+
+
+def test_live_config_checks(
+    env: dict[str, Any], capsys: pytest.CaptureFixture[str], monkeypatch: pytest.MonkeyPatch
+) -> None:
+    cfg = Path(env["argv"][1])
+    cfg.chmod(0o644)
+    assert _doctor(env, capsys)[1]["live config"].startswith("WARN")
+    cfg.chmod(0o600)
+    (env["data"] / "reload-config").write_text("x\n")
+    assert "reload is pending" in _doctor(env, capsys)[1]["live config"]
+    from mybuddy.config import DEFAULT_CONFIG_PATH  # noqa: PLC0415
+
+    env["argv"][1] = str(DEFAULT_CONFIG_PATH)
+    code, lines = _doctor(env, capsys)
+    assert lines["config"].startswith("PASS") and "MYBUDDY_CONFIG" in lines["live config"]
+
+
+def test_failed_sources_and_turned_off_topics(
+    env: dict[str, Any], capsys: pytest.CaptureFixture[str]
+) -> None:
+    data = yaml.safe_load(Path(env["argv"][1]).read_text(encoding="utf-8"))
+    data["topics"][1]["enabled"] = False
+    Path(env["argv"][1]).write_text(yaml.safe_dump(data, allow_unicode=True), encoding="utf-8")
+    env["clock"].advance(hours=30)
+    with Store(env["data"]) as store:
+        store.record_source_failure("ai_news", "Feed", env["clock"].now(), "HTTP 500")
+    code, lines = _doctor(env, capsys)
+    assert code == 0
+    assert lines["sources"].startswith("WARN") and "ai_news/Feed x1" in lines["sources"]
+    assert lines["last run deep_dive"] == "SKIP turned off (enabled: false)"
+    assert lines["last run ai_news"].startswith("WARN")
+    assert "1 topics on; 1 turned off" in lines["config"]
+
+
+def test_health_report_itself_is_checked(
+    env: dict[str, Any], capsys: pytest.CaptureFixture[str]
+) -> None:
+    data = yaml.safe_load(Path(env["argv"][1]).read_text(encoding="utf-8"))
+    data["topics"].append(
+        {
+            "id": "health",
+            "title": "Health check",
+            "emoji": "🩺",
+            "description": "The app's own state.",
+            "schedule": {"time": "09:00"},
+            "ai": False,
+            "kind": "health",
+            "website": False,
+        }
+    )
+    Path(env["argv"][1]).write_text(yaml.safe_dump(data, allow_unicode=True), encoding="utf-8")
+    code, lines = _doctor(env, capsys)
+    assert lines["config"].startswith("PASS"), lines["config"]
+    assert lines["last run health"] == "WARN never ran"
+    with Store(env["data"]) as store:
+        store.record_run("health", env["clock"].now(), "delivered")
+    assert _doctor(env, capsys)[1]["last run health"].startswith("PASS")
+    env["clock"].advance(hours=30)
+    assert "stale" in _doctor(env, capsys)[1]["last run health"]
+
+
 def test_run_command_records_last_run(
     env: dict[str, Any], capsys: pytest.CaptureFixture[str], monkeypatch: pytest.MonkeyPatch
 ) -> None:
@@ -213,8 +288,8 @@ def test_run_command_records_last_run(
     run_argv = [*env["argv"][:-1], "run", "ai_news"]
     assert cli.main(run_argv) == 0
     assert cli.main(run_argv) == 0  # nothing new the second time: still recorded
-    with Store(env["data"]) as store:
-        assert store.load_snapshot("_run:ai_news")["status"] == "no_new_items"
+    with Store(env["data"]) as store:  # the engine's run log (shared with the health check)
+        assert store.last_run("ai_news", ["no_new_items"]) == env["clock"].now()
     capsys.readouterr()
     _, lines = _doctor(env, capsys)
     assert lines["last run ai_news"].startswith("PASS")
@@ -296,11 +371,3 @@ def test_systemd_units(env: dict[str, Any], capsys: pytest.CaptureFixture[str]) 
     env["units"]["mybuddy-bot.service"] = "failed"
     code, lines = _doctor(env, capsys)
     assert code == 1 and lines["unit mybuddy-bot.service"] == "FAIL failed"
-
-
-def test_stale_limit_follows_the_schedule() -> None:
-    assert doctor.stale_limit(Schedule(time="06:30")) == timedelta(hours=26)
-    weekdays = Schedule(time="07:30", days=("mon", "tue", "wed", "thu", "fri"))
-    assert doctor.stale_limit(weekdays) == timedelta(days=3, hours=2)
-    assert doctor.stale_limit(Schedule(time="09:00", days=("sun",))) == timedelta(days=7, hours=2)
-    assert doctor.stale_limit(Schedule(every_minutes=60)) == timedelta(hours=26)

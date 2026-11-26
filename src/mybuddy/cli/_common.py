@@ -56,3 +56,9 @@ def new_bot_http(allowed_hosts: Collection[str]) -> Any:
     from mybuddy import cli
 
     return cli.make_bot_http(allowed_hosts)
+
+
+def new_chat_http(allowed_hosts: Collection[str]) -> Any:
+    from mybuddy import cli
+
+    return cli.make_chat_http(allowed_hosts)

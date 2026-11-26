@@ -18,9 +18,25 @@ each report on Telegram (and optionally Discord). Every item links to its source
 | Startup & product launches | Daily 08:00 |
 | New open-source AI models | Daily 08:15 |
 
+Telegram-only reports (`website: false` in `config/topics.yaml`; not on the website):
+
+| Report | When (IST) | Goes to |
+| --- | --- | --- |
+| Morning digest (from today's reports, no fetching) | Daily 08:30 | owner |
+| Health check (no AI; also `mybuddy health`, exit 1 if stale/failing) | Daily 09:00 | owner only |
+| Tech policy watch (India, US, EU) | Daily 09:15 | owner + AI news subscribers |
+| Product recalls (FDA drugs/devices, CPSC) | Daily 09:30 | owner |
+| Industry signals (AI, chips, cloud) | Daily 09:45 | owner + startup subscribers |
+| Weekly review (last 7 days of reports) | Sun 10:00 | owner |
+
+At most 11 Groq calls a day go to scheduled reports (about 50K tokens; free tier 1K req / 200K
+tokens), 15 minutes apart. A topic with no successful run for over 26 h (longer for weekday or
+weekly topics) is flagged STALE in the health check.
+
 ## Public subscriptions (Telegram)
 
-Anyone can subscribe through the bot [@myBuddy_update_bot](https://t.me/myBuddy_update_bot).
+When public signup is on (see [Chat and access](#chat-and-access)), anyone can subscribe
+through the bot [@myBuddy_update_bot](https://t.me/myBuddy_update_bot).
 Visitors pick topics on the website, which opens
 `https://t.me/myBuddy_update_bot?start=<payload>`; the bot subscribes them when they tap Start.
 
@@ -41,6 +57,68 @@ Visitors pick topics on the website, which opens
 * `mybuddy telegram-setup` and the bot both read updates, so stop `mybuddy-bot` before running
   it.
 
+## Chat and access
+
+MyBuddy is **private by default**: only the owner (`TELEGRAM_CHAT_ID`) and chats in
+`CHAT_ALLOWLIST` can subscribe or chat. Anyone else gets one polite "private" reply (at most every
+10 minutes; no AI call, nothing stored). People who subscribed earlier keep getting reports and
+can always `/stop`.
+
+Allowed chats can ask about the latest reports: send a plain question or `/ask <question>`. Groq
+answers (Gemini only as a fallback, if set) from the saved reports only, citing items like
+`[security #2]`; the bot adds those items' stored links and removes any other URL. Messages and
+feed text are treated as data, the model has no tools, and nothing is remembered between
+messages (`/reset` just confirms that). Logs show masked chat ids and sizes, never text.
+
+| Setting | Default | Meaning |
+| --- | --- | --- |
+| `PUBLIC_SIGNUP` | `false` | `true` lets anyone subscribe (chat stays owner + allowlist) |
+| `CHAT_ALLOWLIST` | empty | extra chat ids, comma separated (the owner is always allowed) |
+| `CHAT_ENABLED` | `true` if `GROQ_API_KEY` is set | `false` turns chat off |
+| `CHAT_RATE_PER_MIN` | `5` | messages per minute per chat |
+| `CHAT_DAILY_CAP` | `30` | messages per chat per day (IST) |
+| `CHAT_DAILY_TOKEN_BUDGET` | `60000` | Groq tokens per day for all chat together, so reports keep their quota |
+
+Limits are counted in SQLite, so restarts don't reset them. To add someone: ask them to message
+the bot, get their chat id (e.g. from @userinfobot), then on the VM add
+`CHAT_ALLOWLIST=123456789,987654321` to `~/.config/mybuddy/env` and
+`sudo systemctl restart mybuddy-bot`. To open signup to everyone, add `PUBLIC_SIGNUP=true` the
+same way. `mybuddy check` prints the current mode, allowlist size and limits.
+
+### Config changes from chat (owner only)
+
+The owner (never allowlisted chats) can change the config from Telegram. No AI is involved;
+the bot understands only these commands:
+
+`/topic on|off <id>` · `/time <id> HH:MM` · `/source add <topic> <https feed url>` ·
+`/source remove <topic> <name>` · `/limit chat-daily|chat-rate|chat-tokens <n>` · `/undo`
+(also as `/set …`; `/set help` lists them). `/config` shows the current settings and
+`/changes` the change log.
+
+Each request is answered with a YAML diff (or the limit change), the result of the real config
+validation and a change id. Nothing changes until you send `/approve <id>` within 10 minutes;
+`/reject <id>` cancels it. On approval the bot keeps a timestamped backup (`backups/`, mode
+600, newest 20), writes the file atomically, and the scheduler reloads it within a minute.
+`/undo` restores the newest backup through the same approval. A new feed must be https; its
+host is added to `extra_allowed_hosts`, and nothing is fetched until the next run. Secrets
+can't be read or set from chat; `/limit` values are stored as overrides in the database.
+Approved edits rewrite the file without its comments (the first backup keeps them).
+
+On the VM both services use `MYBUDDY_CONFIG=~/.config/mybuddy/config/topics.yaml`, a writable
+copy that `deploy.sh` seeds once from `config/topics.yaml`. Later repo changes to the topics
+file are **not** copied over it (deploy prints a note when they differ): merge them by hand, or
+delete the copy and redeploy to re-seed. Only that folder is writable for the bot; the env
+file stays read-only.
+
+### Feedback
+
+Every Telegram report has 👍 / 👎 buttons. Taps from the owner, allowlisted chats and
+subscribers count once per person per report (a second tap can change the vote). Voters are
+stored as salted hashes, not chat ids. `/feedback` (owner) shows the last 7 days per topic.
+`/note <text>` (owner) saves a note that shows in `/feedback` and is never sent to the AI. The
+summariser gets one short line per topic built from vote counts and report lengths only, e.g.
+"Readers liked 4 of 5 recent briefs; disliked ones were longer, so keep it tight."
+
 ## Setup
 
 ```bash
@@ -52,19 +130,26 @@ Visitors pick topics on the website, which opens
 (Telegram, Discord or the local outbox) and optional time changes; the timezone is always IST.
 It then shows the complete plan (topics, times, sources and hosts, files it will write, the
 secrets still missing, by name only) and writes nothing unless you type exactly `yes`. It
-writes `config/topics.local.yaml` (mode 600, not committed; `--output` to change), validated
-with the normal config loader, and sets `MYBUDDY_CONFIG` to it in the env file. It never asks
-for secrets: set those with `deploy/set-secrets.sh`. Re-running with the same answers changes
-nothing. Non-interactive: `mybuddy init --answers answers.yaml --yes` (keys `topics`: `all` or
-a list of ids, `delivery`, `schedule`: `{topic_id: "HH:MM"}`); an existing, different file is
+writes the live config the services and `/set` use: `MYBUDDY_CONFIG` when set, else
+`~/.config/mybuddy/config/topics.yaml` (mode 600, folder 700; `--output` to change), validated
+with the normal config loader. It starts from that file when it exists (so feeds and changes
+made from chat are kept; `--from` picks another base) and turns unchosen topics off with
+`enabled: false` instead of deleting them. Overwriting keeps the old file in `backups/` (so
+`/undo` can restore it) and the scheduler reloads within a minute. Only when nothing sets
+`MYBUDDY_CONFIG` yet does it add that line to the env file. It never asks for secrets: set
+those with `deploy/set-secrets.sh`. Re-running with the same answers changes nothing.
+Non-interactive: `mybuddy init --answers answers.yaml --yes` (keys `topics`: `all` or a
+list of ids, `delivery`, `schedule`: `{topic_id: "HH:MM"}`); an existing, different file is
 only overwritten with `--force`. The delivery channel decides which secrets the plan lists;
 delivery itself still follows the secrets that are set.
 
-`mybuddy doctor` checks the config, which env vars are set (names only), the env file (600)
-and data dir (700) permissions, that the data dir is writable, SQLite integrity, each topic's
-last run (stale after 26 h, or the topic's longest scheduled gap + 2 h), the age of
-`reports.json`, Groq (if a key is set: reachable and `GROQ_MODEL` offered), the Telegram bot
-(`getMe`; the token is never printed), that the host allowlist covers every config URL, free
+`mybuddy doctor` checks the config (and that the live copy is in use and private), which env
+vars are set (names only), the access mode (private or public signup, allowlist size, chat
+limits; never chat ids), the env file (600) and data dir (700) permissions, that the data dir
+is writable, SQLite integrity, each topic's last successful run and failed sources from the
+health check's run log (stale after 26 h, longer for weekday or weekly topics; the health
+report itself included), the age of `reports.json`, Groq (if a key is set: reachable and
+`GROQ_MODEL` offered), the Telegram bot (`getMe`; the token is never printed), that the host allowlist covers every config URL, free
 disk and memory, and the systemd units (`mybuddy`, `mybuddy-bot`; `mybuddy-publish.path` only
 warns). Checks that do not apply (no key; on macOS no `/proc/meminfo` or `systemctl`) are
 SKIPped. `mybuddy check` is the older, more verbose subset.
@@ -159,6 +244,18 @@ fails (and GitHub emails the owner) if the live reports are more than 26 hours o
   `/stop` turns delivery off at once.
 * The services run as an unprivileged `mybuddy` user with systemd hardening. The app opens no
   inbound ports (the bot uses long polling).
+
+## More documentation
+
+* [SECURITY.md](SECURITY.md): reporting, secrets, key rotation, what was hardened
+* [CONTRIBUTING.md](CONTRIBUTING.md): branch + PR workflow, checks, commit style
+* [docs/ssh-access.md](docs/ssh-access.md): closing port 22 (OCI Bastion, Tailscale, fixed IPs)
+* [docs/costs.md](docs/costs.md): free tiers and the budget alert ·
+  [docs/privacy.md](docs/privacy.md): what is stored and sent where
+* [docs/troubleshooting.md](docs/troubleshooting.md) ·
+  [docs/walkthrough.md](docs/walkthrough.md): redirects, subscription links, systemd hardening
+* Server scripts: `deploy/harden.sh`, `deploy/create-vm.sh`, `deploy/oci-security-list-ssh.sh`,
+  `deploy/budget-alert.sh` (all support `--dry-run`)
 
 ## License
 

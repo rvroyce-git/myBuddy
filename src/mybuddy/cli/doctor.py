@@ -3,7 +3,8 @@
 Exit code 1 when any check FAILs (WARN and SKIP never fail). Secret values are never read
 into the output: environment variables are reported by name only, the Telegram token only
 travels inside the getMe request and the Groq key only in its Authorization header.
-`mybuddy check` stays as the older, more verbose subset.
+`mybuddy check` stays as the older, more verbose subset; staleness, failed sources and the
+access mode reuse the health check (reports.py) and `check`'s logic rather than copies.
 """
 
 from __future__ import annotations
@@ -22,13 +23,15 @@ from pathlib import Path
 from typing import Any
 
 from mybuddy.allowlist import build_allowed_hosts
-from mybuddy.cli.check import _disallowed_urls, groq_check, telegram_check
-from mybuddy.cli.run import LAST_RUN_KEY
-from mybuddy.config import WEEKDAYS, ConfigError, Schedule, Settings, Topic, load_config
+from mybuddy.cli.check import _disallowed_urls, access_lines, groq_check, telegram_check
+from mybuddy.config import DEFAULT_CONFIG_PATH, ConfigError, Settings, Topic, load_config
+from mybuddy.configedit import RELOAD_MARKER
 from mybuddy.models import Clock
+from mybuddy.reports import OK_STATUSES, collect_health, stale_after
 from mybuddy.schedule import IST
+from mybuddy.store import Store
 
-STALE_AFTER = timedelta(hours=26)  # a daily topic that has not run for this long is stale
+STALE_AFTER = timedelta(hours=26)  # reports.json older than this: the site is stale
 DISK_WARN_BYTES = 1024**3
 DISK_FAIL_BYTES = 200 * 1024**2
 MEM_WARN_KB = 150 * 1024
@@ -83,14 +86,33 @@ class Doctor:
 
     # ------------------------------------------------------------------ checks
     def check_config(self) -> None:
+        """The config the services use (MYBUDDY_CONFIG: the live, bot-editable copy)."""
         try:
             config = load_config(self.config_path)
         except ConfigError as exc:
             self.add("FAIL", "config", str(exc))
             return
         self.topics, self.extra_hosts = config.topics, config.extra_allowed_hosts
-        ids = ", ".join(t.id for t in self.topics)
-        self.add("PASS", "config", f"{self.config_path}: {len(self.topics)} topics ({ids})")
+        on = [t.id for t in self.topics if t.enabled]
+        off = len(self.topics) - len(on)
+        extra = f"; {off} turned off" if off else ""
+        self.add("PASS", "config", f"{self.config_path}: {len(on)} topics on{extra}")
+        path = self.config_path.expanduser()
+        if path.absolute() == DEFAULT_CONFIG_PATH.absolute():
+            self.add(
+                "WARN",
+                "live config",
+                "using the repo's config/topics.yaml; set MYBUDDY_CONFIG to the live copy "
+                "(deploy.sh seeds ~/.config/mybuddy/config/topics.yaml) for /set changes",
+            )
+            return
+        mode = _mode(path)
+        if mode is not None and mode & 0o077:
+            self.add("WARN", "live config", f"{path} is mode {mode:o}; run: chmod 600 {path}")
+        elif (self.settings.data_dir / RELOAD_MARKER).exists():
+            self.add("WARN", "live config", "a reload is pending (is the scheduler running?)")
+        else:
+            self.add("PASS", "live config", f"{path} is mode {mode:o}" if mode else str(path))
 
     def check_env_vars(self) -> None:
         s = self.settings
@@ -112,6 +134,13 @@ class Doctor:
             self.add("WARN", "env vars", f"{detail} ({'; '.join(problems)})")
         else:
             self.add("PASS", "env vars", detail)
+
+    def check_access(self) -> None:
+        """Private by default: who may subscribe and chat (counts only, never chat ids)."""
+        lines = access_lines(self.settings)
+        warnings = [text for kind, text in lines if kind == "warning"]
+        info = "; ".join(text for kind, text in lines if kind == "info")
+        self.add("WARN" if warnings else "PASS", "access", "; ".join([info, *warnings]))
 
     def check_permissions(self) -> None:
         env = self.env_file.expanduser()
@@ -150,34 +179,55 @@ class Doctor:
             self.add("WARN", "database", f"{path} not found (nothing has run yet)")
             self.add("SKIP", "last runs", "no database")
             return
-        try:
+        try:  # read-only first: a damaged file is reported, never "repaired"
             db = sqlite3.connect(f"{path.resolve().as_uri()}?mode=ro", uri=True, timeout=5)
             try:
                 rows = db.execute("PRAGMA integrity_check").fetchall()
-                runs = {t.id: _last_run(db, t.id) for t in self.topics}
             finally:
                 db.close()
         except sqlite3.Error as exc:
             self.add("FAIL", "database", f"{path}: {exc}")
             return
         result = ", ".join(str(r[0]) for r in rows[:3])
-        if result == "ok":
-            self.add("PASS", "database", f"{path}: integrity ok")
-        else:
+        if result != "ok":
             self.add("FAIL", "database", f"{path}: integrity check: {result}")
+            return
+        self.add("PASS", "database", f"{path}: integrity ok")
+        self.check_runs()
+
+    def check_runs(self) -> None:
+        """Last successful run per topic and failed sources, from the health check's run log."""
         now = self.clock.now()
-        for t in self.topics:
-            when = runs[t.id]
-            limit = stale_limit(t.schedule)
-            if when is None:
-                self.add("WARN", f"last run {t.id}", "never ran")
-                continue
-            age = now - when
-            text = f"{_age(age)} ago"
-            if age > limit:
-                self.add("WARN", f"last run {t.id}", f"{text} (stale after {_age(limit)})")
+        try:
+            with Store(self.settings.data_dir) as store:
+                health = collect_health(self.topics, store, self.settings, now)
+                own = [t for t in self.topics if t.kind == "health"]
+                own_last = {t.id: store.last_run(t.id, OK_STATUSES) for t in own}
+        except (sqlite3.Error, OSError) as exc:
+            self.add("FAIL", "last runs", f"cannot read the run log: {exc}")
+            return
+        rows = [(row.topic, row.last_ok, row.stale) for row in health.topics]
+        for t in own:  # the health report itself (collect_health leaves it out)
+            last = own_last[t.id]
+            rows.append((t, last, last is not None and now - last > stale_after(t.schedule)))
+        for topic, last, stale in rows:
+            name = f"last run {topic.id}"
+            if not topic.enabled:
+                self.add("SKIP", name, "turned off (enabled: false)")
+            elif last is None:
+                self.add("WARN", name, "never ran")
+            elif stale:
+                limit = stale_after(topic.schedule)
+                self.add("WARN", name, f"{_age(now - last)} ago (stale after {_age(limit)})")
             else:
-                self.add("PASS", f"last run {t.id}", text)
+                self.add("PASS", name, f"{_age(now - last)} ago")
+        if health.failures:
+            parts = [
+                f"{topic}/{source} x{n}" for (topic, source), (n, _) in health.failures.items()
+            ]
+            self.add("WARN", "sources", f"failed in the last 24 h: {', '.join(parts)}")
+        else:
+            self.add("PASS", "sources", "no failed sources in the last 24 h")
 
     def check_publish(self) -> None:
         path = self.settings.site_data
@@ -288,6 +338,7 @@ class Doctor:
     def run(self) -> list[Result]:
         self.check_config()
         self.check_env_vars()
+        self.check_access()
         self.check_permissions()
         self.check_writable()
         self.check_database()
@@ -299,35 +350,6 @@ class Doctor:
         self.check_memory()
         self.check_systemd()
         return self.results
-
-
-def stale_limit(schedule: Schedule) -> timedelta:
-    """26 h, or longer for topics that skip days (Mon–Fri: the weekend gap + 2 h)."""
-    if schedule.every_minutes or not schedule.days:
-        return STALE_AFTER
-    idx = sorted(WEEKDAYS.index(d) for d in schedule.days)
-    gaps = [(b - a) % 7 or 7 for a, b in zip(idx, idx[1:] + idx[:1], strict=True)]
-    return max(STALE_AFTER, timedelta(days=max(gaps), hours=2))
-
-
-def _last_run(db: sqlite3.Connection, topic_id: str) -> datetime | None:
-    """The recorded run time, else the newest saved report's time."""
-    row = db.execute(
-        "SELECT json FROM snapshots WHERE key=?", (LAST_RUN_KEY.format(topic_id),)
-    ).fetchone()
-    when = None
-    if row:
-        try:
-            data = json.loads(row[0])
-        except ValueError:
-            data = None
-        when = _parse_time(data.get("at") if isinstance(data, dict) else None)
-    row = db.execute(
-        "SELECT created_at FROM reports WHERE topic_id=? ORDER BY id DESC LIMIT 1", (topic_id,)
-    ).fetchone()
-    report = _parse_time(row[0]) if row else None
-    candidates = [w for w in (when, report) if w is not None]
-    return max(candidates) if candidates else None
 
 
 def _parse_time(value: Any) -> datetime | None:

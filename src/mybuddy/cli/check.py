@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import os
+import re
 import stat
 from collections.abc import Collection, Sequence
 from pathlib import Path
@@ -16,6 +17,7 @@ from mybuddy.config import (
     Settings,
     Topic,
     load_config,
+    parse_chat_allowlist,
     parse_max_subscribers,
 )
 from mybuddy.deliver import TOKEN_RE
@@ -80,6 +82,8 @@ def cmd_check(config_path: Path, settings: Settings, clock: Clock, env_file: Pat
             shown = "set"
         elif name == "TELEGRAM_CHAT_ID":  # personal data: masked like everywhere else
             shown = f"set ({mask_chat_id(value)})"
+        elif name == "CHAT_ALLOWLIST":  # chat ids are personal data: count only
+            shown = f"set ({len(parse_chat_allowlist(value)[0])} id(s))"
         else:
             shown = "set (" + "".join(c if c.isprintable() else "?" for c in value[:80]) + ")"
         print(f"  {name:<20} {shown}")
@@ -112,6 +116,7 @@ def cmd_check(config_path: Path, settings: Settings, clock: Clock, env_file: Pat
         parse_max_subscribers(os.environ.get("MYBUDDY_MAX_SUBSCRIBERS"))
     except ConfigError as exc:
         print(f"  warning: {exc}; using {settings.max_subscribers}")
+    _print_access(settings)
 
     if settings.groq_api_key and not settings.fake:
         print("connectivity:")
@@ -136,6 +141,51 @@ def cmd_check(config_path: Path, settings: Settings, clock: Clock, env_file: Pat
         return 1
     print("all good")
     return 0
+
+
+def access_lines(settings: Settings) -> list[tuple[str, str]]:
+    """Who may subscribe and chat, and the chat limits, as (kind, text) with kind "info" or
+    "warning", in display order. Chat ids are never included (counts only)."""
+    out: list[tuple[str, str]] = []
+    mode = "public signup" if settings.public_signup else "private (owner + allowlist only)"
+    out.append(("info", f"mode: {mode}"))
+    owner = 1 if settings.telegram_chat_id else 0
+    out.append(
+        (
+            "info",
+            f"chat allowlist: owner{'' if owner else ' (not set)'} + "
+            f"{len(settings.chat_allowlist)}",
+        )
+    )
+    _, bad = parse_chat_allowlist(os.environ.get("CHAT_ALLOWLIST"))
+    if bad:
+        out.append(
+            ("warning", f"CHAT_ALLOWLIST has {bad} invalid entr{'y' if bad == 1 else 'ies'}")
+        )
+    if settings.chat_active:
+        out.append(
+            (
+                "info",
+                f"chat: on ({settings.chat_rate_per_min}/min and {settings.chat_daily_cap}/day "
+                f"per chat, {settings.chat_daily_token_budget} tokens/day in total)",
+            )
+        )
+    elif not (settings.groq_api_key or settings.gemini_api_key):
+        out.append(("info", "chat: off (no AI key set)"))
+    else:
+        out.append(("info", "chat: off (CHAT_ENABLED=false)"))
+    for name in ("CHAT_RATE_PER_MIN", "CHAT_DAILY_CAP", "CHAT_DAILY_TOKEN_BUDGET"):
+        raw = os.environ.get(name, "").strip()
+        if raw and not re.fullmatch(r"[0-9]{1,9}", raw):
+            out.append(("warning", f"{name} must be a whole number; using the default"))
+    return out
+
+
+def _print_access(settings: Settings) -> None:
+    """Who may subscribe and chat, and the chat limits. Chat ids are never printed."""
+    print("access:")
+    for kind, text in access_lines(settings):
+        print(f"  {'warning: ' if kind == 'warning' else ''}{text}")
 
 
 def _disallowed_urls(

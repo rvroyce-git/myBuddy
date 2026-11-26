@@ -46,7 +46,7 @@ Every source returns `Item`s with absolute https URLs. Verify each endpoint with
 * `engine.py`: run one topic: build sources, collect each in isolation (log failures), dedupe, summarise, deliver, save report, export.
 * `schedule.py`: tiny in-process scheduler (no APScheduler): computes next run for each topic in Asia/Kolkata; `mybuddy serve` loops and sleeps.
 * `export.py`: writes `site/data/reports.json` (path configurable) in the format below.
-* `cli/` (package, one module per command group; entry point `mybuddy.cli:main`): `mybuddy run <topic|all> [--dry-run]`, `mybuddy list`, `mybuddy serve`, `mybuddy check` (config + env + connectivity), `mybuddy doctor` (every health check, PASS/WARN/FAIL/SKIP, exit 1 on FAIL), `mybuddy init` (guided setup; writes a 0600 topics file only after an exact "yes"), `mybuddy export`, `mybuddy telegram-setup`, `mybuddy bot`, `mybuddy subscribers`. `run`/`serve` record each topic's last run in the store (snapshot key `_run:<topic>`) for `doctor`.
+* `cli/` (package, one module per command group; entry point `mybuddy.cli:main`): `mybuddy run <topic|all> [--dry-run]`, `mybuddy list`, `mybuddy serve`, `mybuddy check` (config + env + connectivity), `mybuddy doctor` (every check incl. access mode, live config and run staleness, PASS/WARN/FAIL/SKIP, exit 1 on FAIL), `mybuddy init` (guided setup; writes the live config, `MYBUDDY_CONFIG` or `~/.config/mybuddy/config/topics.yaml`, mode 0600, only after an exact "yes"), `mybuddy health` (the health check report), `mybuddy export`, `mybuddy telegram-setup`, `mybuddy bot`, `mybuddy subscribers`. `doctor` reads last runs and source failures from the store's `runs`/`source_failures` tables through the health check (`reports.py`).
 
 ## The 7 topics (exactly these; nothing else)
 | id | title | when (IST) | ai |
@@ -92,7 +92,7 @@ Every source returns `Item`s with absolute https URLs. Verify each endpoint with
 Visitors pick topics on the website and subscribe to the existing bot `@myBuddy_update_bot`
 (Telegram cannot message a phone number; the visitor must open the bot and tap Start).
 
-* **Stable topic bits** (v2): every website topic (`ai: true`) has a permanent `bit:` in
+* **Stable topic bits** (v2): every website topic (`ai: true`, unless `website: false`) has a permanent `bit:` in
   `config/topics.yaml` — unique, 0–59, never changed or reused, even if topics are reordered or
   removed. Today: `ai_news 0, security 1, github_trending 2, deep_dive 3, research_papers 4,
   startups 5, ai_models 6` (identical to the old positional order, so existing links stay valid).
@@ -108,9 +108,27 @@ Visitors pick topics on the website and subscribe to the existing bot `@myBuddy_
   topic, plus "Save"), `/stop` (unsubscribe), `/help`. Replies are short, friendly English.
 * **Delivery**: each AI topic's report goes to the owner (`TELEGRAM_CHAT_ID`, all topics) and to
   every active subscriber of that topic; duplicates removed. `kev_alerts` (non-AI, hourly) goes to
-  the owner and to subscribers of `security`. A subscriber error never blocks the owner's delivery;
+  the owner and to subscribers of `security`. Telegram-only topics (`website: false`: digest,
+  policy watch, recalls, industry signals, weekly review, health check) have no bit and are not
+  in `reports.json`; they go to the owner, plus the subscribers of their `audience:` topic if
+  set (the health check never has one). A subscriber error never blocks the owner's delivery;
   a subscriber who blocked the bot (HTTP 403) is marked inactive.
 * **Storage**: SQLite `subscribers(chat_id, topics, active, created_at, updated_at)`. Only the
   Telegram chat id and topic ids are stored — no names, usernames or phone numbers.
 * **Limit**: `MYBUDDY_MAX_SUBSCRIBERS` (default 100) active subscribers; new ones beyond that get a
   polite "full" message. Per-chat flood guard: ignore more than 10 commands (or 40 picker taps) per minute.
+* **Access** (phase 2): private by default (`PUBLIC_SIGNUP=false`). Only the owner and
+  `CHAT_ALLOWLIST` chats can start a new subscription; others get a fixed "private" reply (at most
+  once per 10 minutes, no store write). Existing subscribers keep their reports, can change topics
+  and can always `/stop`. With `PUBLIC_SIGNUP=true` the flow above applies to everyone.
+* **Chat**: owner + `CHAT_ALLOWLIST` only. Plain text or `/ask <question>` is answered from the
+  latest saved reports (stateless; `/reset` just says so). Usage counts live in SQLite
+  `chat_usage(chat_id, at, day, tokens)` (no text), pruned after 3 days.
+* **Feedback**: each Telegram report's last message part has inline buttons 👍/👎 with
+  callback data `fb:<u|d>:<topic id>:<yymmddHHMM>` (the report's IST run time, ≤ 64 bytes).
+  Votes: SQLite `feedback(topic_id, report_ref, voter, vote, report_chars, at)`, voter = salted
+  hash; one vote per voter and report.
+* **Owner config commands** (`/config`, `/set`, `/topic`, `/time`, `/source`, `/limit`,
+  `/approve`, `/reject`, `/changes`, `/undo`, `/feedback`, `/note`): owner only; changes apply
+  only after `/approve <id>` within 10 minutes. Topics may carry `enabled: false` (scheduler
+  skips them; the website still lists them).

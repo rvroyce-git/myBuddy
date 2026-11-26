@@ -28,6 +28,7 @@ def _load_ist() -> tzinfo:
 
 IST: tzinfo = _load_ist()
 MAX_SLEEP_SECONDS = 300.0
+RELOAD_POLL_SECONDS = 60.0
 
 
 class SystemClock:
@@ -73,13 +74,19 @@ class Scheduler:
         stop: threading.Event | None = None,
         log: TextIO | None = None,
         max_sleep: float = MAX_SLEEP_SECONDS,
+        reload: Callable[[], Sequence[Topic] | None] | None = None,
     ) -> None:
         self.topics = list(topics)
         self.run = run
         self.clock = clock
         self.stop = stop or threading.Event()
         self.log = log
-        self.max_sleep = max_sleep
+        # With `reload`, the loop wakes at least once a minute and calls it; a non-None result
+        # (new topics after an approved config change) replaces the schedule.
+        self.reload = reload
+        self.max_sleep = min(max_sleep, RELOAD_POLL_SECONDS) if reload else max_sleep
+        self.due: dict[str, datetime] = {}
+        self.by_id: dict[str, Topic] = {}
 
     def _log(self, msg: str) -> None:
         print(f"[mybuddy] {msg}", file=self.log or sys.stderr, flush=True)
@@ -92,15 +99,43 @@ class Scheduler:
         signal.signal(signal.SIGTERM, handler)
         signal.signal(signal.SIGINT, handler)
 
+    def _plan(self) -> None:
+        """Next run of every enabled topic; disabled topics are skipped."""
+        now = self.clock.now()
+        self.by_id = {t.id: t for t in self.topics if t.enabled}
+        self.due = {tid: next_run(t.schedule, now) for tid, t in self.by_id.items()}
+        for t in self.topics:
+            if t.id in self.due:
+                self._log(f"{t.id}: next run {self.due[t.id]:%a %d %b %H:%M} IST")
+            else:
+                self._log(f"{t.id}: disabled")
+
+    def _check_reload(self) -> None:
+        if self.reload is None:
+            return
+        try:
+            topics = self.reload()
+        except Exception as exc:  # a bad reload keeps the current schedule
+            self._log(f"config reload failed: {type(exc).__name__}: {exc}")
+            return
+        if topics is not None:
+            self.topics = list(topics)
+            self._log(f"config reloaded: {len(self.topics)} topics")
+            self._plan()
+
     def loop(self, max_runs: int | None = None) -> int:
         """Sleep/run until stopped. Returns the number of topic runs performed."""
-        now = self.clock.now()
-        due = {t.id: next_run(t.schedule, now) for t in self.topics}
-        by_id = {t.id: t for t in self.topics}
+        self._plan()
+        due, by_id = self.due, self.by_id
         runs = 0
-        for t in self.topics:
-            self._log(f"{t.id}: next run {due[t.id]:%a %d %b %H:%M} IST")
-        while not self.stop.is_set() and self.topics:
+        while not self.stop.is_set():
+            self._check_reload()
+            due, by_id = self.due, self.by_id
+            if not due:
+                if self.reload is None:
+                    break
+                self.stop.wait(self.max_sleep)  # nothing enabled: just watch for a reload
+                continue
             topic_id = min(due, key=lambda k: due[k])
             wait = (due[topic_id] - self.clock.now()).total_seconds()
             if wait > 0:
