@@ -36,7 +36,13 @@ from typing import Any, TextIO
 
 import yaml
 
-from mybuddy.config import Config, ConfigError, Topic, validate_config_text
+from mybuddy.config import (
+    MAX_CHAT_DAILY_TOKEN_BUDGET,
+    Config,
+    ConfigError,
+    Topic,
+    validate_config_text,
+)
 from mybuddy.export import schedule_label
 from mybuddy.http import host_allowlist, url_host
 from mybuddy.models import Clock
@@ -49,11 +55,11 @@ BACKUPS_KEPT = 20
 DIFF_MAX_CHARS = 2500
 URL_MAX_CHARS = 300
 # /limit name -> (override key, minimum, maximum). Groq's free tier is ~200K tokens/day for
-# everything, so chat can never take more than 150K.
+# everything, so chat can never take more than MAX_CHAT_DAILY_TOKEN_BUDGET (80K).
 LIMITS: dict[str, tuple[str, int, int]] = {
     "chat-daily": ("chat_daily_cap", 0, 1000),
     "chat-rate": ("chat_rate_per_min", 0, 60),
-    "chat-tokens": ("chat_daily_token_budget", 0, 150_000),
+    "chat-tokens": ("chat_daily_token_budget", 0, MAX_CHAT_DAILY_TOKEN_BUDGET),
 }
 _ID_RE = re.compile(r"[a-z][a-z0-9_]{0,39}")
 _TIME_RE = re.compile(r"([01][0-9]|2[0-3]):[0-5][0-9]")

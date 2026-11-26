@@ -75,9 +75,10 @@ messages (`/reset` just confirms that). Logs show masked chat ids and sizes, nev
 | `PUBLIC_SIGNUP` | `false` | `true` lets anyone subscribe (chat stays owner + allowlist) |
 | `CHAT_ALLOWLIST` | empty | extra chat ids, comma separated (the owner is always allowed) |
 | `CHAT_ENABLED` | `true` if `GROQ_API_KEY` is set | `false` turns chat off |
-| `CHAT_RATE_PER_MIN` | `5` | messages per minute per chat |
+| `CHAT_RATE_PER_MIN` | `2` | messages per minute per chat |
 | `CHAT_DAILY_CAP` | `30` | messages per chat per day (IST) |
-| `CHAT_DAILY_TOKEN_BUDGET` | `60000` | Groq tokens per day for all chat together, so reports keep their quota |
+| `CHAT_DAILY_TOKEN_BUDGET` | `60000` | Groq tokens per day for all chat together, so reports keep their quota (max `80000`) |
+| `SITE_URL` | `https://rvroyce-git.github.io/myBuddy/` | website linked from the bot's private-mode reply |
 
 Limits are counted in SQLite, so restarts don't reset them. To add someone: ask them to message
 the bot, get their chat id (e.g. from @userinfobot), then on the VM add

@@ -26,7 +26,7 @@ from types import FrameType
 from typing import Any, TextIO
 
 from mybuddy.chat import RESET, ChatResponder
-from mybuddy.config import DEFAULT_BOT_USERNAME, DEFAULT_MAX_SUBSCRIBERS, Topic
+from mybuddy.config import DEFAULT_BOT_USERNAME, DEFAULT_MAX_SUBSCRIBERS, DEFAULT_SITE_URL, Topic
 from mybuddy.configedit import ConfigEditor
 from mybuddy.deliver import TOKEN_RE, chat_is_gone, telegram_description, telegram_url
 from mybuddy.feedback import CALLBACK_RE, weekly_summary
@@ -87,10 +87,11 @@ EXPIRED = "That button has expired. Send /topics to try again."
 PICK_ONE = "Pick at least one topic first (or send /stop)."
 SAVED = "Saved ✅"
 SLOW_DOWN = "Too many taps – please wait a moment."
-PRIVATE = (
+PRIVATE_TEMPLATE = (
     "Thanks for stopping by! MyBuddy is private for now and isn't taking new subscribers. "
-    "The daily reports are on the website: https://rvroyce-git.github.io/myBuddy/"
+    "The daily reports are on the website: {site_url}"
 )
+PRIVATE = PRIVATE_TEMPLATE.format(site_url=DEFAULT_SITE_URL)  # with the default SITE_URL
 PRIVATE_TAP = "MyBuddy is private for now."
 CHAT_HELP = "\n\nAsk me about the latest reports: just send a question, or /ask <question>."
 CHAT_UNAVAILABLE = "Chat isn't available here. Send /help to see what I can do."
@@ -168,6 +169,7 @@ class SubscriptionBot:
         chat_allowlist: Sequence[int] = (),
         chat: ChatResponder | None = None,
         editor: ConfigEditor | None = None,
+        site_url: str = DEFAULT_SITE_URL,
     ) -> None:
         if not TOKEN_RE.fullmatch(token):
             raise ValueError("TELEGRAM_BOT_TOKEN does not look like a bot token")
@@ -198,6 +200,7 @@ class SubscriptionBot:
         self.chat = chat
         self.editor = editor
         self._denied: dict[int, float] = {}  # chat -> when it last got the PRIVATE reply
+        self.private_reply = PRIVATE_TEMPLATE.format(site_url=site_url)
 
     # ------------------------------------------------------------------ plumbing
     def _log(self, msg: str) -> None:
@@ -277,7 +280,7 @@ class SubscriptionBot:
             ]:
                 del self._denied[cid]
         self._log(f"chat {mask_chat_id(chat_id)}: not allowed (private mode), replied")
-        self._send(chat_id, PRIVATE)
+        self._send(chat_id, self.private_reply)
 
     def _chat(self, chat_id: int, question: str) -> None:
         if self.chat is None or chat_id not in self.allowed:

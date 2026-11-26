@@ -5,8 +5,12 @@ Security posture:
 * The model gets the latest reports and the question as clearly delimited, untrusted DATA
   blocks. It has no tools and no function calling; the only network access is one chat
   completion request (Groq, then Gemini only if configured).
-* The model never sees a URL. Any URL it writes is removed unless it is a link from a stored
-  report; links of the items it cites are added from the store. An answer that contains
+* The model never sees a URL. Any URL or bare domain it writes ("evil.com/login") is removed
+  unless it points at a link (or host) from a stored report; links of the items it cites are
+  added from the store.
+* Owner-only reports (the health check) are context for the owner's questions only.
+* Quiet window: no chat within QUIET_WINDOW_MINUTES of a scheduled AI report run, so the
+  reports always get Groq's per-minute quota. An answer that contains
   anything secret-looking is never sent.
 * Stateless: nothing about the conversation is kept, in memory or on disk. Only usage counts
   (chat id, time, IST day, tokens) are stored, so limits survive restarts.
@@ -19,14 +23,14 @@ import re
 import sys
 from collections.abc import Sequence
 from dataclasses import dataclass
-from datetime import timedelta
+from datetime import datetime, timedelta
 from typing import Any, TextIO
 
 from mybuddy.config import Settings, Topic
 from mybuddy.deliver import TOKEN_RE
-from mybuddy.http import HttpError
+from mybuddy.http import HttpError, url_host
 from mybuddy.models import Clock, HttpClient
-from mybuddy.schedule import IST
+from mybuddy.schedule import IST, next_run
 from mybuddy.store import Store
 from mybuddy.subscriptions import mask_chat_id
 from mybuddy.summarize import Provider, providers_for
@@ -44,6 +48,9 @@ MAX_LINKS = 3
 MAX_TOKENS = 700  # reasoning models spend part of this before answering
 TEMPERATURE = 0.2
 CHARS_PER_TOKEN = 4
+QUIET_WINDOW_MINUTES = 2  # around every scheduled AI report run
+OWNER_ONLY_KINDS = frozenset({"health"})
+LINK_REMOVED = "[link removed]"
 
 GREETING = (
     "Ask me anything about the latest reports, e.g. “what's new in security?”. "
@@ -59,6 +66,7 @@ REFUSE = (
     "access the server or share settings."
 )
 WITHHELD = "Sorry, I can't share that answer."
+QUIET = "I'm busy writing the scheduled reports right now. Please ask again in a few minutes."
 RESET = (
     "Done. I don't remember earlier messages anyway: each question is answered on its own "
     "from the latest reports."
@@ -82,6 +90,23 @@ How to answer:
 
 _URL_RE = re.compile(r"(?:https?://|www\.)[^\s<>\"'()\[\]]+", re.IGNORECASE)
 _TRAILING_PUNCT = ".,;:!?"
+# A URL, or a bare host name with a TLD and an optional port/path ("evil.co", "evil.com/login").
+# Bare hosts never start after a word character, '@', '.' or '-' and never end before one of
+# '@' or a word character, so emails, version numbers (3.4.2) and words are left alone.
+_LINK_RE = re.compile(
+    r"(?P<url>(?:https?://|www\.)[^\s<>\"'()\[\]]+)"
+    r"|(?<![\w@.\-])(?P<host>(?:[^\W_](?:[\w-]{0,61}[^\W_])?\.)+"
+    r"(?:[^\W\d_]{2,24}|xn--[a-z0-9-]{1,59}))(?![\w@-])"
+    r"(?P<path>[:/?#][^\s<>\"'()\[\]]*)?",
+    re.IGNORECASE,
+)
+# Endings that are almost always file names or code ("config.yaml", "Node.js"), not hosts.
+_FILE_SUFFIX_RE = re.compile(
+    r"ya?ml|json|toml|ini|cfg|conf|txt|md|rst|csv|log|py|jsx?|tsx?|html?|css|xml|pdf|png|"
+    r"jpe?g|gif|svg|webp|sh|bat|ps1|exe|dll|so|rs|go|java|kt|rb|php|cpp|lock|env|tar|t?gz|"
+    r"bz2|whl|ipynb|sql|db",
+    re.IGNORECASE,
+)
 _DELIMITER_RE = re.compile(r"[<>]{3,}")
 _WS_RE = re.compile(r"[ \t\r\f\v]+")
 _CITE_RE = re.compile(r"\[?\b([a-z][a-z0-9_]{0,39}) ?#(\d{1,2})\b\]?")
@@ -131,16 +156,23 @@ def _data(value: Any, limit: int) -> str:
 
 
 def build_context(
-    store: Store, topics: Sequence[Topic], max_chars: int = CONTEXT_MAX_CHARS
+    store: Store,
+    topics: Sequence[Topic],
+    max_chars: int = CONTEXT_MAX_CHARS,
+    *,
+    owner: bool = False,
 ) -> Context:
     """The latest report of every topic, numbered per topic, within `max_chars`.
 
+    Owner-only topics (the health check) are left out unless the question is the owner's.
     Items are added round-robin by rank (every topic's #1, then every #2, ...) so a large
     report cannot crowd the others out.
     """
     headers: list[tuple[str, list[str]]] = []
     items: list[list[tuple[str, str, str]]] = []  # per topic: (label, text, url)
     for topic in topics:
+        if topic.kind in OWNER_ONLY_KINDS and not owner:
+            continue
         report = store.latest_report(topic.id)
         if not report:
             continue
@@ -208,16 +240,46 @@ def build_messages(context: Context, question: str) -> list[dict[str, str]]:
     return [{"role": "system", "content": SYSTEM_PROMPT}, {"role": "user", "content": user}]
 
 
-def _strip_urls(text: str, allowed: set[str]) -> str:
-    def repl(match: re.Match[str]) -> str:
-        url = match.group(0)
-        tail = ""
-        while url and url[-1] in _TRAILING_PUNCT:
-            tail = url[-1] + tail
-            url = url[:-1]
-        return (url if url in allowed else "(link removed)") + tail
+def _bare_host(host: str) -> str:
+    host = host.lower()
+    return host[4:] if host.startswith("www.") else host
 
-    return _URL_RE.sub(repl, text)
+
+def _strip_urls(text: str, allowed: set[str]) -> str:
+    """Keep stored-report URLs (and bare mentions of their hosts); remove every other link."""
+    hosts = {_bare_host(h) for h in map(url_host, allowed) if h}
+
+    def repl(match: re.Match[str]) -> str:
+        link = match.group(0)
+        tail = ""
+        while link and link[-1] in _TRAILING_PUNCT:
+            tail = link[-1] + tail
+            link = link[:-1]
+        host = match.group("host")
+        if host is None and link[:4].lower() == "www.":
+            keep = link in allowed or _bare_host(url_host("https://" + link) or "") in hosts
+        elif host is None:
+            keep = link in allowed  # full URLs must be exactly a stored link
+        else:
+            suffix = host.rsplit(".", 1)[-1].lower()
+            keep = (_FILE_SUFFIX_RE.fullmatch(suffix) is not None and not match.group("path")) or (
+                _bare_host(host) in hosts
+            )
+        return (link if keep else LINK_REMOVED) + tail
+
+    return _LINK_RE.sub(repl, text)
+
+
+def in_quiet_window(
+    topics: Sequence[Topic], now: datetime, minutes: int = QUIET_WINDOW_MINUTES
+) -> bool:
+    """True within `minutes` before or after a scheduled run of an enabled AI topic."""
+    window = timedelta(minutes=minutes)
+    start = now - window - timedelta(microseconds=1)  # next_run is strictly after its input
+    for topic in topics:
+        if topic.ai and topic.enabled and next_run(topic.schedule, start) <= now + window:
+            return True
+    return False
 
 
 def _trim(text: str) -> str:
@@ -285,6 +347,8 @@ class ChatResponder:
         self.rate_per_min = settings.chat_rate_per_min
         self.daily_cap = settings.chat_daily_cap
         self.token_budget = settings.chat_daily_token_budget
+        owner = (settings.telegram_chat_id or "").strip()
+        self.owner = int(owner) if re.fullmatch(r"-?[0-9]{1,20}", owner) else None
         self._secrets = tuple(
             s
             for s in (
@@ -333,6 +397,9 @@ class ChatResponder:
     def _answer(self, chat_id: int, question: str, masked: str) -> str:
         if not question:
             return GREETING
+        if in_quiet_window(self.topics, self.clock.now()):
+            self._log(f"chat {masked}: quiet window (scheduled report run)")
+            return QUIET
         limit = self.limited(chat_id)
         if limit:
             self._log(f"chat {masked}: chat limit reached")
@@ -342,7 +409,9 @@ class ChatResponder:
             self.store.record_chat_use(chat_id, self.clock.now(), day)
             self._log(f"chat {masked}: refused a server/secret request ({len(question)} chars)")
             return REFUSE
-        context = build_context(self.store, self.topics)
+        context = build_context(
+            self.store, self.topics, owner=self.owner is not None and chat_id == self.owner
+        )
         if not context.links:
             return NO_REPORTS
         messages = build_messages(context, question)
