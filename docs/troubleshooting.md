@@ -123,3 +123,12 @@ systemctl status mybuddy | grep -i memory
   for a source returning huge responses (each response is capped at 5 MB); restart
   the service. The swap file keeps the whole VM from freezing.
 * Swap missing after a reboot: `grep swapfile /etc/fstab`; rerun `sudo bash deploy/harden.sh`.
+
+## Website updates late (up to about an hour)
+
+GitHub often delays scheduled workflows on quiet repositories, so the 10-minute rebuild in
+`pages.yml` may run only hourly. For instant updates, create a fine-grained GitHub token
+(Settings → Developer settings → Fine-grained tokens → this repository only → Repository
+permissions → **Actions: Read and write**, nothing else) and save it on the VM with
+`MYBUDDY_HOST=<vm-ip> bash deploy/set-dispatch-token.sh`. After each publish the server then asks
+GitHub to run main's trusted website build straight away.
