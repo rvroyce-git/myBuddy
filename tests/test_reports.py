@@ -385,6 +385,10 @@ def test_health_cli(
     assert out.startswith("Health check\n⚠️ no Groq key")
     assert "policy_watch: never run yet" in out and "Groq: NOT configured" in out
     with Store(tmp_path / "data") as s:
+        s.record_source_failure("ai_news", "Feed", THURSDAY, "HTTP 500")
+    assert cli.main(["--env-file", str(tmp_path / "none"), "health"]) == 0  # failed source: WARN
+    capsys.readouterr()
+    with Store(tmp_path / "data") as s:
         s.record_run("ai_news", THURSDAY - timedelta(days=2), "delivered")
     assert cli.main(["--env-file", str(tmp_path / "none"), "health"]) == 1
     assert "⚠️ STALE ai_news" in capsys.readouterr().out

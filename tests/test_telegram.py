@@ -193,7 +193,22 @@ def test_telegram_setup_without_messages(
     monkeypatch.setenv("TELEGRAM_BOT_TOKEN", TOKEN)
     env["http"].get_responses[f"https://api.telegram.org/bot{TOKEN}/getUpdates"] = _updates()
     assert cli.main([*env["argv"], "telegram-setup"]) == 1
-    assert "send 'hi'" in capsys.readouterr().err
+    err = capsys.readouterr().err
+    assert "send 'hi'" in err
+    assert "sudo systemctl stop mybuddy-bot" in err and "sudo systemctl start mybuddy-bot" in err
+
+
+def test_telegram_setup_chat_id_already_set(
+    env: dict[str, Any],  # noqa: F811
+    monkeypatch: pytest.MonkeyPatch,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    monkeypatch.setenv("TELEGRAM_BOT_TOKEN", TOKEN)
+    monkeypatch.setenv("TELEGRAM_CHAT_ID", "987654321")
+    # No getUpdates response registered: the command must not call it.
+    assert cli.main([*env["argv"], "telegram-setup"]) == 0
+    out = capsys.readouterr().out
+    assert "already set" in out and "…321" in out and "987654321" not in out
 
 
 def test_check_reports_telegram_bot(

@@ -29,7 +29,8 @@ SWAPPINESS=20
 TIMEZONE=Asia/Kolkata
 SSHD_DROPIN=/etc/ssh/sshd_config.d/99-mybuddy.conf
 JAIL_LOCAL=/etc/fail2ban/jail.local
-SYSCTL_FILE=/etc/sysctl.d/99-mybuddy.conf
+SYSCTL_DIR=/etc/sysctl.d
+SYSCTL_FILE=$SYSCTL_DIR/99-mybuddy.conf
 AUTO_UPGRADES=/etc/apt/apt.conf.d/20auto-upgrades
 BACKUP_ROOT=/var/backups/mybuddy
 BACKUP_DIR=$BACKUP_ROOT/$(date +%Y%m%d%H%M%S)
@@ -126,6 +127,53 @@ put_file() {
   return 0
 }
 
+# ---------------------------------------------------------------- effective settings
+# Idempotency compares what is in force, not file bytes: a server hardened earlier (other
+# header, other key order, another file name) is left alone and nothing is restarted.
+SSHD_WANT=("passwordauthentication no" "kbdinteractiveauthentication no"
+  "permitrootlogin no" "pubkeyauthentication yes" "maxauthtries 3")
+
+# sshd_effective_ok: 0 when `sshd -T` already reports every wanted value.
+sshd_effective_ok() {
+  local effective want
+  command -v sshd >/dev/null || return 1
+  [ -d /run/sshd ] || [ "$(id -u)" -ne 0 ] || install -d -m 755 /run/sshd
+  effective=$(sshd -T 2>/dev/null) || return 1
+  for want in "${SSHD_WANT[@]}"; do
+    grep -qix "$want" <<<"$effective" || return 1
+  done
+}
+
+# jail_settings: read INI text on stdin, print sorted "section.key=value" lines
+# (comments, blank lines, spacing and order ignored).
+jail_settings() {
+  awk '
+    /^[[:space:]]*[#;]/ || /^[[:space:]]*$/ { next }
+    /^[[:space:]]*\[/ { sec = $0; gsub(/[][[:space:]]/, "", sec); next }
+    index($0, "=") {
+      k = substr($0, 1, index($0, "=") - 1); v = substr($0, index($0, "=") + 1)
+      gsub(/^[[:space:]]+|[[:space:]]+$/, "", k); gsub(/^[[:space:]]+|[[:space:]]+$/, "", v)
+      print sec "." tolower(k) "=" v
+    }' | LC_ALL=C sort
+}
+
+# jail_effective_ok: 0 when $JAIL_LOCAL already holds the wanted jail settings.
+jail_effective_ok() {
+  [ -r "$JAIL_LOCAL" ] || return 1
+  [ "$(jail_settings <"$JAIL_LOCAL")" = "$(printf '%s' "$JAIL_CONTENT" | jail_settings)" ]
+}
+
+# swappiness_ok: 0 when the live value is right AND a mybuddy sysctl.d file persists it.
+swappiness_ok() {
+  local f
+  [ "$(sysctl -n vm.swappiness 2>/dev/null)" = "$SWAPPINESS" ] || return 1
+  for f in "$SYSCTL_DIR"/*mybuddy*.conf; do
+    [ -r "$f" ] || continue
+    grep -qE "^[[:space:]]*vm\.swappiness[[:space:]]*=[[:space:]]*${SWAPPINESS}[[:space:]]*$" "$f" && return 0
+  done
+  return 1
+}
+
 # ---------------------------------------------------------------- preflight
 [ -r /etc/os-release ] || die "cannot read /etc/os-release; this script is for Ubuntu 24.04"
 # shellcheck disable=SC1091
@@ -162,7 +210,7 @@ if [ ${#missing[@]} -gt 0 ]; then
 else
   same "packages ${PACKAGES[*]}"
 fi
-changed "apt upgrade (ran)"
+if [ "$DRY_RUN" = 1 ]; then changed "apt upgrade (would run)"; else changed "apt upgrade (ran)"; fi
 
 # ---------------------------------------------------------------- 2. unattended upgrades
 echo "==> 2. Unattended security upgrades"
@@ -210,8 +258,13 @@ else
   fi
   changed "$SWAPFILE in /etc/fstab"
 fi
-if put_file "$SYSCTL_FILE" 644 "$SYSCTL_CONTENT" "vm.swappiness"; then
+if swappiness_ok; then
+  same "vm.swappiness=$SWAPPINESS (live and in $SYSCTL_DIR)"
+elif put_file "$SYSCTL_FILE" 644 "$SYSCTL_CONTENT" "vm.swappiness"; then
   run sysctl -q -p "$SYSCTL_FILE"
+else
+  run sysctl -q -p "$SYSCTL_FILE"
+  changed "vm.swappiness live value"
 fi
 
 # ---------------------------------------------------------------- 5. app user
@@ -265,6 +318,9 @@ echo "==> 6. SSH server: $SSHD_DROPIN"
 grep -qE '^[[:space:]]*Include[[:space:]]+/etc/ssh/sshd_config\.d/\*\.conf' /etc/ssh/sshd_config ||
   warn "/etc/ssh/sshd_config does not include sshd_config.d/*.conf; the drop-in has no effect"
 backup=""
+if sshd_effective_ok; then
+  same "sshd settings (effective, sshd -T)"
+else
 [ -f "$SSHD_DROPIN" ] && backup=$(mktemp) && cp -p "$SSHD_DROPIN" "$backup"
 if put_file "$SSHD_DROPIN" 644 "$SSHD_CONTENT" "sshd drop-in"; then
   if [ "$DRY_RUN" = 1 ]; then
@@ -278,19 +334,27 @@ if put_file "$SSHD_DROPIN" 644 "$SSHD_CONTENT" "sshd drop-in"; then
     die "sshd config invalid; nothing reloaded, your SSH session is unaffected"
   fi
 fi
-[ -n "$backup" ] && rm -f "$backup"
+fi
+if [ -n "$backup" ]; then rm -f "$backup"; fi
 # First match wins in sshd: an earlier drop-in (e.g. 50-cloud-init.conf) could override ours.
 if [ "$DRY_RUN" = 0 ] && command -v sshd >/dev/null; then
   effective=$(sshd -T 2>/dev/null || true)
-  for want in "passwordauthentication no" "kbdinteractiveauthentication no" \
-    "permitrootlogin no" "pubkeyauthentication yes" "maxauthtries 3"; do
-    grep -qx "$want" <<<"$effective" || warn "effective sshd setting is not '$want' (check other files in /etc/ssh/sshd_config.d/)"
+  for want in "${SSHD_WANT[@]}"; do
+    grep -qix "$want" <<<"$effective" || warn "effective sshd setting is not '$want' (check other files in /etc/ssh/sshd_config.d/)"
   done
 fi
 
 # ---------------------------------------------------------------- 7. fail2ban
 echo "==> 7. fail2ban sshd jail: $JAIL_LOCAL"
-if put_file "$JAIL_LOCAL" 644 "$JAIL_CONTENT" "fail2ban jail.local"; then
+if jail_effective_ok; then
+  same "fail2ban jail settings ($JAIL_LOCAL)"
+  if systemctl is-active --quiet fail2ban 2>/dev/null; then
+    same "fail2ban running"
+  else
+    run systemctl enable --now fail2ban
+    changed "fail2ban running"
+  fi
+elif put_file "$JAIL_LOCAL" 644 "$JAIL_CONTENT" "fail2ban jail.local"; then
   if [ "$DRY_RUN" = 0 ]; then
     fail2ban-client -t >/dev/null || die "fail2ban rejected $JAIL_LOCAL (previous copy saved under $BACKUP_DIR)"
   fi

@@ -165,6 +165,15 @@ disk and memory, and the systemd units (`mybuddy`, `mybuddy-bot`; `mybuddy-publi
 warns). Checks that do not apply (no key; on macOS no `/proc/meminfo` or `systemctl`) are
 SKIPped. `mybuddy check` is the older, more verbose subset.
 
+`mybuddy doctor` and `mybuddy health` grade problems the same way: a failed source (one feed
+or API erroring in the last 24 h) is a WARN and keeps exit code 0; a topic whose last
+successful run is older than its stale threshold is a FAIL and exits 1.
+
+`mybuddy telegram-setup` reports the configured chat (masked) and exits when
+`TELEGRAM_CHAT_ID` is already set. If it finds no messages while the `mybuddy-bot` service is
+running (the bot consumes updates), run `sudo systemctl stop mybuddy-bot`, message the bot,
+run `mybuddy telegram-setup --save`, then `sudo systemctl start mybuddy-bot`.
+
 ## Develop and test
 
 ```bash

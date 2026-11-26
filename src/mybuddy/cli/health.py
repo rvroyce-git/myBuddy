@@ -10,7 +10,7 @@ from mybuddy.store import Store
 
 
 def cmd_health(topics: Sequence[Topic], settings: Settings, clock: Clock) -> int:
-    """Print the health check. Exit 1 when something is stale or a source failed."""
+    """Print the health check. Exit 1 when a topic is stale; failed sources only warn."""
     from mybuddy.reports import collect_health, health_report, health_text
 
     health_topic = next((t for t in topics if t.kind == "health"), None)
@@ -19,4 +19,4 @@ def cmd_health(topics: Sequence[Topic], settings: Settings, clock: Clock) -> int
     with Store(settings.data_dir) as store:
         health = collect_health(topics, store, settings, now)
     print(health_text(health_report("health", title, health, now)), end="")
-    return 1 if health.stale or health.failures else 0
+    return 1 if health.stale else 0

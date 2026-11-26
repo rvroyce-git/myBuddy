@@ -183,11 +183,11 @@ def test_corrupt_database_fails(env: dict[str, Any], capsys: pytest.CaptureFixtu
     assert code == 1 and lines["database"].startswith("FAIL")
 
 
-def test_stale_runs_warn(env: dict[str, Any], capsys: pytest.CaptureFixture[str]) -> None:
+def test_stale_runs_fail(env: dict[str, Any], capsys: pytest.CaptureFixture[str]) -> None:
     env["clock"].advance(hours=30)
     code, lines = _doctor(env, capsys)
-    assert code == 0
-    assert lines["last run ai_news"].startswith("WARN") and "stale" in lines["last run ai_news"]
+    assert code == 1
+    assert lines["last run ai_news"].startswith("FAIL") and "stale" in lines["last run ai_news"]
     # Mon–Fri topics may rest over the weekend: 30 h is still fine for them.
     assert lines["last run deep_dive"].startswith("PASS")
     assert lines["publish"].startswith("WARN")
@@ -240,10 +240,10 @@ def test_failed_sources_and_turned_off_topics(
     with Store(env["data"]) as store:
         store.record_source_failure("ai_news", "Feed", env["clock"].now(), "HTTP 500")
     code, lines = _doctor(env, capsys)
-    assert code == 0
+    assert code == 1  # stale topic fails; the failed source alone only warns
     assert lines["sources"].startswith("WARN") and "ai_news/Feed x1" in lines["sources"]
     assert lines["last run deep_dive"] == "SKIP turned off (enabled: false)"
-    assert lines["last run ai_news"].startswith("WARN")
+    assert lines["last run ai_news"].startswith("FAIL")
     assert "1 topics on; 1 turned off" in lines["config"]
 
 
