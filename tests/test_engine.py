@@ -209,6 +209,53 @@ def test_kev_plain_path_no_ai(settings: Settings, clock: FixedClock) -> None:
     assert exported["topics"] == []  # hourly KEV alerts are Discord-only, not site widgets
 
 
+def test_kev_alerts_end_to_end_plain_path(settings: Settings) -> None:
+    """Real KEV source + fixture JSON -> engine -> formatted message; seen only after delivery."""
+    from test_sources_support import fixture_json
+
+    from mybuddy.deliver.format import format_telegram
+    from mybuddy.sources import build_source
+    from mybuddy.sources.cisa_kev import KEV_URL
+
+    vulns = fixture_json("cisa_kev.json")["vulnerabilities"]
+    fresh = [v for v in vulns if v["dateAdded"] == "2026-11-20"]
+    assert fresh
+    topic = make_topic(
+        id="kev_alerts",
+        title="Actively exploited vulnerabilities",
+        emoji="🚨",
+        ai=False,
+        prompt=None,
+        schedule=Schedule(every_minutes=60),
+        sources=({"type": "cisa_kev", "name": "CISA KEV", "days": 1},),
+    )
+    clock = FixedClock(datetime(2026, 11, 21, 6, 0, tzinfo=IST))
+    failing = RecordingDeliverer(fail=True)
+    deps, _ = make_deps(settings, clock, {}, deliverer=failing, topics=[topic])
+    deps.http.get_responses[KEV_URL] = fixture_json("cisa_kev.json")  # type: ignore[attr-defined]
+    deps.build_source = build_source
+    deps.summarizer = None  # type: ignore[assignment]  # the plain path never uses AI
+
+    urls = [f"https://nvd.nist.gov/vuln/detail/{v['cveID']}" for v in fresh]
+    assert run_topic(topic, deps).status == "failed"
+    assert not any(deps.store.is_seen(topic.id, u) for u in urls)
+
+    deliverer = RecordingDeliverer()
+    deps.deliverer = deliverer
+    assert run_topic(topic, deps).status == "delivered"
+    [report] = deliverer.delivered
+    message = format_telegram(report, topic.emoji)
+    for v in fresh:
+        assert v["cveID"] in message
+        assert f"{v['vendorProject']} {v['product']}" in message
+        assert f'href="https://nvd.nist.gov/vuln/detail/{v["cveID"]}"' in message
+    assert all(deps.store.is_seen(topic.id, u) for u in urls)
+
+    deps.deliverer = second = RecordingDeliverer()
+    assert run_topic(topic, deps).status == "no_new_items"
+    assert second.delivered == []
+
+
 ROTATION = {
     "mon": RotationEntry("RAG", ({"type": "fake", "name": "Mon"},)),
     "tue": RotationEntry("Agents", ({"type": "fake", "name": "Tue"},)),
