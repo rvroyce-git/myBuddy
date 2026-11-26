@@ -169,13 +169,15 @@ def test_stop_source_everywhere(bot: Bot, tg: TgHttp, cfg: Path) -> None:
     assert "Reddit ML" not in names(cfg, "ai_news") + names(cfg, "startups")
 
 
-def test_yes_applies_only_the_latest(bot: Bot, tg: TgHttp, cfg: Path) -> None:
+def test_bare_yes_refused_when_several_pending(bot: Bot, tg: TgHttp, cfg: Path) -> None:
+    original = cfg.read_text(encoding="utf-8")
     say(bot, tg, "stop security")
     say(bot, tg, "send ai_news at 07:15")
-    assert say(bot, tg, "yes").startswith("Applied")
-    assert topic(cfg, "ai_news")["schedule"]["time"] == "07:15"
-    assert "enabled" not in topic(cfg, "security")
-    assert bot.editor is not None and len(bot.editor.pending) == 1
+    assert say(bot, tg, "yes") == "Several changes are pending — use /approve <id>"
+    assert say(bot, tg, "no") == "Several changes are pending — use /approve <id>"
+    assert cfg.read_text(encoding="utf-8") == original
+    assert bot.editor is not None and len(bot.editor.pending) == 2
+    assert bot.chats == []
 
 
 def test_no_cancels(bot: Bot, tg: TgHttp, cfg: Path) -> None:

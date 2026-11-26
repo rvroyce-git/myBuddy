@@ -169,7 +169,7 @@ def test_check_reports_access_mode(
     assert "mode: public signup" in out and "chat allowlist: owner + 2" in out
     assert "CHAT_ALLOWLIST       set (2 id(s))" in out
     assert "warning: CHAT_ALLOWLIST has 1 invalid entry" in out
-    assert "chat: on (2/min and 30/day per chat, 60000 tokens/day in total)" in out
+    assert "chat: on (2/min and 30/day per chat, 60000 tokens/day in total; public" in out
     assert "warning: CHAT_DAILY_CAP must be a whole number" in out
     assert _no_chat_ids(out)
 

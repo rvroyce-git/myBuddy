@@ -113,6 +113,9 @@ own terminal; `<vm-ip>` is the server.
 3. `ssh ubuntu@<vm-ip> 'sudo systemctl restart mybuddy mybuddy-bot'`; check the next report (or
    `mybuddy run ai_news`) has an AI summary.
 4. Delete the old key in the Groq console.
+5. Recommended: set a hard spend/usage limit in the Groq console (*Settings* > *Limits*/*Billing*).
+   The free tier has no billing, so a leaked key cannot cost money today; if a paid key is ever
+   used, set a low monthly spend limit before deploying it.
 
 **Telegram bot token**
 1. In Telegram, @BotFather > `/revoke` > choose the bot. The old token stops working at once and

@@ -72,6 +72,10 @@ USERS_LIMIT = (
     "Reports still arrive as usual."
 )
 BUDGET_LIMIT = "Daily chat limit reached for today, back tomorrow. Reports still arrive as usual."
+NEW_USERS_LIMIT = (
+    "Lots of new people are chatting right now, so new chats are paused for a while. "
+    "Please try again in an hour. Reports still arrive as usual."
+)
 NO_REPORTS = "There are no saved reports yet, so I have nothing to answer from."
 FAILED = "Sorry, I can't answer right now. Please try again later."
 REFUSE = (
@@ -377,6 +381,8 @@ class ChatResponder:
         self.daily_cap = settings.chat_daily_cap
         self.token_budget = settings.chat_daily_token_budget
         self.max_users_per_day = settings.chat_max_users_per_day
+        self.public_share = max(0, min(100, settings.chat_public_budget_share))
+        self.new_users_per_hour = settings.chat_new_users_per_hour
         owner = (settings.telegram_chat_id or "").strip()
         self.owner = int(owner) if re.fullmatch(r"-?[0-9]{1,20}", owner) else None
         self._secrets = tuple(
@@ -388,6 +394,10 @@ class ChatResponder:
                 settings.discord_webhook_url,
             )
             if s
+        )
+        # Owner + allowlist: not "public"; they may use the reserved part of the budget.
+        self.trusted: frozenset[int] = frozenset(settings.chat_allowlist) | (
+            frozenset({self.owner}) if self.owner is not None else frozenset()
         )
         # chat id -> (last activity, turns). In memory only; never stored or logged.
         self._memory: dict[int, tuple[datetime, deque[tuple[str, str]]]] = {}
@@ -459,7 +469,25 @@ class ChatResponder:
             and self.store.chat_users_on(day) >= self.max_users_per_day
         ):
             return USERS_LIMIT
+        if (
+            chat_id not in self.trusted
+            and not self.store.chat_has_used(chat_id)
+            and self.store.chat_new_users_since(now - timedelta(hours=1), self.trusted)
+            >= self.new_users_per_hour
+        ):
+            return NEW_USERS_LIMIT
         return None
+
+    def over_budget(self, chat_id: int, day: str, estimate: int) -> bool:
+        """True when this message would exceed the budget open to this chat: public chats
+        share at most `public_share`% of it; owner/allowlist may use all of it."""
+        budget = self.limits()["chat_daily_token_budget"]
+        if self.store.chat_tokens_on(day) + estimate > budget:
+            return True
+        if chat_id in self.trusted:
+            return False
+        public_cap = budget * self.public_share // 100
+        return self.store.chat_tokens_on_except(day, self.trusted) + estimate > public_cap
 
     def answer(self, chat_id: int, question: str) -> str:
         masked = mask_chat_id(chat_id)
@@ -492,8 +520,7 @@ class ChatResponder:
         messages = build_messages(context, question, self.history(chat_id))
         prompt_chars = sum(len(m["content"]) for m in messages)
         estimate = estimate_tokens(prompt_chars) + MAX_TOKENS
-        budget = self.limits()["chat_daily_token_budget"]
-        if self.store.chat_tokens_on(day) + estimate > budget:
+        if self.over_budget(chat_id, day, estimate):
             self._log(f"chat {masked}: daily chat token budget reached")
             return BUDGET_LIMIT
         row = self.store.record_chat_use(chat_id, self.clock.now(), day)

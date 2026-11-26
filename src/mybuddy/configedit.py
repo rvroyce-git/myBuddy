@@ -360,6 +360,11 @@ class ConfigEditor:
             return f"Not changed: cannot read the config ({type(exc).__name__})."
         return preview + "\nOr just reply yes to apply, no to cancel."
 
+    def pending_count(self) -> int:
+        """Number of pending (unexpired) changes."""
+        self._expire()
+        return len(self.pending)
+
     def latest_pending(self) -> str | None:
         """Id of the most recent pending change (what a bare "yes"/"no" refers to)."""
         self._expire()

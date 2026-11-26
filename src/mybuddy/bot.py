@@ -135,6 +135,7 @@ OWNER_HELP = (
     "\n\nOwner: /config, /set (config changes), /changes, /feedback [text], /note <text>\n\n"
     + NL_HELP
 )
+SEVERAL_PENDING = "Several changes are pending — use /approve <id>"
 _YES = frozenset({"yes", "y", "yes please", "approve", "ok apply"})
 _NO = frozenset({"no", "n", "cancel", "reject"})
 TELEGRAM_TEXT_MAX = 4000
@@ -432,6 +433,10 @@ class SubscriptionBot:
             return False
         lowered = " ".join(text.lower().strip(" .!").split())
         if self.editor is not None and (lowered in _YES or lowered in _NO):
+            count = self.editor.pending_count()
+            if count > 1:
+                self._send(chat_id, SEVERAL_PENDING)
+                return True
             latest = self.editor.latest_pending()
             if latest is not None:
                 decide = self.editor.approve if lowered in _YES else self.editor.reject

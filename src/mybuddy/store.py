@@ -348,7 +348,7 @@ class Store:
             return None
         marks = ",".join("?" * len(wanted))
         row = self._db.execute(
-            f"SELECT MAX(at) FROM runs WHERE topic_id=? AND status IN ({marks})",  # noqa: S608
+            f"SELECT MAX(at) FROM runs WHERE topic_id=? AND status IN ({marks})",
             (topic_id, *wanted),
         ).fetchone()
         return _parse_stamp(row[0]) if row and row[0] else None
@@ -489,6 +489,35 @@ class Store:
             "SELECT COALESCE(SUM(tokens), 0) FROM chat_usage WHERE day=?", (day,)
         ).fetchone()
         return int(row[0])
+
+    def chat_tokens_on_except(self, day: str, excluded: Iterable[int]) -> int:
+        """Tokens used by chat on IST `day` by chats NOT in `excluded` (the public share)."""
+        ids = sorted({int(i) for i in excluded})
+        marks = ",".join("?" * len(ids))
+        where = f" AND chat_id NOT IN ({marks})" if ids else ""
+        row = self._db.execute(
+            f"SELECT COALESCE(SUM(tokens), 0) FROM chat_usage WHERE day=?{where}",
+            (day, *ids),
+        ).fetchone()
+        return int(row[0])
+
+    def chat_new_users_since(self, since: datetime, excluded: Iterable[int]) -> int:
+        """Chats (not in `excluded`) whose first recorded use is after `since`."""
+        ids = sorted({int(i) for i in excluded})
+        marks = ",".join("?" * len(ids))
+        where = f" WHERE chat_id NOT IN ({marks})" if ids else ""
+        row = self._db.execute(
+            "SELECT COUNT(*) FROM (SELECT chat_id, MIN(at) AS first FROM chat_usage"
+            f"{where} GROUP BY chat_id) WHERE first > ?",
+            (*ids, _utc_stamp(since)),
+        ).fetchone()
+        return int(row[0])
+
+    def chat_has_used(self, chat_id: int) -> bool:
+        row = self._db.execute(
+            "SELECT 1 FROM chat_usage WHERE chat_id=? LIMIT 1", (chat_id,)
+        ).fetchone()
+        return row is not None
 
     # ---- report feedback (👍/👎)
     def voter_id(self, chat_id: int) -> str:

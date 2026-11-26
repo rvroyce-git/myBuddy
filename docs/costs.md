@@ -47,6 +47,10 @@ MyBuddy is designed to cost **nothing**. Every part runs on a free tier:
    no paid add-ons (extra block volumes beyond 200 GB in total, paid shapes, etc.).
 3. Keep the GitHub repository public (Actions minutes and Pages are free for public repos).
 4. No new paid APIs. New features must fit in the Groq free quota above.
+5. Groq usage limit: in console.groq.com > *Settings* > *Limits* (or *Billing*), set a hard
+   spend/usage limit. The free tier has no billing attached, so nothing can be charged today; but
+   if a paid (Developer tier) key is ever used, set a low monthly spend limit there first so a
+   leaked key or runaway chat cannot run up a bill.
 
 ## Safety net: a 1-unit budget alert
 

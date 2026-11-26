@@ -181,7 +181,9 @@ def access_lines(settings: Settings, users_today: int | None = None) -> list[tup
             (
                 "info",
                 f"chat: on ({settings.chat_rate_per_min}/min and {settings.chat_daily_cap}/day "
-                f"per chat, {settings.chat_daily_token_budget} tokens/day in total)",
+                f"per chat, {settings.chat_daily_token_budget} tokens/day in total; public chats "
+                f"may use {settings.chat_public_budget_share}% of it; "
+                f"{settings.chat_new_users_per_hour} new public chatters/hour)",
             )
         )
     elif not (settings.groq_api_key or settings.gemini_api_key):
@@ -193,6 +195,8 @@ def access_lines(settings: Settings, users_today: int | None = None) -> list[tup
         "CHAT_DAILY_CAP",
         "CHAT_DAILY_TOKEN_BUDGET",
         "CHAT_MAX_USERS_PER_DAY",
+        "CHAT_PUBLIC_BUDGET_SHARE",
+        "CHAT_NEW_USERS_PER_HOUR",
     ):
         raw = os.environ.get(name, "").strip()
         if raw and not re.fullmatch(r"[0-9]{1,9}", raw):

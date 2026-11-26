@@ -30,10 +30,11 @@ request_rebuild() {
   local token=${GH_DISPATCH_TOKEN:-}
   [ -n "$token" ] || { echo "no GH_DISPATCH_TOKEN; the scheduled build will publish"; return 0; }
   local code
+  # The token reaches curl on stdin (-H @-), never on its command line (visible in ps).
   code=$(curl -sS -o /dev/null -w '%{http_code}' --max-time 20 -X POST \
-    -H "Authorization: Bearer $token" -H "Accept: application/vnd.github+json" \
+    -H @- -H "Accept: application/vnd.github+json" \
     "https://api.github.com/repos/${MYBUDDY_REPO:-rvroyce-git/myBuddy}/actions/workflows/pages.yml/dispatches" \
-    -d '{"ref":"main"}') || code=000
+    -d '{"ref":"main"}' <<<"Authorization: Bearer $token") || code=000
   if [ "$code" = 204 ]; then echo "requested website rebuild"; else echo "rebuild request failed (HTTP $code); the scheduled build will publish" >&2; fi
 }
 

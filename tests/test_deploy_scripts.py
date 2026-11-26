@@ -216,6 +216,12 @@ def test_publish_reports_pins_github_host_keys() -> None:
     assert "install -m 644 deploy/github_known_hosts ~/.ssh/github_known_hosts" in deploy
 
 
+def test_publish_reports_keeps_dispatch_token_off_the_command_line() -> None:
+    text = _text("publish-reports.sh")
+    assert '-H "Authorization: Bearer $token"' not in text
+    assert "-H @-" in text and '<<<"Authorization: Bearer $token"' in text
+
+
 WORKFLOWS = DEPLOY.parent / ".github" / "workflows"
 
 

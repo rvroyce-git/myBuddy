@@ -33,6 +33,10 @@ DEFAULT_CHAT_DAILY_CAP = 30
 DEFAULT_CHAT_MAX_USERS_PER_DAY = 50  # distinct chatting people per IST day (public chat)
 DEFAULT_CHAT_DAILY_TOKEN_BUDGET = 60_000
 MAX_CHAT_DAILY_TOKEN_BUDGET = 80_000
+# Public (non-owner, non-allowlisted) chats may use at most this % of the chat token budget;
+# the rest is reserved for the owner and allowlist. New public chatters are capped per hour.
+DEFAULT_CHAT_PUBLIC_BUDGET_SHARE = 70
+DEFAULT_CHAT_NEW_USERS_PER_HOUR = 20
 DEFAULT_SITE_URL = "https://rvroyce-git.github.io/myBuddy/"
 _SITE_URL_RE = re.compile(r"https://[A-Za-z0-9.-]+(?:/[A-Za-z0-9._~/-]*)?")
 _CHAT_ID_RE = re.compile(r"-?[0-9]{1,20}")
@@ -147,6 +151,8 @@ class Settings:
     chat_rate_per_min: int = DEFAULT_CHAT_RATE_PER_MIN
     chat_daily_cap: int = DEFAULT_CHAT_DAILY_CAP
     chat_daily_token_budget: int = DEFAULT_CHAT_DAILY_TOKEN_BUDGET
+    chat_public_budget_share: int = DEFAULT_CHAT_PUBLIC_BUDGET_SHARE  # percent, 0-100
+    chat_new_users_per_hour: int = DEFAULT_CHAT_NEW_USERS_PER_HOUR
     site_url: str = DEFAULT_SITE_URL  # the public website, linked from bot replies
 
     @property
@@ -190,6 +196,12 @@ class Settings:
                 get("CHAT_RATE_PER_MIN"), DEFAULT_CHAT_RATE_PER_MIN, 1000
             ),
             chat_daily_cap=parse_count(get("CHAT_DAILY_CAP"), DEFAULT_CHAT_DAILY_CAP, 100_000),
+            chat_public_budget_share=parse_count(
+                get("CHAT_PUBLIC_BUDGET_SHARE"), DEFAULT_CHAT_PUBLIC_BUDGET_SHARE, 100
+            ),
+            chat_new_users_per_hour=parse_count(
+                get("CHAT_NEW_USERS_PER_HOUR"), DEFAULT_CHAT_NEW_USERS_PER_HOUR, 100_000
+            ),
             chat_daily_token_budget=parse_count(
                 get("CHAT_DAILY_TOKEN_BUDGET"),
                 DEFAULT_CHAT_DAILY_TOKEN_BUDGET,
@@ -289,6 +301,8 @@ SETTING_ENV_VARS: tuple[tuple[str, bool], ...] = (
     ("CHAT_RATE_PER_MIN", False),
     ("CHAT_DAILY_CAP", False),
     ("CHAT_DAILY_TOKEN_BUDGET", False),
+    ("CHAT_PUBLIC_BUDGET_SHARE", False),
+    ("CHAT_NEW_USERS_PER_HOUR", False),
     ("SITE_URL", False),
 )
 

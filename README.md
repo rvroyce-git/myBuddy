@@ -105,6 +105,8 @@ Reports on demand:
 | `CHAT_ALLOWLIST` | empty | extra chat ids, comma separated (the owner is always allowed) |
 | `CHAT_PUBLIC` | `false` | `true` lets anyone chat (within the limits below) |
 | `CHAT_MAX_USERS_PER_DAY` | `50` | distinct people who may chat per day (IST), owner excluded |
+| `CHAT_PUBLIC_BUDGET_SHARE` | `70` | % of `CHAT_DAILY_TOKEN_BUDGET` public chats may use; the rest is reserved for owner + allowlist |
+| `CHAT_NEW_USERS_PER_HOUR` | `20` | first-time public chatters allowed per hour |
 | `CHAT_ENABLED` | `true` if `GROQ_API_KEY` is set | `false` turns chat off |
 | `CHAT_RATE_PER_MIN` | `2` | messages per minute per chat |
 | `CHAT_DAILY_CAP` | `30` | messages per chat per day (IST) |

@@ -408,6 +408,44 @@ def test_global_token_budget_shared_by_all_chats(
     assert "token budget" in log.getvalue()
 
 
+def test_public_chats_capped_at_their_share_owner_keeps_the_rest(
+    store: Store, aihttp: FakeHttp, clock: FixedClock
+) -> None:
+    seed_reports(store)
+    settings = chat_settings(
+        chat_daily_token_budget=9000, chat_public_budget_share=50, chat_allowlist=(FRIEND,)
+    )
+    assert Settings.from_env({}).chat_public_budget_share == 70
+    responder = ChatResponder(settings, aihttp, store, TOPICS, clock)
+    aihttp.post_responses = [ai(f"A{i}.", tokens=2000) for i in range(10)]
+    assert responder.answer(STRANGER, "q") == "A0."
+    assert responder.answer(STRANGER + 1, "q") == "A1."  # public: 4000 of 4500 used
+    assert responder.answer(STRANGER, "q") == chatmod.BUDGET_LIMIT  # 4000 + estimate > 4500
+    assert responder.answer(FRIEND, "q") == "A2."  # allowlisted: reserved part
+    assert responder.answer(OWNER, "q") == "A3."
+    assert store.chat_tokens_on("2026-11-23") == 8000
+    assert responder.answer(OWNER, "q") == chatmod.BUDGET_LIMIT  # full budget still applies
+    assert len(aihttp.posts) == 4
+
+
+def test_new_public_chatters_capped_per_hour(
+    store: Store, aihttp: FakeHttp, clock: FixedClock
+) -> None:
+    seed_reports(store)
+    assert Settings.from_env({}).chat_new_users_per_hour == 20
+    responder = ChatResponder(
+        chat_settings(chat_new_users_per_hour=2), aihttp, store, TOPICS, clock
+    )
+    aihttp.post_responses = [ai(f"A{i}.") for i in range(10)]
+    assert responder.answer(STRANGER, "q") == "A0."
+    assert responder.answer(STRANGER + 1, "q") == "A1."
+    assert responder.answer(STRANGER + 2, "q") == chatmod.NEW_USERS_LIMIT
+    assert responder.answer(STRANGER, "again") == "A2."  # known chatters continue
+    assert responder.answer(OWNER, "q") == "A3."  # owner never counted or capped
+    clock.advance(hours=1, minutes=1)
+    assert responder.answer(STRANGER + 2, "q") == "A4."
+
+
 def test_tokens_estimated_without_usage_fields(
     store: Store, aihttp: FakeHttp, clock: FixedClock
 ) -> None:
@@ -698,3 +736,5 @@ def test_check_shows_public_chat_mode() -> None:
     assert ("info", "public chat: on (anyone; 7/50 people/day)") in on
     off = access_lines(Settings.from_env({}))
     assert ("info", "public chat: off (owner + allowlist only)") in off
+    chat = access_lines(Settings.from_env({"GROQ_API_KEY": GROQ_KEY}))
+    assert any("may use 70%" in t and "20 new public chatters/hour" in t for _, t in chat)
