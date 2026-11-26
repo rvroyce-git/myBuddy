@@ -69,9 +69,8 @@ sudo -u mybuddy ssh -i /home/mybuddy/.ssh/github_data_deploy -o IdentitiesOnly=y
 * Rejected push: the publisher pushes only to `data`; `main` is protected by the ruleset and
   cannot take a direct push from any key.
 * Broken JSON is never published (`publish-reports.sh` validates it first).
-* Note: `deploy/deploy.sh` only auto-enables `mybuddy-publish.path` when
-  `~/.ssh/github_deploy` exists, while the publisher uses `~/.ssh/github_data_deploy`; on a fresh
-  server enable the path unit by hand (step 2 above).
+* `deploy/deploy.sh` enables `mybuddy-publish.path` only once `~/.ssh/github_data_deploy` exists;
+  on a fresh server create the key, add it on GitHub, then re-run the deploy (or step 2 above).
 
 ## SSH times out
 
