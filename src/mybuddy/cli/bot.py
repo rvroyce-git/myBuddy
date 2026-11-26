@@ -64,6 +64,7 @@ def cmd_bot(
             chat_allowlist=settings.chat_allowlist,
             chat=chat,
             editor=_config_editor(config_path, store, clock, settings),
+            site_url=settings.site_url,
         )
         bot.install_signal_handlers()
         bot.run()

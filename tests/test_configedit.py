@@ -16,6 +16,7 @@ import pytest
 import yaml
 from conftest import MONDAY, FixedClock
 from test_bot import OWNER, TOKEN, TOPICS, TgHttp, Ticker, msg
+from test_bot_access import CHAT_TIME
 
 from mybuddy.bot import OWNER_ONLY, PRIVATE, SubscriptionBot
 from mybuddy.chat import ChatResponder
@@ -79,7 +80,7 @@ def bot(tg: TgHttp, store: Store, cfg: Path, clock: FixedClock, data_dir: Path) 
         chat_allowlist=(FRIEND,),
         monotonic=Ticker(),
         log=io.StringIO(),
-        chat=ChatResponder(settings, tg, store, TOPICS, clock),
+        chat=ChatResponder(settings, tg, store, TOPICS, FixedClock(CHAT_TIME)),
         editor=editor,
     )
 
@@ -185,6 +186,8 @@ def test_non_owner_cannot_change_config(
         ("/source add ai_news https://user@example.org/feed", "no port or login"),
         ("/source add ai_news https://openai.com/news/rss.xml", "already a source"),
         ("/limit chat-daily 5000", "between 0 and 1000"),
+        ("/limit chat-tokens 80001", "between 0 and 80000"),
+        ("/limit chat-tokens 150000", "between 0 and 80000"),
         ("/limit groq-key 1", "use /limit"),
     ],
 )

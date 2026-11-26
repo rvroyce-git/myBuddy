@@ -26,10 +26,14 @@ DEFAULT_MAX_SUBSCRIBERS = 100
 MAX_SUBSCRIBERS_CEILING = 10_000
 DEFAULT_BOT_USERNAME = "myBuddy_update_bot"
 # Chat with the bot (owner + CHAT_ALLOWLIST only). Groq's free tier is shared with the
-# scheduled reports, so chat gets its own small daily token budget.
-DEFAULT_CHAT_RATE_PER_MIN = 5
+# scheduled reports (~200K tokens/day, 8K tokens/min), so chat gets its own small daily
+# token budget, never more than MAX_CHAT_DAILY_TOKEN_BUDGET.
+DEFAULT_CHAT_RATE_PER_MIN = 2
 DEFAULT_CHAT_DAILY_CAP = 30
 DEFAULT_CHAT_DAILY_TOKEN_BUDGET = 60_000
+MAX_CHAT_DAILY_TOKEN_BUDGET = 80_000
+DEFAULT_SITE_URL = "https://rvroyce-git.github.io/myBuddy/"
+_SITE_URL_RE = re.compile(r"https://[A-Za-z0-9.-]+(?:/[A-Za-z0-9._~/-]*)?")
 _CHAT_ID_RE = re.compile(r"-?[0-9]{1,20}")
 _BOT_USERNAME_RE = re.compile(r"^[A-Za-z][A-Za-z0-9_]{3,31}$")
 
@@ -140,6 +144,7 @@ class Settings:
     chat_rate_per_min: int = DEFAULT_CHAT_RATE_PER_MIN
     chat_daily_cap: int = DEFAULT_CHAT_DAILY_CAP
     chat_daily_token_budget: int = DEFAULT_CHAT_DAILY_TOKEN_BUDGET
+    site_url: str = DEFAULT_SITE_URL  # the public website, linked from bot replies
 
     @property
     def chat_active(self) -> bool:
@@ -179,8 +184,11 @@ class Settings:
             ),
             chat_daily_cap=parse_count(get("CHAT_DAILY_CAP"), DEFAULT_CHAT_DAILY_CAP, 100_000),
             chat_daily_token_budget=parse_count(
-                get("CHAT_DAILY_TOKEN_BUDGET"), DEFAULT_CHAT_DAILY_TOKEN_BUDGET, 10_000_000
+                get("CHAT_DAILY_TOKEN_BUDGET"),
+                DEFAULT_CHAT_DAILY_TOKEN_BUDGET,
+                MAX_CHAT_DAILY_TOKEN_BUDGET,
             ),
+            site_url=parse_site_url(get("SITE_URL")),
         )
 
 
@@ -204,6 +212,12 @@ def parse_count(raw: str | None, default: int, ceiling: int) -> int:
     if re.fullmatch(r"[0-9]{1,9}", value) and int(value) <= ceiling:
         return int(value)
     return default
+
+
+def parse_site_url(raw: str | None) -> str:
+    """SITE_URL: a plain https URL (no query, spaces or login); anything else = the default."""
+    value = (raw or "").strip()
+    return value if len(value) <= 200 and _SITE_URL_RE.fullmatch(value) else DEFAULT_SITE_URL
 
 
 def parse_chat_allowlist(raw: str | None) -> tuple[tuple[int, ...], int]:
@@ -268,6 +282,7 @@ SETTING_ENV_VARS: tuple[tuple[str, bool], ...] = (
     ("CHAT_RATE_PER_MIN", False),
     ("CHAT_DAILY_CAP", False),
     ("CHAT_DAILY_TOKEN_BUDGET", False),
+    ("SITE_URL", False),
 )
 
 

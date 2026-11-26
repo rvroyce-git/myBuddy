@@ -12,6 +12,7 @@ from mybuddy.allowlist import build_allowed_hosts, topic_source_specs
 from mybuddy.cli._common import new_http
 from mybuddy.cli.telegram import _telegram_bot_name
 from mybuddy.config import (
+    MAX_CHAT_DAILY_TOKEN_BUDGET,
     SETTING_ENV_VARS,
     ConfigError,
     Settings,
@@ -178,6 +179,15 @@ def access_lines(settings: Settings) -> list[tuple[str, str]]:
         raw = os.environ.get(name, "").strip()
         if raw and not re.fullmatch(r"[0-9]{1,9}", raw):
             out.append(("warning", f"{name} must be a whole number; using the default"))
+    raw = os.environ.get("CHAT_DAILY_TOKEN_BUDGET", "").strip()
+    if re.fullmatch(r"[0-9]{1,9}", raw) and int(raw) > MAX_CHAT_DAILY_TOKEN_BUDGET:
+        out.append(
+            (
+                "warning",
+                f"CHAT_DAILY_TOKEN_BUDGET is above the {MAX_CHAT_DAILY_TOKEN_BUDGET} maximum "
+                "(Groq free tier); using the default",
+            )
+        )
     return out
 
 

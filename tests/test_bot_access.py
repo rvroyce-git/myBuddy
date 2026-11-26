@@ -116,13 +116,22 @@ def aihttp() -> FakeHttp:
     return FakeHttp()
 
 
+# 06:40 IST: outside the chat quiet window around the 06:30 and 07:00 report runs.
+CHAT_TIME = MONDAY + timedelta(minutes=10)
+
+
 @pytest.fixture
 def clock() -> FixedClock:
-    return FixedClock(MONDAY)
+    return FixedClock(CHAT_TIME)
 
 
 def chat_settings(**kw: Any) -> Settings:
-    options: dict[str, Any] = {"groq_api_key": GROQ_KEY, "telegram_bot_token": TOKEN}
+    options: dict[str, Any] = {
+        "groq_api_key": GROQ_KEY,
+        "telegram_bot_token": TOKEN,
+        "telegram_chat_id": str(OWNER),
+        "chat_rate_per_min": 5,  # the tests send bursts; the real default is 2
+    }
     options.update(kw)
     return Settings(**options)
 
@@ -488,7 +497,7 @@ def test_unknown_urls_stripped_stored_urls_kept(
     [reply] = tg.texts()
     assert "evil.example" not in reply and "bad.example" not in reply and "fake" not in reply
     assert "https://example.com/model-x." in reply
-    assert reply.count("(link removed)") == 3
+    assert reply.count("[link removed]") == 3
 
 
 def test_long_answers_trimmed(bot: SubscriptionBot, aihttp: FakeHttp, tg: TgHttp) -> None:
@@ -550,7 +559,9 @@ def test_context_is_bounded_and_round_robin(store: Store) -> None:
         )
     ctx = chatmod.build_context(store, TOPICS, max_chars=3000)
     assert len(ctx.text) <= 3000
-    assert all(f"{t.id} #1" in ctx.links for t in TOPICS)  # every topic gets its top item
+    public = [t for t in TOPICS if t.kind != "health"]
+    assert all(f"{t.id} #1" in ctx.links for t in public)  # every topic gets its top item
+    assert "health_check #1" not in ctx.links  # owner-only
     assert "ai_news #10" not in ctx.links
 
 
@@ -579,7 +590,8 @@ def test_chat_settings_from_env() -> None:
         False,
         False,
     )
-    assert (s.chat_rate_per_min, s.chat_daily_cap, s.chat_daily_token_budget) == (5, 30, 60000)
+    assert (s.chat_rate_per_min, s.chat_daily_cap, s.chat_daily_token_budget) == (2, 30, 60000)
+    assert s.site_url == "https://rvroyce-git.github.io/myBuddy/"
     s = Settings.from_env({"GROQ_API_KEY": "gsk_x"})
     assert s.chat_enabled and s.chat_active
     s = Settings.from_env(
