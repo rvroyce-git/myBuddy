@@ -13,18 +13,30 @@ MyBuddy is designed to cost **nothing**. Every part runs on a free tier:
 
 ## How much of the free quota MyBuddy uses
 
-* **Groq.** Six AI topics a day plus the weekday deep dive: at most 7 calls a day (plus at most
-  one retry each after a 429). Each call sends at most 12 items (titles + 280-character
-  snippets) and asks for at most 2,000 output tokens (`MAX_AI_ITEMS`, `SNIPPET_CHARS`,
-  `MAX_TOKENS` in `src/mybuddy/summarize.py`), so a day uses well under 1% of the request quota
-  and a small share of the token quota. Reports are 15 minutes apart, so the per-minute limits
-  are not reached. Any Groq error (including running out of quota) falls back to a plain report
-  built from the snippets: nothing is ever paid for, and the report still arrives. Hourly CVE
-  alerts use no AI. Any new feature that calls Groq (for example chat) shares these limits.
+* **Groq** (free: ≈ 30 requests/min, 8K tokens/min, 1K requests/day, 200K tokens/day, shared
+  by everything below).
+  * *Scheduled reports:* at most **11 AI calls a day** (the 7 website topics plus 4
+    Telegram-only reports; the weekly review takes the deep dive's slot on Sundays), plus at
+    most one retry each after a 429, so ≤ 22 requests. Each call sends at most 12 items
+    (titles + 280-character snippets, ≈ 2.5K tokens in) and asks for at most 2,000 output
+    tokens (`MAX_AI_ITEMS`, `SNIPPET_CHARS`, `MAX_TOKENS` in `src/mybuddy/summarize.py`):
+    **≈ 40–50K tokens a day**. Hourly CVE alerts and the health check use no AI.
+  * *Chat* (owner + `CHAT_ALLOWLIST` only): by default **2 messages/min and 30/day per
+    person**, and a global **60K tokens/day** chat budget (`CHAT_DAILY_TOKEN_BUDGET`; it cannot
+    be set above 80K, from the env file or `/limit`). Chat pauses for **±2 minutes around each
+    scheduled report run**, so a report never shares a minute with chat.
+  * *Total:* ≈ 50K (reports) + at most 80K (chat) stays **under the 200K tokens/day** free
+    limit, with room for retries. Per minute: reports are 15 minutes apart and one call is at
+    most ≈ 4.5K tokens; one chat answer is at most ≈ 2.5K tokens (≈ 6,000 characters of report
+    context + the question, 700 output tokens), so even 2 chat messages in a minute stay under
+    8K tokens/min, and the quiet window keeps them apart from report calls.
+  * Any Groq error (including running out of quota) falls back to a plain report built from
+    the snippets, or a "try later" chat reply: nothing is ever paid for, and reports still
+    arrive. Any new feature that calls Groq must fit inside these numbers.
 * **Oracle.** One micro VM. Services are capped (`MemoryMax=300M`/`CPUQuota=50%` for the
   scheduler, `150M`/`25%` for the bot). Oracle may stop Always Free instances it considers
   idle; the `Watchdog` workflow emails the owner if the website gets no fresh reports for 26 h.
-* **GitHub.** CI on pushes and PRs, one Pages build per report push, one watchdog run a day.
+* **GitHub.** CI on pushes and PRs; the *Publish website* check every 10 minutes (a few seconds when nothing changed, a full build only when new reports arrived); one watchdog run a day. All free for a public repository.
 
 ## Rules that keep it free
 

@@ -77,8 +77,11 @@ messages (`/reset` just confirms that). Logs show masked chat ids and sizes, nev
 | `CHAT_ENABLED` | `true` if `GROQ_API_KEY` is set | `false` turns chat off |
 | `CHAT_RATE_PER_MIN` | `2` | messages per minute per chat |
 | `CHAT_DAILY_CAP` | `30` | messages per chat per day (IST) |
-| `CHAT_DAILY_TOKEN_BUDGET` | `60000` | Groq tokens per day for all chat together, so reports keep their quota (max `80000`) |
+| `CHAT_DAILY_TOKEN_BUDGET` | `60000` (capped at `80000`) | Groq tokens per day for all chat together, so reports keep their quota |
 | `SITE_URL` | `https://rvroyce-git.github.io/myBuddy/` | website linked from the bot's private-mode reply |
+
+Chat pauses for about 2 minutes either side of each scheduled AI report, so a report never
+competes with chat for Groq's per-minute limit. Groq usage and limits: [docs/costs.md](docs/costs.md).
 
 Limits are counted in SQLite, so restarts don't reset them. To add someone: ask them to message
 the bot, get their chat id (e.g. from @userinfobot), then on the VM add
@@ -103,7 +106,13 @@ validation and a change id. Nothing changes until you send `/approve <id>` withi
 `/undo` restores the newest backup through the same approval. A new feed must be https; its
 host is added to `extra_allowed_hosts`, and nothing is fetched until the next run. Secrets
 can't be read or set from chat; `/limit` values are stored as overrides in the database.
-Approved edits rewrite the file without its comments (the first backup keeps them).
+Approved edits rewrite the file **without its comments** (YAML is re-written from the parsed
+data); the first backup, taken before the first approved edit, still has them. `/undo` is one
+step: it previews restoring the newest file in `backups/` and, once approved, backs up the
+current file first, so a second `/undo` re-applies what the first one undid. To go back further
+(or to get the commented original back), copy an older backup over the live file on the VM:
+`ls ~/.config/mybuddy/config/backups/`, then `cp <backup> ~/.config/mybuddy/config/topics.yaml`
+and `touch ~/.local/share/mybuddy/reload-config`, as the `mybuddy` user.
 
 On the VM both services use `MYBUDDY_CONFIG=~/.config/mybuddy/config/topics.yaml`, a writable
 copy that `deploy.sh` seeds once from `config/topics.yaml`. Later repo changes to the topics
@@ -115,7 +124,8 @@ file stays read-only.
 
 Every Telegram report has 👍 / 👎 buttons. Taps from the owner, allowlisted chats and
 subscribers count once per person per report (a second tap can change the vote). Voters are
-stored as salted hashes, not chat ids. `/feedback` (owner) shows the last 7 days per topic.
+stored as salted hashes, not chat ids; the salt is in the same database, so votes are not
+anonymous to anyone who can read it (see [docs/privacy.md](docs/privacy.md)). `/feedback` (owner) shows the last 7 days per topic.
 `/note <text>` (owner) saves a note that shows in `/feedback` and is never sent to the AI. The
 summariser gets one short line per topic built from vote counts and report lengths only, e.g.
 "Readers liked 4 of 5 recent briefs; disliked ones were longer, so keep it tight."
@@ -233,7 +243,9 @@ ssh mybuddy@<vm-ip> 'cd app && .venv/bin/mybuddy telegram-setup --save'  # after
 ```
 
 `mybuddy-publish.path` pushes each new `site/data/reports.json` to GitHub with a deploy key
-limited to this repository; GitHub Pages then republishes the website. The `Watchdog` workflow
+limited to this repository; the scheduled *Publish website* workflow on `main` picks it up
+within about 10 minutes and republishes the website (see SECURITY.md, *Publishing trust
+boundary*). The `Watchdog` workflow
 fails (and GitHub emails the owner) if the live reports are more than 26 hours old.
 
 ## Security and privacy

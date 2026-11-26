@@ -51,7 +51,10 @@ The `Watchdog` workflow fails when the live `reports.json` is older than 26 h. F
 1. Reports made? `journalctl -u mybuddy --since today` (if not: *No reports arrive*).
 2. Published? `journalctl -u mybuddy-publish -n 30` should say `published reports.json to data`.
    If the path unit is not active: `sudo systemctl enable --now mybuddy-publish.path`.
-3. Built? GitHub > Actions: the run on the `data` branch, then *Publish website* (`pages.yml`).
+3. Built? GitHub > Actions > *Publish website* (`pages.yml`): a `schedule` run every ~10 min
+   compares the `data` commit with `.data-sha` on `gh-pages` and publishes when it changed
+   ("Nothing new to publish." otherwise). *Run workflow* forces a rebuild. GitHub disables
+   scheduled workflows after 60 days without repository activity; re-enable it on that page.
 4. Served? Settings > Pages: source is `gh-pages` / root.
 
 ## Publishing fails (deploy key)
@@ -68,6 +71,11 @@ sudo -u mybuddy ssh -i /home/mybuddy/.ssh/github_data_deploy -o IdentitiesOnly=y
   with **Allow write access**. To make a new one see [SECURITY.md](../SECURITY.md#rotating-keys).
 * Rejected push: the publisher pushes only to `data`; `main` is protected by the ruleset and
   cannot take a direct push from any key.
+* `Host key verification failed` or `missing .../github_known_hosts`: GitHub's host keys are
+  pinned in `deploy/github_known_hosts` (copied to `~/.ssh/github_known_hosts` by `deploy.sh`).
+  Re-run the deploy; if GitHub really rotated a key, refresh the file from
+  `https://api.github.com/meta` (`ssh_keys`) and check `ssh-keygen -lf` against
+  <https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/githubs-ssh-key-fingerprints>.
 * Broken JSON is never published (`publish-reports.sh` validates it first).
 * `deploy/deploy.sh` enables `mybuddy-publish.path` only once `~/.ssh/github_data_deploy` exists;
   on a fresh server create the key, add it on GitHub, then re-run the deploy (or step 2 above).
