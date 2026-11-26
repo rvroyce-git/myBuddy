@@ -34,16 +34,36 @@ def source_topics(topics: Sequence[Topic], exclude: str) -> list[Topic]:
     return [t for t in topics if t.kind == "news" and t.id != exclude]
 
 
-def _round_robin(groups: list[list[Item]], limit: int) -> list[Item]:
+def _url_key(url: str) -> str:
+    """URL identity for de-duplication: ignore the fragment, a trailing slash and case."""
+    return url.split("#", 1)[0].strip().rstrip("/").lower()
+
+
+def _round_robin(groups: list[list[Item]], limit: int, per_group: int | None = None) -> list[Item]:
+    """Interleave groups (one item per group per round), skipping URLs already taken; a
+    group whose next item is a duplicate falls through to its next candidate, up to
+    ``per_group`` picks each."""
     out: list[Item] = []
     seen: set[str] = set()
-    longest = max((len(g) for g in groups), default=0)
-    for i in range(longest):
-        for group in groups:
-            if i < len(group) and group[i].url not in seen:
-                seen.add(group[i].url)
-                out.append(group[i])
-    return out[:limit]
+    cursors = [0] * len(groups)
+    taken = [0] * len(groups)
+    cap = per_group if per_group is not None else max((len(g) for g in groups), default=0)
+    progress = True
+    while progress and len(out) < limit:
+        progress = False
+        for g, group in enumerate(groups):
+            if taken[g] >= cap or len(out) >= limit:
+                continue
+            while cursors[g] < len(group):
+                item = group[cursors[g]]
+                cursors[g] += 1
+                if _url_key(item.url) not in seen:
+                    seen.add(_url_key(item.url))
+                    out.append(item)
+                    taken[g] += 1
+                    progress = True
+                    break
+    return out
 
 
 def _items_of(report: StoredReport, topic: Topic, count: int, context: str = "") -> list[Item]:
@@ -81,12 +101,14 @@ def digest_items(topics: Sequence[Topic], store: Store, now: datetime, self_id: 
         current = latest.get(report.topic_id)
         if current is None or report.created_at >= current.created_at:
             latest[report.topic_id] = report
+    # Fetch every candidate so a topic whose top item duplicates another topic's can fall
+    # through to its next-best item instead of repeating the same link in the digest.
     groups = [
-        _items_of(latest[t.id], t, DIGEST_ITEMS_PER_TOPIC)
+        _items_of(latest[t.id], t, MAX_AI_ITEMS)
         for t in source_topics(topics, self_id)
         if t.id in latest
     ]
-    return _round_robin(groups, MAX_AI_ITEMS)
+    return _round_robin(groups, MAX_AI_ITEMS, DIGEST_ITEMS_PER_TOPIC)
 
 
 def weekly_items(topics: Sequence[Topic], store: Store, now: datetime, self_id: str) -> list[Item]:

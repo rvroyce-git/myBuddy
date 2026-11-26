@@ -15,11 +15,19 @@ if [ -n "$REPORTS" ] && [ -s "$REPORTS" ]; then
 else
   echo "no reports.json found; the site will show its sample data" >&2
 fi
+# The data-branch workflow (publish-data.yml) calls this without DATA_SHA; under `set -u`,
+# bash >= 4 aborts on ${DATA_SHA:0:7} when it is unset, so default it here, falling back to
+# the commit of the checkout that holds reports.json.
+DATA_SHA=${DATA_SHA:-}
+if [ -z "$DATA_SHA" ] && [ -n "$REPORTS" ]; then
+  DATA_SHA=$(git -C "$(dirname "$REPORTS")" rev-parse -q --verify HEAD 2>/dev/null || true)
+fi
+SITE_TREE=${SITE_TREE:-}
 touch "$out/.nojekyll"   # serve files as they are (no Jekyll processing)
 # Record what was published, so the scheduled run in pages.yml can tell whether the data
 # branch or main's site/ changed since (it reads these from gh-pages and skips if equal).
-printf '%s\n' "${DATA_SHA:-}" > "$out/.data-sha"
-printf '%s\n' "${SITE_TREE:-}" > "$out/.site-tree"
+printf '%s\n' "$DATA_SHA" > "$out/.data-sha"
+printf '%s\n' "$SITE_TREE" > "$out/.site-tree"
 cd "$out"
 git init -q -b gh-pages
 git config user.name "github-actions[bot]"
