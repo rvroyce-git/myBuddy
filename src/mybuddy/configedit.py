@@ -342,6 +342,31 @@ class ConfigEditor:
                 del self.pending[cid]
                 self.store.log_config_change(cid, p.summary, "expired", now)
 
+    def natural(self, text: str) -> str | None:
+        """Preview for a plain-English request, or None when it isn't one (-> normal chat)."""
+        self._expire()
+        text = _TRAIL.sub("", _FILLER.sub("", " ".join(text.split())))
+        if not text or len(text) > NL_MAX_CHARS:
+            return None
+        try:
+            old_text, data = self._read()
+            summary = _natural(self, data, text)
+            if summary is None:
+                return None
+            preview = self._preview_config(old_text, _dump(data), summary)
+        except ChangeError as exc:
+            return f"Not changed: {exc}.\n\n{NL_HELP}"
+        except OSError as exc:
+            return f"Not changed: cannot read the config ({type(exc).__name__})."
+        return preview + "\nOr just reply yes to apply, no to cancel."
+
+    def latest_pending(self) -> str | None:
+        """Id of the most recent pending change (what a bare "yes"/"no" refers to)."""
+        self._expire()
+        if not self.pending:
+            return None
+        return list(self.pending)[-1]  # insertion order: newest last
+
     # ------------------------------------------------------------------ decisions
     def approve(self, change_id: str) -> str:
         self._expire()
@@ -445,3 +470,120 @@ def make_reloader(
         return config.topics
 
     return reload
+
+
+# ---------------------------------------------------------------------- plain English
+# Owner-only, deterministic (regex) phrases that map onto the same previews as the commands.
+# Anything that doesn't match gives None so the text goes to normal chat.
+NL_HELP = (
+    "Plain-English changes (owner; reply yes to apply, no to cancel):\n"
+    "• stop ai_news · enable startups\n"
+    "• send security at 08:30 · make policy_watch weekly (or daily)\n"
+    "• add https://example.com/feed.xml to ai_news\n"
+    "• remove TechCrunch AI from industry_signals · stop reddit\n"
+    "• track quantum computing news daily"
+)
+NL_MAX_CHARS = 400
+TRACK_TOPIC = "industry_signals"
+_FILLER = re.compile(r"^(?:please|pls|can you|could you)\s+", re.I)
+_TRAIL = re.compile(r"[\s.!?]+$")
+_NL_OFF = re.compile(r"(?:stop|disable|pause|turn off|switch off|mute)\s+(.+)", re.I)
+_NL_ON = re.compile(r"(?:enable|start|resume|turn on|switch on|unmute)\s+(.+)", re.I)
+_NL_TIME = re.compile(r"send\s+(.+?)\s+at\s+([0-9]{1,2})[:.]([0-9]{2})", re.I)
+_NL_FREQ = re.compile(r"make\s+(.+?)\s+(weekly|daily)", re.I)
+_NL_ADD = re.compile(r"add\s+(https://\S+)\s+to\s+(.+)", re.I)
+_NL_REMOVE = re.compile(r"remove\s+(.+?)\s+from\s+(.+)", re.I)
+_NL_TRACK = re.compile(r"track\s+(.+?)\s+news(?:\s+daily)?", re.I)
+_KEYWORD_RE = re.compile(r"[A-Za-z0-9][A-Za-z0-9 .&+#'-]{0,59}")
+_TOPIC_NOISE = re.compile(r"^the\s+|\s+(?:reports?|topic|updates|briefs?)$", re.I)
+
+
+def _find_topic(data: dict[str, Any], phrase: str) -> str | None:
+    """Topic id for an id, a title or a title-ish phrase ("the AI news report")."""
+    p = phrase.strip().lower()
+    for _ in range(2):
+        p = _TOPIC_NOISE.sub("", p).strip()
+    keys = {p, p.replace(" ", "_"), p.replace("-", "_")}
+    for entry in data["topics"]:
+        if not isinstance(entry, dict):
+            continue
+        tid = str(entry.get("id", ""))
+        title = str(entry.get("title", "")).strip().lower()
+        if tid in keys or (title and title in keys):
+            return tid
+    return None
+
+
+def _need_topic(data: dict[str, Any], phrase: str) -> str:
+    tid = _find_topic(data, phrase)
+    if tid is None:
+        raise ChangeError(f"no topic called {phrase.strip()[:40]!r} (see /config)")
+    return tid
+
+
+def _natural(editor: ConfigEditor, data: dict[str, Any], text: str) -> str | None:
+    """Apply one plain-English request to `data`; return its summary, or None (no match)."""
+    if m := _NL_TIME.fullmatch(text):
+        hh, mm = int(m.group(2)), m.group(3)
+        return editor._time(data, [_need_topic(data, m.group(1)), f"{hh:02d}:{mm}"])
+    if m := _NL_FREQ.fullmatch(text):
+        tid = _need_topic(data, m.group(1))
+        schedule = editor._topic(data, tid).get("schedule")
+        if not isinstance(schedule, dict) or "time" not in schedule:
+            raise ChangeError(f"{tid} runs every few minutes; it has no daily time")
+        weekly = m.group(2).lower() == "weekly"
+        schedule["days"] = ["sun"] if weekly else "daily"
+        return f"{'weekly (Sun)' if weekly else 'daily'} {tid}"
+    if m := _NL_ADD.fullmatch(text):
+        return editor._source(data, ["add", _need_topic(data, m.group(2)), m.group(1)])
+    if m := _NL_REMOVE.fullmatch(text):
+        tid = _need_topic(data, m.group(2))
+        wanted = m.group(1).strip().lower()
+        for s in editor._topic(data, tid).get("sources") or []:
+            if isinstance(s, dict) and str(s.get("name", "")).lower() == wanted:
+                return editor._source(data, ["remove", tid, str(s["name"])])
+        raise ChangeError(f"{tid} has no source named {m.group(1)[:60]!r}")
+    if m := _NL_TRACK.fullmatch(text):
+        keyword = " ".join(m.group(1).split())
+        if not _KEYWORD_RE.fullmatch(keyword):
+            raise ChangeError("keep the keyword to letters, digits and spaces (max 60)")
+        sources = editor._topic(data, TRACK_TOPIC).get("sources")
+        if not isinstance(sources, list):
+            raise ChangeError(f"{TRACK_TOPIC} has no plain source list")
+        name = f"Google News {keyword}"[:60]
+        if any(isinstance(s, dict) and s.get("name") == name for s in sources):
+            raise ChangeError(f"{keyword!r} is already tracked")
+        sources.append({"type": "google_news", "name": name, "query": keyword, "limit": 5})
+        return f"track {keyword} in {TRACK_TOPIC}"
+    for regex, state in ((_NL_OFF, "off"), (_NL_ON, "on")):
+        if m := regex.fullmatch(text):
+            found = _find_topic(data, m.group(1))
+            if found is not None:
+                return editor._topic_onoff(data, [state, found])
+            if state == "off":
+                return _remove_sources_everywhere(data, m.group(1))
+    return None
+
+
+def _remove_sources_everywhere(data: dict[str, Any], phrase: str) -> str | None:
+    """'stop reddit': drop every source whose name contains the phrase or whose type is it."""
+    p = _TOPIC_NOISE.sub("", phrase.strip().lower()).strip()
+    if len(p) < 3:
+        return None
+    removed: list[str] = []
+    for entry in data["topics"]:
+        sources = entry.get("sources") if isinstance(entry, dict) else None
+        if not isinstance(sources, list):
+            continue
+        keep = []
+        for s in sources:
+            if isinstance(s, dict) and (
+                p in str(s.get("name", "")).lower() or str(s.get("type", "")).lower() == p
+            ):
+                removed.append(f"{entry.get('id')}/{s.get('name')}")
+            else:
+                keep.append(s)
+        entry["sources"] = keep
+    if not removed:
+        return None
+    return f"remove sources {', '.join(removed)}"[:190]
