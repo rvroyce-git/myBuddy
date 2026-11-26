@@ -39,6 +39,11 @@ def cmd_telegram_setup(settings: Settings, env_file: Path, save: bool) -> int:
     if not token:
         _err("TELEGRAM_BOT_TOKEN is not set (run deploy/set-secrets.sh on your laptop)")
         return 1
+    current = (settings.telegram_chat_id or "").strip()
+    if current and not save:
+        print(f"TELEGRAM_CHAT_ID is already set (chat {mask_chat_id(current)}); nothing to do.")
+        print("To replace it, run: mybuddy telegram-setup --save")
+        return 0
     try:
         data = _telegram_get(token, "getUpdates")
     except RuntimeError as exc:
@@ -60,7 +65,7 @@ def cmd_telegram_setup(settings: Settings, env_file: Path, save: bool) -> int:
             found[str(chat_id)] = None
     chats = list(found)
     if not chats:
-        _err("No messages found. Open your bot in Telegram, tap Start, send 'hi', then retry.")
+        _err(NO_MESSAGES_HELP)
         return 1
     for chat_id in chats:
         print(f"  private chat {mask_chat_id(chat_id)}")
@@ -83,5 +88,11 @@ def cmd_telegram_setup(settings: Settings, env_file: Path, save: bool) -> int:
     print(f"saved TELEGRAM_CHAT_ID to {path}")
     return 0
 
+
+NO_MESSAGES_HELP = """No messages found. Open your bot in Telegram, tap Start, send 'hi', retry.
+If the mybuddy-bot service is running it consumes the updates first. Stop it, retry, start it:
+  sudo systemctl stop mybuddy-bot
+  (message your bot in Telegram, then) mybuddy telegram-setup --save
+  sudo systemctl start mybuddy-bot"""
 
 _CHAT_ID_LINE = re.compile(r"\s*(?:export\s+)?TELEGRAM_CHAT_ID\s*=")

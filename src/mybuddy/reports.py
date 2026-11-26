@@ -253,18 +253,23 @@ def _age(delta: timedelta) -> str:
     return f"{hours / 24:.0f} days ago"
 
 
+def _plural(count: int, word: str) -> str:
+    """'1 report', '2 reports', '0 reports'."""
+    return f"{count} {word}" if count == 1 else f"{count} {word}s"
+
+
 def health_lines(health: Health, now: datetime) -> list[str]:
     lines = ["Topics (last successful run):"]
     for row in health.topics:
         t = row.topic
         if row.last_ok is None:
-            lines.append(f"• {t.id}: never run yet · {row.reports} reports")
+            lines.append(f"• {t.id}: never run yet · {_plural(row.reports, 'report')}")
             continue
         when = row.last_ok.astimezone(IST)
         mark = "⚠️ STALE" if row.stale else "✅"
         lines.append(
             f"{mark} {t.id}: {when:%d %b %H:%M} IST ({_age(now - row.last_ok)}) · "
-            f"{row.reports} reports"
+            f"{_plural(row.reports, 'report')}"
         )
     if health.failures:
         lines += ["", f"Failed sources, last 24 h: {len(health.failures)}"]
@@ -292,7 +297,7 @@ def health_report(topic_id: str, title: str, health: Health, now: datetime) -> R
     if health.stale:
         problems.append(f"{len(health.stale)} stale: {', '.join(t.topic.id for t in health.stale)}")
     if health.failures:
-        problems.append(f"{len(health.failures)} failing source(s)")
+        problems.append(_plural(len(health.failures), "failing source"))
     if not health.groq:
         problems.append("no Groq key")
     headline = "⚠️ " + "; ".join(problems) if problems else "✅ All good"

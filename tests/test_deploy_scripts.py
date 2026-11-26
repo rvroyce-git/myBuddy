@@ -310,3 +310,132 @@ def test_build_pages_runs_without_data_sha(tmp_path) -> None:
         check=True,
     )
     assert shown.stdout.strip() == data_sha
+
+
+# ------------------------------------------------- harden.sh: idempotency on effective settings
+
+
+def _harden_helpers() -> str:
+    text = _text("harden.sh")
+    head = text[: text.index("usage()")]
+    start = text.index(
+        "# ---------------------------------------------------------------- effective"
+    )
+    end = text.index("# ---------------------------------------------------------------- preflight")
+    return head.replace("set -euo pipefail", "set -uo pipefail") + text[start:end]
+
+
+def _run_helper(
+    tmp_path: Path, body: str, bins: dict[str, str]
+) -> subprocess.CompletedProcess[str]:
+    assert BASH is not None
+    fake = tmp_path / "bin"
+    fake.mkdir(exist_ok=True)
+    for name, out in bins.items():
+        (tmp_path / f"{name}.out").write_text(out, encoding="utf-8")
+        exe = fake / name
+        exe.write_text(f'#!/bin/sh\ncat "{tmp_path}/{name}.out"\n', encoding="utf-8")
+        exe.chmod(0o755)
+    script = tmp_path / "h.sh"
+    script.write_text(_harden_helpers() + body, encoding="utf-8")
+    return subprocess.run(
+        [BASH, str(script)],
+        capture_output=True,
+        text=True,
+        env={"PATH": f"{fake}:/usr/bin:/bin"},
+    )
+
+
+SSHD_T_OK = (
+    "port 22\npermitrootlogin no\npubkeyauthentication yes\npasswordauthentication no\n"
+    "kbdinteractiveauthentication no\nmaxauthtries 3\n"
+)
+
+
+@pytest.mark.skipif(BASH is None, reason="bash not installed")
+@pytest.mark.parametrize(
+    ("sshd_t", "ok"), [(SSHD_T_OK, True), (SSHD_T_OK.replace("3", "6"), False)]
+)
+def test_harden_sshd_effective(tmp_path: Path, sshd_t: str, ok: bool) -> None:
+    r = _run_helper(tmp_path, "sshd_effective_ok && echo OK || echo DIFF\n", {"sshd": sshd_t})
+    assert r.stdout.strip() == ("OK" if ok else "DIFF"), r.stderr
+
+
+@pytest.mark.skipif(BASH is None, reason="bash not installed")
+def test_harden_jail_compares_settings_not_bytes(tmp_path: Path) -> None:
+    reordered = (
+        "# hardened by hand earlier\n[sshd]\njournalmatch=_COMM=sshd\nenabled = true\n\n"
+        "[DEFAULT]\nbackend = systemd\nmaxretry = 5\nfindtime = 10m\nbantime = 1h\n"
+    )
+    jail = tmp_path / "jail.local"
+    jail.write_text(reordered, encoding="utf-8")
+    body = f'JAIL_LOCAL="{jail}"\njail_effective_ok && echo OK || echo DIFF\n'
+    assert _run_helper(tmp_path, body, {}).stdout.strip() == "OK"
+    jail.write_text(reordered.replace("maxretry = 5", "maxretry = 9"), encoding="utf-8")
+    assert _run_helper(tmp_path, body, {}).stdout.strip() == "DIFF"
+
+
+@pytest.mark.skipif(BASH is None, reason="bash not installed")
+@pytest.mark.parametrize(
+    ("live", "files", "ok"),
+    [
+        ("20", {"90-mybuddy.conf": "# old\nvm.swappiness=20\n"}, True),
+        ("60", {"90-mybuddy.conf": "vm.swappiness = 20\n"}, False),
+        ("20", {"10-other.conf": "vm.swappiness = 20\n"}, False),
+        ("20", {"99-mybuddy.conf": "vm.swappiness = 10\n"}, False),
+    ],
+)
+def test_harden_swappiness_existing_file(
+    tmp_path: Path, live: str, files: dict[str, str], ok: bool
+) -> None:
+    d = tmp_path / "sysctl.d"
+    d.mkdir()
+    for name, text in files.items():
+        (d / name).write_text(text, encoding="utf-8")
+    body = f'SYSCTL_DIR="{d}"\nswappiness_ok && echo OK || echo DIFF\n'
+    r = _run_helper(tmp_path, body, {"sysctl": live + "\n"})
+    assert r.stdout.strip() == ("OK" if ok else "DIFF"), r.stderr
+
+
+def test_harden_skips_writes_when_effective_settings_match() -> None:
+    text = _text("harden.sh")
+    assert text.index("if sshd_effective_ok") < text.index('put_file "$SSHD_DROPIN"')
+    assert text.index("if jail_effective_ok") < text.index('put_file "$JAIL_LOCAL"')
+    assert text.index("if swappiness_ok") < text.index('put_file "$SYSCTL_FILE"')
+    assert "apt upgrade (would run)" in text
+
+
+# ------------------------------------------------- create-vm / budget-alert arguments
+
+
+def _run_script(name: str, *args: str, tmp_path: Path) -> subprocess.CompletedProcess[str]:
+    assert BASH is not None
+    env = {"PATH": "/usr/bin:/bin", "HOME": str(tmp_path)}
+    return subprocess.run(
+        [BASH, str(DEPLOY / name), *args], capture_output=True, text=True, env=env
+    )
+
+
+@pytest.mark.skipif(BASH is None, reason="bash not installed")
+def test_create_vm_reports_all_missing_args(tmp_path: Path) -> None:
+    r = _run_script("create-vm.sh", tmp_path=tmp_path)
+    assert r.returncode == 1
+    for opt in ("--compartment", "--ad", "--subnet", "--ssh-key"):
+        assert opt in r.stderr
+    r = _run_script("create-vm.sh", "--dry-run", tmp_path=tmp_path)
+    assert r.returncode == 0, r.stderr
+    assert "<compartment-ocid>" in r.stdout and "<subnet-ocid>" in r.stdout
+    assert "Dry run: nothing was created" in r.stdout
+    placeholders = ["--compartment", "<compartment-ocid>", "--ad", "x"]
+    placeholders += ["--subnet", "<subnet-ocid>", "--ssh-key", "<k.pub>"]
+    r = _run_script("create-vm.sh", *placeholders, tmp_path=tmp_path)
+    assert r.returncode == 1 and "only allowed with --dry-run" in r.stderr
+
+
+@pytest.mark.skipif(BASH is None, reason="bash not installed")
+def test_budget_alert_reports_all_missing_args(tmp_path: Path) -> None:
+    r = _run_script("budget-alert.sh", tmp_path=tmp_path)
+    assert r.returncode == 1 and "--email" in r.stderr and "--tenancy" in r.stderr
+    r = _run_script("budget-alert.sh", "--dry-run", tmp_path=tmp_path)
+    assert r.returncode == 0, r.stderr
+    assert "<tenancy-ocid>" in r.stdout and "<email>" in r.stdout

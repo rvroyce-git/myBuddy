@@ -27,7 +27,7 @@ from typing import Any
 import yaml
 
 from mybuddy.allowlist import source_hosts, topic_source_specs
-from mybuddy.cli._common import _err, write_private
+from mybuddy.cli._common import _err, make_private_dirs, write_private
 from mybuddy.config import (
     DEFAULT_CONFIG_PATH,
     ConfigError,
@@ -345,8 +345,7 @@ def print_plan(plan: Plan) -> None:
 def apply_plan(plan: Plan, settings: Settings) -> None:
     if plan.file_state != "unchanged":
         folder = plan.output.parent
-        if not folder.exists():
-            folder.mkdir(parents=True, mode=0o700)
+        make_private_dirs(folder)
         if plan.file_state == "overwrite":
             backups = ensure_private_dir(folder / BACKUP_DIR)
             stamp = datetime.now(IST).strftime("%Y%m%d-%H%M%S")

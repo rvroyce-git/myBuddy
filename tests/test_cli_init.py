@@ -117,6 +117,9 @@ def test_default_output_is_the_live_config(
     assert _enabled(live) == ["ai_news"]
     assert stat.S_IMODE(live.stat().st_mode) == 0o600
     assert stat.S_IMODE(live.parent.stat().st_mode) == 0o700
+    # Every parent dir init created is private too, not left at the umask default (775).
+    for folder in (live.parent.parent, live.parent.parent.parent):
+        assert stat.S_IMODE(folder.stat().st_mode) == 0o700
     assert f"MYBUDDY_CONFIG={live}" in env["envfile"].read_text(encoding="utf-8")
 
 

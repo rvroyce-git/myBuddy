@@ -322,17 +322,36 @@ def test_health_content_and_stale_detection(store: Store, settings: Settings) ->
     text = report.summary
     assert [t.topic.id for t in health.stale] == ["security"]
     assert "⚠️ STALE security" in text and "(30 h ago)" in text
-    assert "✅ ai_news: 26 Nov 06:30 IST (2 h ago) · 1 reports" in text
+    assert "✅ ai_news: 26 Nov 06:30 IST (2 h ago) · 1 report" in text
+    assert "reports" not in text.split("ai_news:")[1].splitlines()[0]
     assert "morning_digest: never run yet" in text
     assert "health_check" not in text  # not listed in its own report
     assert "security / Feed ×2: HttpError: 502" in text and "Old" not in text
     assert "Disk free (data dir):" in text and "Process memory:" in text
     assert "Groq: configured" in text and "Telegram: NOT configured" in text
-    assert report.headline.startswith("⚠️ 1 stale: security; 1 failing source(s)")
+    assert report.headline.startswith("⚠️ 1 stale: security; 1 failing source")
     assert report.items == ()
     # Both channels keep the lines apart.
     assert "\n⚠️ STALE security" in format_telegram(report, "🩺")
     assert "\n⚠️ STALE security" in format_report(report, "🩺")
+
+
+def test_health_wording_is_pluralised(store: Store, settings: Settings) -> None:
+    now = THURSDAY
+    store.record_run("ai_news", now - timedelta(hours=1), "delivered")
+    for h in (2, 3):
+        when = now - timedelta(hours=h)
+        store.save_report("ai_news", when, _report("ai_news", when, 1))
+    once = now - timedelta(hours=1)
+    store.save_report("security", once, _report("security", once, 1))
+    store.record_source_failure("security", "A", once, "x")
+    store.record_source_failure("security", "B", once, "y")
+    report = health_report("h", "Health", collect_health(TOPICS, store, settings, now), now)
+    lines = report.summary.splitlines()
+    assert any(ln.startswith("✅ ai_news") and ln.endswith("· 2 reports") for ln in lines)
+    assert any(ln.startswith("✅ security") and ln.endswith("· 1 report") for ln in lines)
+    assert "• morning_digest: never run yet · 0 reports" in lines
+    assert "2 failing sources" in report.headline and "(s)" not in report.headline
 
 
 def test_health_all_good(store: Store, settings: Settings) -> None:
@@ -365,6 +384,10 @@ def test_health_cli(
     assert code == 0  # nothing has run yet: nothing stale, no failures
     assert out.startswith("Health check\n⚠️ no Groq key")
     assert "policy_watch: never run yet" in out and "Groq: NOT configured" in out
+    with Store(tmp_path / "data") as s:
+        s.record_source_failure("ai_news", "Feed", THURSDAY, "HTTP 500")
+    assert cli.main(["--env-file", str(tmp_path / "none"), "health"]) == 0  # failed source: WARN
+    capsys.readouterr()
     with Store(tmp_path / "data") as s:
         s.record_run("ai_news", THURSDAY - timedelta(days=2), "delivered")
     assert cli.main(["--env-file", str(tmp_path / "none"), "health"]) == 1

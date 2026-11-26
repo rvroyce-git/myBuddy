@@ -218,7 +218,7 @@ class Doctor:
                 self.add("WARN", name, "never ran")
             elif stale:
                 limit = stale_after(topic.schedule)
-                self.add("WARN", name, f"{_age(now - last)} ago (stale after {_age(limit)})")
+                self.add("FAIL", name, f"{_age(now - last)} ago (stale after {_age(limit)})")
             else:
                 self.add("PASS", name, f"{_age(now - last)} ago")
         if health.failures:
