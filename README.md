@@ -83,8 +83,21 @@ export, or run `mybuddy export`). Set them back to `false` (and restart) to go p
 Allowed chats can ask about the latest reports: send a plain question or `/ask <question>`. Groq
 answers (Gemini only as a fallback, if set) from the saved reports only, citing items like
 `[security #2]`; the bot adds those items' stored links and removes any other URL. Messages and
-feed text are treated as data, the model has no tools, and nothing is remembered between
-messages (`/reset` just confirms that). Logs show masked chat ids and sizes, never text.
+feed text are treated as data and the model has no tools. Follow-up questions work: the bot
+keeps the last 6 question/answer pairs per chat (at most ~1,500 characters, oldest dropped
+first) **in memory only** for 30 minutes of inactivity and passes them back as an untrusted
+data block. They are never written to disk or logged; `/reset` (or a restart) forgets them.
+Logs show masked chat ids and sizes, never text.
+
+Reports on demand:
+
+* **Anyone** who can use the bot: `/latest <topic>` or "show me today's security" replies with
+  that topic's latest saved report, formatted like the scheduled message (no fetch, no AI call).
+* **Owner only**: `/run <topic>` or phrases like "send me the security report now", "run github
+  trending", "refresh ai news" run the topic immediately in the background and send it to the
+  owner only (no subscriber fan-out), then reply "Done" or the error. Topics are matched by
+  fixed patterns on ids, titles and aliases (no AI decides). One run at a time; a file lock
+  (`run.lock` in the data dir) keeps it from overlapping scheduled runs. Others get a polite no.
 
 | Setting | Default | Meaning |
 | --- | --- | --- |

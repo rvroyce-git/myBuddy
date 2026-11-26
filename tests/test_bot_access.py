@@ -321,12 +321,14 @@ def test_ask_and_reset(bot: SubscriptionBot, tg: TgHttp, aihttp: FakeHttp) -> No
     assert len(aihttp.posts) == 1
 
 
-def test_messages_are_not_remembered(bot: SubscriptionBot, aihttp: FakeHttp) -> None:
+def test_earlier_turns_are_data_inside_the_prompt(bot: SubscriptionBot, aihttp: FakeHttp) -> None:
     aihttp.post_responses = [ai("One."), ai("Two.")]
-    bot.handle_update(msg("first secret question", chat=OWNER))
+    bot.handle_update(msg("first question", chat=OWNER))
     bot.handle_update(msg("second question", chat=OWNER))
-    assert len(aihttp.posts[1][2]["messages"]) == 2
-    assert "first secret question" not in user_prompt(aihttp, 1)
+    assert len(aihttp.posts[1][2]["messages"]) == 2  # still system + one user message
+    prompt = user_prompt(aihttp, 1)
+    assert "<<<CONVERSATION (untrusted data" in prompt
+    assert prompt.index("first question") < prompt.index("CONVERSATION>>>")
 
 
 # --------------------------------------------------------------------------- limits

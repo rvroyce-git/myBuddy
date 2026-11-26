@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import sys
-from collections.abc import Collection, Sequence
+from collections.abc import Callable, Collection, Sequence
 from pathlib import Path
 
 from mybuddy.allowlist import build_allowed_hosts
@@ -14,6 +14,7 @@ from mybuddy.deliver import make_deliverer
 from mybuddy.engine import Deps, RunResult, run_topic
 from mybuddy.export import export, schedule_label, signup_mode
 from mybuddy.models import Clock
+from mybuddy.ondemand import run_lock
 from mybuddy.schedule import Scheduler, next_run
 from mybuddy.store import Store
 from mybuddy.summarize import Summarizer
@@ -34,6 +35,28 @@ def _build_deps(
         export_path=settings.site_data,
         settings=settings,
     )
+
+
+def owner_run(
+    settings: Settings, topics: Sequence[Topic], clock: Clock, allowed_hosts: Collection[str]
+) -> Callable[[Topic], str]:
+    """Run one topic now for the bot's /run: owner channel only, no subscriber fan-out."""
+
+    def run(topic: Topic) -> str:
+        deps = _build_deps(settings, topics, clock, allowed_hosts)
+        deps.deliverer = make_deliverer(settings, deps.http, clock)  # owner only
+        try:
+            result = run_topic(topic, deps)
+        finally:
+            deps.store.close()
+        if result.status == "delivered":
+            return f"Done ✅ {topic.title} sent."
+        if result.status in ("no_new_items", "skipped"):
+            return f"Done. {topic.title}: nothing new since the last report."
+        error = result.errors[0] if result.errors else result.status
+        return f"{topic.title} failed: {error[:200]}"
+
+    return run
 
 
 def cmd_list(topics: Sequence[Topic], clock: Clock) -> int:
@@ -101,7 +124,12 @@ def cmd_serve(
     if config_path is not None:
         marker = settings.data_dir / RELOAD_MARKER
         reload = make_reloader(config_path, marker, load_config, on_reload)
-    scheduler = Scheduler(topics, lambda t: run_topic(t, state["deps"]), clock, reload=reload)
+
+    def run_locked(topic: Topic) -> RunResult:
+        with run_lock(settings.data_dir):  # shared with the bot's on-demand /run
+            return run_topic(topic, state["deps"])
+
+    scheduler = Scheduler(topics, run_locked, clock, reload=reload)
     scheduler.install_signal_handlers()
     print(f"[mybuddy] serving {len(topics)} topics (fake={settings.fake})", file=sys.stderr)
     try:
