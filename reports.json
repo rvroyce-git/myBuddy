@@ -1,0 +1,342 @@
+{
+  "generated_at": "2026-11-26T21:08:39+05:30",
+  "topics": [
+    {
+      "id": "ai_news",
+      "title": "AI news",
+      "emoji": "🧠",
+      "description": "The day's AI news in plain words — models, labs, funding, policy and open source.",
+      "schedule": "Daily · 06:30 IST",
+      "bit": 0,
+      "report": {
+        "created_at": "2026-11-26T06:30:44+05:30",
+        "headline": "Anthropic releases a compact GRH Lean verification model",
+        "summary": "Anthropic unveiled a compact GRH Lean verification model. IDC forecasts half of Asia‑Pacific firms will be AI‑first by 2029; NYT warns against Photoshop AI updates; China bonds fall amid AI tensions; medical AI lacks…",
+        "items": [
+          {
+            "title": "Much shorter version of GRH Lean verification from Anthropic",
+            "url": "https://github.com/lsernau/grh-lean",
+            "source": "Hacker News",
+            "blurb": "Anthropic releases a shorter GRH Lean verification model, speeding AI verification tasks.",
+            "published": "2026-11-25T21:48:10+00:00"
+          },
+          {
+            "title": "IDC forecasts 50% AI-first enterprise adoption in Asia-Pacific by 2029",
+            "url": "https://news.google.com/rss/articles/CBMiuAFBVV95cUxObWJTekdZbzY4VlBJa0JHSzJLN0dSTVNmbjRJVWVwN2Q4cjY5cFFkS0JLVnlkMTYyVVNRUXBtamI2VWZRMm1fMWcwMks0bHh1bjJ3cEw3SGdNRV9YdlQ3US0zMFhHYzJpUWVjcWtuay1Oa19KOHdzb08tT0pkelRJbXV2ZTRhOHRZSmx6QzduM3F0aG9sUnNwazJNMlM4MUV0WlJnYWdMNUxzSmRBaWhTQWxNLWtUamhY?oc=5",
+            "source": "CRN Asia",
+            "blurb": "IDC predicts 50% of Asia‑Pacific enterprises will adopt AI‑first strategies by 2029.",
+            "published": "2026-11-25T23:58:33+00:00"
+          },
+          {
+            "title": "The New York Times warns photographers not to update Photoshop over AI features",
+            "url": "https://www.theverge.com/ai-artificial-intelligence/1041227/the-new-york-times-warns-photographers-not-to-update-photoshop-over-ai-features",
+            "source": "Hacker News",
+            "blurb": "NYT advises photographers not to update Photoshop with new AI features.",
+            "published": "2026-11-25T21:18:02+00:00"
+          },
+          {
+            "title": "AI strife spurs risk-off mode as China government bond yield drops to record low",
+            "url": "https://news.google.com/rss/articles/CBMizgFBVV95cUxNZEI3MTJnVW5oREJlbEhRdDhkTjFEU0hqYnBXTG80ak9mWFgtLUhIQTlwdXZyakNWMGJycVFKSVAtM3lzdGZEUi1MNEZ2LUlYYlp3NTVXWndoNzNiQU01RjFwcndZWVpMRFFqN3pkd0MzYTZOYWNaS0stVW9zUzZQOEVlN2JWRWZoU3VnX0Myd3YxYTlZQjlGc2tGclpVQS1tTldvQTBKU2dDbE9oM2hhM3JwekRUTkVLNS1qUjY1UDZ5QWVRLURWbEhONGNFdw?oc=5",
+            "source": "South China Morning Post",
+            "blurb": "China government bond yields hit record low as AI‑related market worries rise.",
+            "published": "2026-11-26T00:00:13+00:00"
+          },
+          {
+            "title": "Resuscitation artificial intelligence risks reproducing documented sex disparities in emergency care",
+            "url": "https://news.google.com/rss/articles/CBMiwwFBVV95cUxPWnY1dGU3Yi16N01kbF9vaDI1SU9DQ2dRVW42R3VXQWk5NDQtVENrREJUUllYQkF6cDM0YUJsdlBwdFRzYWlrbTFSNXliU3ZobnJlS2lDVktlNWxxMXkwVnJtWmJNX1QwSUE0T1U4RmZ0c3hOSUR4VXRHUlNwTWhBZnQ3ZHlKRUZUZklFQXJTSG1QR3hYbDZLc0pETTUtOENwcEhLekhJWjRGNUxhdUVQckd4M1llTXBVc0VIbHB1cEVWdzQ?oc=5",
+            "source": "Bioengineer.org",
+            "blurb": "Study finds resuscitation AI may repeat known sex disparities in emergency care.",
+            "published": "2026-11-25T23:24:49+00:00"
+          },
+          {
+            "title": "Medical Artificial Intelligence Models Face a Persistent Validation Gap Across Public Health",
+            "url": "https://news.google.com/rss/articles/CBMiuAFBVV95cUxQclZtU0xWZEpia0x5MUNDQ3huZHFnS09jRkVSbU9UNjU2dEozbkQxblI5X2JDSG1LMWY0ZG1UOFZUWVg1WmhWV1daNGI3Y2dZa1hBaWhxVjE2WWRWVl9DM3NHTEtnN0tHcE90SVN0SG5TMWN4YVhwYTdqWmNtNllDLTg4VTFfSHlENndfRmd1aGdnVlk0Ti1JeExtUE1UTTRaSnFLTmowVG1HNWVnLVRhQ3JtdUcwRVVu?oc=5",
+            "source": "Bioengineer.org",
+            "blurb": "Medical AI models continue to lack validation across public‑health settings.",
+            "published": "2026-11-25T22:22:44+00:00"
+          }
+        ]
+      }
+    },
+    {
+      "id": "security",
+      "title": "Cybersecurity alerts",
+      "emoji": "🛡️",
+      "description": "Fresh security advisories and breaches, with what they mean and what to do.",
+      "schedule": "Daily · 07:00 IST",
+      "bit": 1,
+      "report": {
+        "created_at": "2026-11-26T07:00:06+05:30",
+        "headline": "Active exploits hit GeoServer, Drupal, 1Password and network devices—patch now",
+        "summary": "Two critical server flaws and a 1Password breach are being exploited; update affected software and monitor accounts.",
+        "items": [
+          {
+            "title": "Hackers Exploit Two GeoServer Flaws as Researchers Warn of Unauthenticated RCE Chains",
+            "url": "https://thehackernews.com/2026/11/hackers-exploit-two-geoserver-flaws-as.html",
+            "source": "The Hacker News",
+            "blurb": "GeoServer patches (CVE‑2026‑120705, CVE‑2026‑129243, CVSS 8.6) needed; attackers actively exploiting.",
+            "published": "2026-11-25T12:48:54+00:00"
+          },
+          {
+            "title": "1Password customer data stolen after employee GitHub account breach",
+            "url": "https://www.bleepingcomputer.com/news/security/1password-customer-data-stolen-after-employee-github-account-breach/",
+            "source": "BleepingComputer",
+            "blurb": "1Password breach via employee GitHub; watch for suspicious activity and change master passwords.",
+            "published": "2026-11-25T21:33:33+00:00"
+          },
+          {
+            "title": "Drupal Fail2Install Exploit Details Emerge as Critical RCE Flaw Faces Active Exploitation",
+            "url": "https://thehackernews.com/2026/11/drupal-fail2install-exploit-details.html",
+            "source": "The Hacker News",
+            "blurb": "Drupal critical RCE (CVE‑2026‑132…) in KEV catalog; apply fixes by Nov 27 2026.",
+            "published": "2026-11-25T11:23:26+00:00"
+          },
+          {
+            "title": "Palo Alto Networks warns of Fragnesia flaw exploited in PAN-OS attacks",
+            "url": "https://www.bleepingcomputer.com/news/security/palo-alto-networks-warns-of-fragnesia-flaw-exploited-in-pan-os-attacks/",
+            "source": "BleepingComputer",
+            "blurb": "Palo Alto devices with internet‑exposed management interfaces targeted; restrict access and apply vendor patches.",
+            "published": "2026-11-25T22:05:09+00:00"
+          },
+          {
+            "title": "CISA Adds 10 Known Exploited Vulnerabilities to Catalog",
+            "url": "https://www.cisa.gov/news-events/alerts/2026/11/25/cisa-adds-10-known-exploited-vulnerabilities-catalog",
+            "source": "CISA Advisories",
+            "blurb": "CISA added ten exploited CVEs, including Danfoss AK‑SM series; update any affected industrial controllers.",
+            "published": "2026-11-25T12:00:00+00:00"
+          }
+        ]
+      }
+    },
+    {
+      "id": "github_trending",
+      "title": "Trending GitHub repos",
+      "emoji": "⭐",
+      "description": "AI projects on GitHub that are picking up stars fastest right now.",
+      "schedule": "Daily · 07:15 IST",
+      "bit": 2,
+      "report": {
+        "created_at": "2026-11-26T07:15:19+05:30",
+        "headline": "DeepTutor gains attention as a Python AI tutoring platform",
+        "summary": "DeepTutor offers lifelong personalized tutoring using AI, built in Python. It’s trending with 457 new stars, reaching over 62 k total.",
+        "items": [
+          {
+            "title": "HKUDS/DeepTutor",
+            "url": "https://github.com/HKUDS/DeepTutor",
+            "source": "GitHub Trending",
+            "blurb": "Personalized AI tutoring tool, useful for students and educators, gained 457 stars, total 62,799",
+            "published": "2026-11-24T06:57:44+00:00"
+          }
+        ]
+      }
+    },
+    {
+      "id": "deep_dive",
+      "title": "Deep dive",
+      "emoji": "🔬",
+      "description": "One AI subject a weekday, explained simply with the latest papers.",
+      "schedule": "Mon–Fri · 07:30 IST",
+      "bit": 3,
+      "report": {
+        "created_at": "2026-11-26T07:30:04+05:30",
+        "headline": "New AI tools boost audio‑video understanding, synthesis, and realistic generation",
+        "summary": "Audio‑video AI is advancing from better dialogue captioning and speech detection to realistic video synthesis and physics‑aware generation. Recent papers introduce tools for automatic captioning, multi‑camera…",
+        "items": [
+          {
+            "title": "DiaCap: Jointly Learning Who Speaks When for Audiovisual Dialogue Captioning",
+            "url": "https://arxiv.org/abs/2611.33153v1",
+            "source": "arXiv audio & video",
+            "blurb": "DiaCap creates transcripts, timestamps, and speaker visual descriptions for video dialogue using an audiovisual LLM.",
+            "published": "2026-11-24T18:59:08+00:00"
+          },
+          {
+            "title": "One Take, Many Cameras: Audio-Grounded Shot Synthesis for Dialogue Re-Cinematography",
+            "url": "https://arxiv.org/abs/2611.33147v1",
+            "source": "arXiv audio & video",
+            "blurb": "One Take, Many Cameras synthesizes missing camera angles for dialogue scenes, reducing costly multi‑camera shoots.",
+            "published": "2026-11-24T18:58:32+00:00"
+          },
+          {
+            "title": "iWAM: Efficient Action Prediction from World Models without Explicit Future Prediction",
+            "url": "https://arxiv.org/abs/2611.33141v1",
+            "source": "arXiv audio & video",
+            "blurb": "iWAM predicts actions efficiently by using world models without generating full future video frames.",
+            "published": "2026-11-24T18:56:04+00:00"
+          },
+          {
+            "title": "ClusterVAD: Threshold-Free Unsupervised Voice Activity Detection with Pre-Trained Neural Representations",
+            "url": "https://arxiv.org/abs/2611.33059v1",
+            "source": "arXiv audio & video",
+            "blurb": "ClusterVAD detects speech activity without thresholds or labeled data using pre‑trained neural representations.",
+            "published": "2026-11-24T18:03:21+00:00"
+          },
+          {
+            "title": "Mask-Based Speech Enhancement for Spatial Audio: Effects of Signal Representation and Channel-Specific Masking",
+            "url": "https://arxiv.org/abs/2611.32910v1",
+            "source": "arXiv audio & video",
+            "blurb": "Mask‑Based Speech Enhancement improves spatial audio quality while preserving scene directionality via…",
+            "published": "2026-11-24T16:29:52+00:00"
+          },
+          {
+            "title": "PhysMend: Verification-Guided Program Refinement for Physics-Aware Video Generation",
+            "url": "https://arxiv.org/abs/2611.32821v1",
+            "source": "arXiv audio & video",
+            "blurb": "PhysMend adds physics verification to video generation, correcting unrealistic object interactions post‑hoc.",
+            "published": "2026-11-24T15:37:39+00:00"
+          }
+        ]
+      }
+    },
+    {
+      "id": "research_papers",
+      "title": "AI research papers",
+      "emoji": "📄",
+      "description": "Today's notable AI papers, each boiled down to its key idea.",
+      "schedule": "Daily · 07:45 IST",
+      "bit": 4,
+      "report": {
+        "created_at": "2026-11-26T07:45:04+05:30",
+        "headline": "New AI papers tackle belief‑aligned agents, smarter robots, and efficient learning",
+        "summary": "Researchers propose methods for agents to act on verified beliefs, improve robot decision‑making with mirrors and counterfactual models, and boost learning efficiency in vision, hardware repair, and multimodal reasoning.",
+        "items": [
+          {
+            "title": "Lazy Agents Answer Against Their Own Beliefs: Reinforcement Learning with Verifiable Beliefs Teaches Them to Act on What They Believe",
+            "url": "https://huggingface.co/papers/2611.32884",
+            "source": "Hugging Face Daily Papers",
+            "blurb": "Agents often commit answers before evidence; verifiable beliefs guide actions to match their confidence.",
+            "published": "2026-11-23T19:00:00+00:00"
+          },
+          {
+            "title": "REFORGE: LLM-Assisted RTL Bug Repair with Structured Context and Verification Feedback",
+            "url": "https://arxiv.org/abs/2611.33748v1",
+            "source": "arXiv AI/CL/LG",
+            "blurb": "LLM‑assisted RTL bug repair adds structured context and verification feedback to ensure fixes work.",
+            "published": "2026-11-25T04:08:43+00:00"
+          },
+          {
+            "title": "Embodied AI Fails the Mirror Test: How a Simple Mirror Breaks Robot Policies",
+            "url": "https://huggingface.co/papers/2611.33010",
+            "source": "Hugging Face Daily Papers",
+            "blurb": "A simple mirror reveals current robot policies struggle with self‑reflexive scenes, exposing perception gaps.",
+            "published": "2026-11-23T19:00:00+00:00"
+          },
+          {
+            "title": "WhatIf: Counterfactual World Models over Action-Grounded Causal Graphs for Robotic Manipulation",
+            "url": "https://arxiv.org/abs/2611.33745v1",
+            "source": "arXiv AI/CL/LG",
+            "blurb": "Counterfactual world models use action‑grounded causal graphs to compare outcomes before acting.",
+            "published": "2026-11-25T04:06:11+00:00"
+          },
+          {
+            "title": "ThinkMorph-SSL: Scaling Interleaved Multimodal Reasoning with Pretext Tasks",
+            "url": "https://huggingface.co/papers/2611.32183",
+            "source": "Hugging Face Daily Papers",
+            "blurb": "ThinkMorph‑SSL trains models to interleave images and text, scaling multimodal reasoning via pretext tasks.",
+            "published": "2026-11-23T19:00:00+00:00"
+          },
+          {
+            "title": "Teaching Students to Stand on Their Own: Distilling Vision Foundation Models for Fine-Grained Few-Shot Class-Incremental Learning",
+            "url": "https://arxiv.org/abs/2611.33749v1",
+            "source": "arXiv AI/CL/LG",
+            "blurb": "Distilled vision foundation models enable few‑shot, fine‑grained class‑incremental learning without forgetting prior…",
+            "published": "2026-11-25T04:10:53+00:00"
+          }
+        ]
+      }
+    },
+    {
+      "id": "startups",
+      "title": "Startup & product launches",
+      "emoji": "🚀",
+      "description": "New products and startup funding news — what it is and who it's for.",
+      "schedule": "Daily · 08:00 IST",
+      "bit": 5,
+      "report": {
+        "created_at": "2026-11-26T08:00:07+05:30",
+        "headline": "AI control layer and video model launch as funding hits new highs",
+        "summary": "OpenEight offers deterministic AI agent control, while Sand AI's MAGI‑2 brings cinematic video generation. Meanwhile, major funding news includes ElevenLabs talks, Outcome1’s €1 M raise, and a robotics startup’s $1.6 B…",
+        "items": [
+          {
+            "title": "OpenEight",
+            "url": "https://www.producthunt.com/products/openeight",
+            "source": "Product Hunt",
+            "blurb": "OpenEight provides a deterministic control layer for AI agents, helping developers ensure predictable behavior.",
+            "published": "2026-11-25T06:58:59+00:00"
+          },
+          {
+            "title": "MAGI-2",
+            "url": "https://www.producthunt.com/products/magi-1",
+            "source": "Product Hunt",
+            "blurb": "MAGI‑2 is Sand AI’s 480B model that generates cinematic video, aiding creators in fast content production.",
+            "published": "2026-11-25T05:35:39+00:00"
+          },
+          {
+            "title": "GibHub",
+            "url": "https://www.producthunt.com/products/gibhub-git-file-history",
+            "source": "Product Hunt",
+            "blurb": "GibHub lets developers retrieve and compare Git versions, simplifying code review and change tracking.",
+            "published": "2026-11-25T04:38:27+00:00"
+          },
+          {
+            "title": "Robotics startup hits $1.6 billion valuation amid China funding slowdown",
+            "url": "https://news.google.com/rss/articles/CBMirwFBVV95cUxOeUtua1lWYnV5UVdKcHFTQWRvMThVZlhpVnJrS1BiSE9IVk9KY3NkR2VIUEdHS29tZEVVTURPbUpjTnp5WnUtMmpYY2RxWm1QaXZENmpTT2RldEJNM2tkNGF4NjdVM2E2WktEM1kxSUN1ZWY1SW9GTVZtTkJqeHNGUEpHTTFwUXVFVHZVMUlyVS16U0hSTXYzWm9xVFZjOE5JaDBGal9KWVNkYlNveS1F?oc=5",
+            "source": "TechTarget",
+            "blurb": "A robotics startup reached a $1.6 B valuation, showing strong market interest despite China funding slowdown.",
+            "published": "2026-11-25T15:02:55+00:00"
+          },
+          {
+            "title": "Romanian startup Outcome1 raises 1 mln euro in Catalyst-led funding round",
+            "url": "https://news.google.com/rss/articles/CBMiqgFBVV95cUxNdTIxN3poOUdoZ3dudkw0RzJncGxIS19tLTlPQlQ2d01tYVhpZ3Y0Yi1DZ3ZmSm9ybmtIdTE1empxU2doZHRGcXlYdjRnSERTRkZEY3NjanhMdWtNdUhOLTVpejR5ZDYtQVZhQnpmemtldHR1RENybml5RDUyM3dlQlQ1Y1lEYkQybjNZQmw3TG1lR2FBRXN2eFNqTGRWQjdGcEtkUjRWQ2g1dw?oc=5",
+            "source": "SeeNews",
+            "blurb": "Romanian startup Outcome1 raised €1 M in a Catalyst‑led round, supporting its growth plans.",
+            "published": "2026-11-25T14:36:26+00:00"
+          },
+          {
+            "title": "ElevenLabs in Early Talks for Funding at $33 Billion Value",
+            "url": "https://news.google.com/rss/articles/CBMiswFBVV95cUxNWDZDSXBpam9icmNSdEVhMmJHdDQxWU5JOWV0NERCNmNhVS0xcUZrek9KMm9UbUt3WERDaHg4bWNkODhQV2daN1VTQ1hKMmJrRmhXZi1SU29xVFQwbXU1eWpvQm0wSU41ajlTX3ZtUVFkUll1VktCNzcybHBZM25sSHdJRVF4RmdSUk5neTRBdjFUUFh6aDJHRGd3MGlGcFI4bFZNTE1FZld1eEFUVVd3X0hWMA?oc=5",
+            "source": "Bloomberg",
+            "blurb": "ElevenLabs is in early funding talks at a $33 B valuation, indicating high investor interest.",
+            "published": "2026-11-25T21:50:52+00:00"
+          }
+        ]
+      }
+    },
+    {
+      "id": "ai_models",
+      "title": "New open-source AI models",
+      "emoji": "🤖",
+      "description": "Open models trending on Hugging Face, with what they're good for.",
+      "schedule": "Daily · 08:15 IST",
+      "bit": 6,
+      "report": {
+        "created_at": "2026-11-26T08:15:04+05:30",
+        "headline": "Three new open-source models are gaining traction on Hugging Face",
+        "summary": "prism-ml released a 27B text generator, llamaindex added a tiny OCR model, and inclusionAI posted Ling-3.2-air. All are trending with hundreds of downloads.",
+        "items": [
+          {
+            "title": "prism-ml/Ternary-Bonsai-2.5-27B-GGUF",
+            "url": "https://huggingface.co/prism-ml/Ternary-Bonsai-2.5-27B-GGUF",
+            "source": "Hugging Face Trending",
+            "blurb": "prism-ml’s Ternary-Bonsai-2.5-27B-GGUF is a 27-billion-parameter text generator, trending on Hugging Face",
+            "published": "2026-11-24T16:32:20+00:00"
+          },
+          {
+            "title": "llamaindex/OCRia-nano-1",
+            "url": "https://huggingface.co/llamaindex/OCRia-nano-1",
+            "source": "Hugging Face Trending",
+            "blurb": "llamaindex’s OCRia-nano-1 converts images to text, a tiny OCR model gaining likes",
+            "published": "2026-11-03T21:44:40+00:00"
+          },
+          {
+            "title": "inclusionAI/Ling-3.2-air",
+            "url": "https://huggingface.co/inclusionAI/Ling-3.2-air",
+            "source": "Hugging Face Trending",
+            "blurb": "inclusionAI’s Ling-3.2-air is a new model attracting downloads, details sparse",
+            "published": "2026-11-23T03:55:12+00:00"
+          }
+        ]
+      }
+    }
+  ],
+  "signup": "open"
+}
