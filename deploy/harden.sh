@@ -13,8 +13,10 @@
 #   vm.swappiness=20; user `mybuddy` (no sudo) with the admin's SSH key; sshd drop-in
 #   99-mybuddy.conf (keys only, no root, MaxAuthTries 3), validated with `sshd -t` before a
 #   reload (the reload never drops the SSH session you are in); linger for mybuddy;
-#   python3-venv/pip, git, rsync; fail2ban sshd jail.
-# What it never does: touch iptables/nftables (Oracle's rules stay as they are; UFW is not
+#   python3-venv/pip, git, rsync; fail2ban sshd jail; a read-only check of Oracle's iptables
+#   INPUT chain. Every file it replaces is first copied to /var/backups/mybuddy/<timestamp>/
+#   (mode 0700), never next to the original (apt and sshd would read a copy left there).
+# What it never does: change iptables/nftables (Oracle's rules stay as they are; UFW is not
 # used because it conflicts with them), open ports, or restart sshd.
 set -euo pipefail
 
@@ -29,6 +31,8 @@ SSHD_DROPIN=/etc/ssh/sshd_config.d/99-mybuddy.conf
 JAIL_LOCAL=/etc/fail2ban/jail.local
 SYSCTL_FILE=/etc/sysctl.d/99-mybuddy.conf
 AUTO_UPGRADES=/etc/apt/apt.conf.d/20auto-upgrades
+BACKUP_ROOT=/var/backups/mybuddy
+BACKUP_DIR=$BACKUP_ROOT/$(date +%Y%m%d%H%M%S)
 PACKAGES=(unattended-upgrades python3-venv python3-pip git rsync fail2ban)
 
 SSHD_CONTENT='# MyBuddy hardening (deploy/harden.sh): SSH keys only, no root login.
@@ -89,6 +93,17 @@ run() {
   fi
 }
 
+# backup_file PATH: copy PATH to $BACKUP_DIR/PATH (e.g. .../<ts>/etc/fstab), keeping its mode.
+# Backups live outside /etc so that apt.conf.d, sshd_config.d etc. never read them.
+backup_file() {
+  local path=$1
+  [ -f "$path" ] || return 0
+  install -d -m 700 "$BACKUP_ROOT" "$BACKUP_DIR"
+  mkdir -p "$BACKUP_DIR$(dirname "$path")"
+  cp -p "$path" "$BACKUP_DIR$path"
+  echo "+ backed up $path to $BACKUP_DIR$path"
+}
+
 # put_file PATH MODE CONTENT LABEL: write CONTENT when it differs. Returns 0 if (would be) changed.
 put_file() {
   local path=$1 mode=$2 content=$3 label=$4
@@ -99,7 +114,7 @@ put_file() {
   if [ "$DRY_RUN" = 1 ]; then
     printf '[dry-run] write %s (mode %s):\n%s\n' "$path" "$mode" "$content"
   else
-    [ -f "$path" ] && cp -p "$path" "$path.bak.$(date +%Y%m%d%H%M%S)"
+    backup_file "$path"
     local tmp
     tmp=$(mktemp "$path.XXXXXX")
     printf '%s' "$content" >"$tmp"
@@ -190,7 +205,7 @@ else
   if [ "$DRY_RUN" = 1 ]; then
     echo "[dry-run] append '$SWAPFILE none swap sw 0 0' to /etc/fstab"
   else
-    cp -p /etc/fstab "/etc/fstab.bak.$(date +%Y%m%d%H%M%S)"
+    backup_file /etc/fstab
     echo "$SWAPFILE none swap sw 0 0" >>/etc/fstab
   fi
   changed "$SWAPFILE in /etc/fstab"
@@ -277,7 +292,7 @@ fi
 echo "==> 7. fail2ban sshd jail: $JAIL_LOCAL"
 if put_file "$JAIL_LOCAL" 644 "$JAIL_CONTENT" "fail2ban jail.local"; then
   if [ "$DRY_RUN" = 0 ]; then
-    fail2ban-client -t >/dev/null || die "fail2ban rejected $JAIL_LOCAL (previous copy saved as .bak.*)"
+    fail2ban-client -t >/dev/null || die "fail2ban rejected $JAIL_LOCAL (previous copy saved under $BACKUP_DIR)"
   fi
   run systemctl enable fail2ban
   run systemctl restart fail2ban
@@ -289,7 +304,30 @@ else
 fi
 
 # ---------------------------------------------------------------- 8. firewall (read-only check)
-echo "==> 8. Firewall: Oracle's iptables rules are left untouched"
+# Oracle's Ubuntu image ships an iptables INPUT chain that accepts SSH (tcp 22) and ends in a
+# catch-all REJECT. This only reads the chain (`iptables -S` lists rules) and warns when it
+# looks different; it never adds, removes or reorders a rule.
+echo "==> 8. Firewall: Oracle's iptables rules are checked, never changed"
+if ! command -v iptables >/dev/null; then
+  warn "iptables not found; cannot check the INPUT chain"
+elif ! input_rules=$(iptables -S INPUT 2>/dev/null); then
+  warn "could not read the iptables INPUT chain (run as root to check it)"
+else
+  appended=$(grep -E '^-A INPUT ' <<<"$input_rules" || true)
+  if grep -E -- '--dport 22( |$)' <<<"$appended" | grep -q -- '-j ACCEPT'; then
+    same "iptables INPUT accepts tcp 22"
+  else
+    warn "iptables INPUT has no ACCEPT rule for port 22; SSH may be blocked after a reboot"
+  fi
+  last_rule=$(tail -n 1 <<<"$appended")
+  if grep -q -- '-j REJECT' <<<"$last_rule"; then
+    same "iptables INPUT ends with REJECT"
+  else
+    warn "iptables INPUT does not end with a REJECT rule (last: '${last_rule:-none}'); other ports may be open"
+  fi
+  other_ports=$(grep -- '-j ACCEPT' <<<"$appended" | grep -oE -- '--dport [0-9:]+' | grep -vx -- '--dport 22' || true)
+  [ -z "$other_ports" ] || warn "iptables INPUT also accepts: $(tr '\n' ' ' <<<"$other_ports")(MyBuddy needs none)"
+fi
 if command -v ufw >/dev/null && ufw status 2>/dev/null | grep -q 'Status: active'; then
   warn "UFW is active; it conflicts with Oracle's iptables rules. Not changing it: decide yourself"
 fi

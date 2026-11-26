@@ -24,6 +24,9 @@ cd ~/app
 .venv/bin/pip install -q --require-hashes -r requirements/runtime.txt   # exact, hash-checked versions
 .venv/bin/pip install -q --no-deps -e .
 install -d -m 700 ~/.local/share/mybuddy ~/.config/mybuddy ~/.config/mybuddy/config
+# GitHub's published SSH host keys, pinned for publish-reports.sh (StrictHostKeyChecking=yes).
+install -d -m 700 ~/.ssh
+install -m 644 deploy/github_known_hosts ~/.ssh/github_known_hosts
 [ -f site/data/reports.json ] || cp site/data/reports.sample.json site/data/reports.json
 # The live topics file is a writable copy (the owner edits it from the bot with /approve),
 # seeded once from the repo default. Later repo changes to config/topics.yaml are NOT copied

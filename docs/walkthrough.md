@@ -1,7 +1,7 @@
 # Walkthrough: three security mechanisms, explained with the code
 
 Manager feedback item 8. Each section says what the code does, why, where it lives, and how to
-demo it. Line numbers are as of 26 Nov 2026.
+demo it. Line numbers are as of 26 Nov 2026 (commit 5792407); they drift as the code changes, the function names do not.
 
 ## 1. HTTP redirects and credential stripping
 
@@ -19,7 +19,7 @@ or to a host we never meant to talk to (SSRF).
 
 * `UrllibHttpClient.__init__` (line 201) builds the opener with our own redirect handler:
   `urllib.request.build_opener(_HttpsOnlyRedirect(self.allowed_hosts))`.
-* `_HttpsOnlyRedirect.redirect_request` (lines 154-178) runs for every redirect hop, *before*
+* `_HttpsOnlyRedirect.redirect_request` (lines 161-178) runs for every redirect hop, *before*
   urllib connects to the new location:
   1. `_require_https(newurl, self.allowed_hosts)` (line 171) raises `HttpError` unless the new
      URL is `https`, has no spaces/control characters, its host is not an IP literal (including
@@ -64,8 +64,8 @@ EOF
 
 **Files:** `src/mybuddy/subscriptions.py` (shared logic), `src/mybuddy/bot.py` (uses it),
 `config/topics.yaml` (`bit:` per topic), `src/mybuddy/config.py` (validation),
-`src/mybuddy/export.py` line 99 (publishes `"bit"` in `reports.json`), `site/assets/app.js`
-lines 1236-1280 and 1337-1351 (website side). Contract: `CONTRACT.md`, *Subscriptions contract*.
+`src/mybuddy/export.py` line 99 (publishes `"bit"` in `reports.json`), `site/assets/js/subscribe.js`
+(website side; the bot name and fallback `TOPIC_BITS` are settings in `site/assets/app.js` lines 33-50). Contract: `CONTRACT.md`, *Subscriptions contract*.
 
 **The problem.** A website visitor picks topics, then must open Telegram and tap *Start*;
 Telegram passes only a short `start` parameter (max 64 characters, `A-Z a-z 0-9 _ -`) to the bot.
@@ -80,24 +80,24 @@ meaning the same thing forever (links get shared, bookmarked and printed as QR c
   topic never changes what an old link means (`test_reordering_topics_never_changes_a_payload`,
   `test_removing_a_topic_never_shifts_other_payloads`). `config.py` rejects a missing bit, a
   bit outside 0..59 (`MAX_TOPIC_BIT`, line 24), a duplicate bit, and a bit on a non-website topic.
-* **Encoding** (`encode_payload`, line 71): `mask = OR of (1 << bit)` (`mask_for`, line 42),
+* **Encoding** (`encode_payload`, line 72): `mask = OR of (1 << bit)` (`mask_for`, line 43),
   payload = `"t" + format(mask, "x")`. AI news + security = `0b11` → `t3`; all seven = `0x7f` →
   `t7f`. An empty selection is an error.
-* **Decoding** (`decode_payload`, line 78): the payload must fully match `t([0-9a-f]{1,15})`
-  (`_PAYLOAD_RE`, line 22): lowercase only, at most 15 hex digits (60 bits, matching bits 0..59),
-  so `int(..., 16)` is bounded and cheap. `topics_for_mask` (line 56) returns `None` when the mask
+* **Decoding** (`decode_payload`, line 79): the payload must fully match `t([0-9a-f]{1,15})`
+  (`_PAYLOAD_RE`, line 23): lowercase only, at most 15 hex digits (60 bits, matching bits 0..59),
+  so `int(..., 16)` is bounded and cheap. `topics_for_mask` (line 57) returns `None` when the mask
   sets any bit no current topic owns (`mask & ~full_mask(bits)`), and an empty mask (`t0`) is
   rejected too. Anything invalid → the bot shows the topic picker instead of guessing
-  (`bot.py` line 276-281). Leading zeros are accepted (`t003` = `t3`).
+  (`bot.py` lines 463-467, the `start` command). Leading zeros are accepted (`t003` = `t3`).
 * **The picker reuses the same format:** inline buttons carry `tog:<hex>:<topic>` and
-  `save:<hex>` (`_TOGGLE_RE`/`_SAVE_RE`, `bot.py` lines 50-51, ≤ 64 bytes as Telegram requires),
-  parsed with the same strict `parse_hex_mask` (line 63), so the bot keeps no per-chat picker
+  `save:<hex>` (`_TOGGLE_RE`/`_SAVE_RE`, `bot.py` lines 60-61, ≤ 64 bytes as Telegram requires),
+  parsed with the same strict `parse_hex_mask` (line 64), so the bot keeps no per-chat picker
   state.
-* **Website side** (`app.js`): `payload()` (line 1268) builds the hex string *nibble by nibble*
+* **Website side** (`site/assets/js/subscribe.js`): `payload()` (line 39) builds the hex string *nibble by nibble*
   (4 bits per hex digit) because JavaScript's bitwise operators work on 32-bit integers and
   `1 << 40` would overflow; this keeps all 60 bits exact. The bit comes from `reports.json`; for
-  older data without `bit` it falls back to `TOPIC_BITS` (line 1252, same values as the YAML).
-  `topicBits()` (line 1338) hides a topic whose bit is missing, out of range, or shared by two
+  older data without `bit` it falls back to `TOPIC_BITS` (`app.js` line 35, same values as the YAML).
+  `topicBits()` (line 109) hides a topic whose bit is missing, out of range, or shared by two
   topics, so the website can never produce a link that means something else.
 * **Limits:** at most 60 website topics ever (bits 0..59); payload ≤ 16 characters; at most
   `MYBUDDY_MAX_SUBSCRIBERS` (default 100) active subscribers (owner always allowed); per chat at
@@ -139,7 +139,7 @@ feed library, a malicious dependency update), the process can do very little.
 | `PrivateDevices=true` | minimal `/dev` (null, zero, random, tty …), no disks or `/dev/mem` | raw disk reads, hardware access | ✓ | ✓ | ✓ |
 | `ProtectSystem=` | `strict`: the whole filesystem read-only except `ReadWritePaths`; `full`: `/usr`, `/boot`, `/etc` read-only | changing system binaries or config (`/etc/cron.d`, `/etc/passwd`) for persistence | strict | strict | full |
 | `ProtectHome=read-only` | `/home`, `/root`, `/run/user` read-only | a compromised app rewriting its own code/venv, its env file, or adding a key to `~/.ssh/authorized_keys` | ✓ | ✓ | – |
-| `ReadWritePaths=` | the only writable places | limits damage to the app's own data | data dir + `site/data` | data dir | – |
+| `ReadWritePaths=` | the only writable places | limits damage to the app's own data | data dir + `site/data` | data dir + `~/.config/mybuddy/config` | – |
 | `ProtectKernelTunables=true` | `/proc/sys`, `/sys` read-only | changing kernel settings (sysctl) | ✓ | ✓ | ✓ |
 | `ProtectKernelModules=true` | no module loading | loading a rootkit module | ✓ | ✓ | ✓ |
 | `ProtectKernelLogs=true` | no access to the kernel log buffer | reading kernel addresses/secrets from `dmesg` | ✓ | ✓ | ✓ |
@@ -165,16 +165,21 @@ one commit, and is killed after `TimeoutStartSec=180`.
 
 **Why the units differ.**
 
-* The **bot** needs less than the scheduler: it only writes its SQLite DB, so `ReadWritePaths`
-  has just the data dir and its memory/CPU caps are half.
-* The **scheduler** also writes `site/data/reports.json`, hence the second writable path.
-* The **publisher** runs `bash`, `git` and the OpenSSH client instead of our Python. git and ssh
-  write in the home directory (`~/data-repo`, `~/.ssh/known_hosts` via
-  `StrictHostKeyChecking=accept-new`), so the unit uses `ProtectSystem=full` and leaves home
-  writable (the unit file says so). `MemoryDenyWriteExecute`, the syscall filter and resource caps
-  are not set, to avoid breaking those tools; the run is short and bounded by the 180 s timeout.
-  Possible future tightening: `ProtectSystem=strict` with
-  `ReadWritePaths=/home/mybuddy/data-repo /home/mybuddy/.ssh`, then test a real publish.
+* The **bot** writes its SQLite DB and, because the owner can change the configuration from
+  Telegram (`/topic`, `/time`, `/source`, then `/approve`; `/undo`), the live topics folder
+  `~/.config/mybuddy/config/` (the edited `topics.yaml` and its `backups/`; the reload marker
+  the scheduler picks up goes in the data dir). Only that config folder is writable: the env file with the secrets one level
+  up (`~/.config/mybuddy/env`) stays read-only, so even a compromised bot cannot change keys.
+  Its memory/CPU caps are half the scheduler's.
+* The **scheduler** writes its DB and `site/data/reports.json`; it only reads the topics file.
+* The **publisher** runs `bash`, `git` and the OpenSSH client instead of our Python. git writes
+  in the home directory (`~/data-repo`); GitHub's host keys are pinned in a read-only
+  `~/.ssh/github_known_hosts` (`StrictHostKeyChecking=yes`, copied by `deploy.sh` from
+  `deploy/github_known_hosts`). The unit uses `ProtectSystem=full` and leaves home writable (the
+  unit file says so). `MemoryDenyWriteExecute`, the syscall filter and resource caps are not set,
+  to avoid breaking those tools; the run is short and bounded by the 180 s timeout. Possible
+  future tightening: `ProtectSystem=strict` with `ReadWritePaths=/home/mybuddy/data-repo`, then
+  test a real publish.
 
 **Demo (on the VM).**
 

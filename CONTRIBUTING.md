@@ -13,6 +13,12 @@ merged with **squash** (linear history, no force pushes), after the required che
    * `test`: ruff lint, ruff format, mypy (strict), backend pytest with coverage
    * `ui`: Playwright browser tests of the website (`tests/ui`)
    * `secrets`: gitleaks over the **full** git history
+   * `lint-js`: ESLint over the website's JavaScript (`site/`)
+
+   **Owner, one-time:** `lint-js` runs in CI but is not yet *required*. Add it: GitHub >
+   Settings > Rules > Rulesets > `protect-main` > *Require status checks to pass* > *Add
+   checks* > type `lint-js` > select it (source GitHub Actions) > *Save changes*. Required
+   checks then read `test`, `ui`, `secrets`, `lint-js`.
 6. Squash-merge once green. The PR title becomes the commit subject on `main`, so make it a good
    one.
 
