@@ -1,0 +1,34 @@
+[Unit]
+Description=Push MyBuddy reports.json to GitHub (GitHub Pages republishes the website)
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+User=mybuddy
+Group=mybuddy
+# Let a burst of reports settle, then publish them in one commit.
+ExecStartPre=/bin/sleep 20
+# Only the rebuild-trigger token (GH_DISPATCH_TOKEN); the app's other secrets are not loaded here.
+EnvironmentFile=-/home/mybuddy/.config/mybuddy/dispatch.env
+ExecStart=/bin/bash /home/mybuddy/app/deploy/publish-reports.sh
+TimeoutStartSec=180
+# Hardening: git and ssh need to write in the home directory (data-repo),
+# so the home stays writable; the rest of the system is read-only.
+UMask=0022
+NoNewPrivileges=true
+CapabilityBoundingSet=
+PrivateTmp=true
+PrivateDevices=true
+ProtectSystem=full
+ProtectKernelTunables=true
+ProtectKernelModules=true
+ProtectKernelLogs=true
+ProtectControlGroups=true
+ProtectClock=true
+ProtectHostname=true
+RestrictAddressFamilies=AF_INET AF_INET6 AF_UNIX
+RestrictNamespaces=true
+RestrictRealtime=true
+RestrictSUIDSGID=true
+LockPersonality=true

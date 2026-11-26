@@ -1,0 +1,73 @@
+<!doctype html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="utf-8">
+  <!-- CSP: the inline script and style below are allowed by their sha256 hashes; update them
+       here after any edit (tests/ui/test_site_hardening.py checks them). -->
+  <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-TKM1FXyK7wF2HA5FSY8YN+rTYaJmQHPTpe/h5YSpo9Y='; style-src 'sha256-O/54NFWNUTIBCypAxUETG8kAa/d8wopgUEyDhRUKF+0=' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src data:; base-uri 'none'; form-action 'none'; require-trusted-types-for 'script'; trusted-types 'none'">
+  <meta name="referrer" content="strict-origin-when-cross-origin">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Page not found · MyBuddy</title>
+  <meta name="robots" content="noindex">
+  <meta name="color-scheme" content="dark">
+  <meta name="theme-color" content="#0C0F1E">
+  <!-- Always dark, like the home page (palette: Ink &amp; Periwinkle). -->
+  <script>document.documentElement.setAttribute("data-theme","dark");try{localStorage.removeItem("mybuddy.theme")}catch(e){}</script>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ccircle cx='24' cy='26' r='16' fill='%23F4E1C6' stroke='%23D9B88F' stroke-width='3'/%3E%3Ccircle cx='76' cy='26' r='16' fill='%23F4E1C6' stroke='%23D9B88F' stroke-width='3'/%3E%3Ccircle cx='50' cy='56' r='38' fill='%23F4E1C6' stroke='%23D9B88F' stroke-width='3'/%3E%3Cellipse cx='50' cy='68' rx='16' ry='12' fill='%23FFF8EE'/%3E%3Ccircle cx='36' cy='50' r='4.5' fill='%234A3A30'/%3E%3Ccircle cx='64' cy='50' r='4.5' fill='%234A3A30'/%3E%3Cellipse cx='50' cy='63' rx='6' ry='4.5' fill='%234A3A30'/%3E%3C/svg%3E">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600&family=Nunito:wght@400;700;800&display=swap" rel="stylesheet">
+  <!-- Self-contained: GitHub Pages serves this file for any missing URL, at any depth. -->
+  <style>
+    :root { --bg: #0C0F1E; --card: #181D36; --ink: #ECEEFB; --ink-2: #A0A6C6; --line: rgba(236,238,251,.10);
+      --blob1: rgba(157,168,255,.13); --blob2: rgba(122,130,242,.09);
+      --accent: #9DA8FF; --accent-2: #7A82F2; --accent-ink: #11133A; --focus: #B9C0FF;
+      --fur: #F4E1C6; --fur-line: #D9B88F; --fur-inner: #F8D3CB; --muzzle: #FFF8EE; --bear-ink: #4A3A30; --cheek: #F6B9B0; color-scheme: dark; }
+    *, *::before, *::after { box-sizing: border-box; }
+    body { margin: 0; background: var(--bg); color: var(--ink); font-family: "Nunito", ui-rounded, system-ui, -apple-system, "Segoe UI", sans-serif; line-height: 1.6; overflow-x: hidden; }
+    .sky { position: fixed; inset: 0; z-index: -1; overflow: hidden; pointer-events: none; }
+    .blob { position: absolute; border-radius: 50%; animation: drift 24s ease-in-out infinite alternate; }
+    .b1 { width: 560px; height: 560px; top: -200px; left: -180px; background: radial-gradient(closest-side, var(--blob1), transparent); }
+    .b2 { width: 520px; height: 520px; bottom: -200px; right: -180px; background: radial-gradient(closest-side, var(--blob2), transparent); animation-duration: 30s; }
+    @keyframes drift { to { transform: translate(60px, 50px) scale(1.1); } }
+    .lost { min-height: 100vh; min-height: 100dvh; display: grid; place-items: center; padding: 110px 16px 32px; }
+    .card { position: relative; width: min(400px, 100%); padding: 2rem 1.5rem 1.8rem; border-radius: 24px; background: var(--card); border: 1px solid var(--line); text-align: center; box-shadow: 0 26px 50px -22px rgba(0,0,0,.75); animation: up .7s cubic-bezier(.34, 1.45, .55, 1) both; }
+    .bear { position: absolute; left: calc(50% - 56px); bottom: calc(100% - 10px); width: 112px; z-index: -1; animation: peek .8s .4s cubic-bezier(.34, 1.45, .55, 1) both; }
+    .bear svg { display: block; width: 100%; height: auto; transform-origin: 50% 100%; animation: wiggle 3s 1.4s ease-in-out infinite; }
+    .fur { fill: var(--fur); stroke: var(--fur-line); stroke-width: 1.6; } .inner { fill: var(--fur-inner); } .muzzle { fill: var(--muzzle); }
+    .eye, .nose { fill: var(--bear-ink); } .cheek { fill: var(--cheek); opacity: .7; }
+    .mouth { fill: none; stroke: var(--bear-ink); stroke-width: 2.2; stroke-linecap: round; }
+    h1 { font-family: "Fredoka", "Nunito", ui-rounded, system-ui, sans-serif; font-weight: 600; font-size: clamp(1.8rem, 7vw, 2.4rem); line-height: 1.1; margin: 0; }
+    p { margin: .5rem 0 0; color: var(--ink-2); font-weight: 700; }
+    .home { display: inline-flex; align-items: center; min-height: 48px; margin-top: 1.3rem; padding: .7rem 1.4rem; border-radius: 999px; background: linear-gradient(135deg, var(--accent), var(--accent-2)); color: var(--accent-ink); font-weight: 800; text-decoration: none; transition: transform .3s cubic-bezier(.34, 1.45, .55, 1); }
+    .home:hover { transform: translateY(-3px); }
+    .home:focus-visible { outline: 3px solid var(--focus); outline-offset: 3px; }
+    @keyframes up { from { opacity: 0; transform: translateY(30px) scale(.95); } }
+    @keyframes peek { from { transform: translateY(80%); } }
+    @keyframes wiggle { 0%, 100% { transform: rotate(0); } 25% { transform: rotate(-5deg); } 75% { transform: rotate(5deg); } }
+    @media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation: none !important; transition: none !important; } }
+  </style>
+</head>
+<body>
+  <div class="sky" aria-hidden="true"><span class="blob b1"></span><span class="blob b2"></span></div>
+  <main class="lost">
+    <div class="card">
+      <div class="bear" aria-hidden="true">
+        <svg viewBox="0 0 120 92">
+          <circle cx="24" cy="26" r="17" class="fur"/><circle cx="24" cy="26" r="9" class="inner"/>
+          <circle cx="96" cy="26" r="17" class="fur"/><circle cx="96" cy="26" r="9" class="inner"/>
+          <ellipse cx="60" cy="60" rx="44" ry="40" class="fur"/>
+          <ellipse cx="60" cy="72" rx="19" ry="14" class="muzzle"/>
+          <ellipse cx="34" cy="66" rx="7" ry="4.5" class="cheek"/><ellipse cx="86" cy="66" rx="7" ry="4.5" class="cheek"/>
+          <circle cx="44" cy="54" r="5" class="eye"/><circle cx="76" cy="54" r="5" class="eye"/>
+          <ellipse cx="60" cy="66" rx="6.5" ry="4.8" class="nose"/>
+          <path d="M53 79c4-4 10-4 14 0" class="mouth"/>
+        </svg>
+      </div>
+      <h1>Page not found</h1>
+      <p>The bear looked everywhere.</p>
+      <a class="home" href="/myBuddy/">Back home</a>
+    </div>
+  </main>
+</body>
+</html>

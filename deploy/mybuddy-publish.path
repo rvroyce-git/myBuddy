@@ -1,0 +1,9 @@
+[Unit]
+Description=Publish MyBuddy reports to GitHub Pages when they change
+
+[Path]
+PathChanged=/home/mybuddy/app/site/data/reports.json
+Unit=mybuddy-publish.service
+
+[Install]
+WantedBy=multi-user.target

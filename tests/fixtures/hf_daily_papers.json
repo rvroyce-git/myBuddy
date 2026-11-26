@@ -1,0 +1,117 @@
+[
+ {
+  "paper": {
+   "id": "2611.26232",
+   "title": "Time Series Structure Learning with Local Causal Parent Discovery",
+   "summary": "Learning and inference on time series can pose significant statistical challenges, including autocorrelated observations, distribution shift over time, and the curse of dimensionality. These challenges complicate the practical application of causal discovery algorithms, which already suffer from high computational and sample complexity in the general case. To mitigate these issues, this work introduces Iterative Temporal Parent Discovery (ITPD): a sound and complete constraint-based procedure for causal structure learning on multivariate time series with causal nonstationarity. ITPD takes a lo",
+   "upvotes": 2,
+   "publishedAt": "2026-11-19T00:00:00.000Z",
+   "authors": [
+    {
+     "name": "Jacqueline Maasch"
+    },
+    {
+     "name": "Shu Wan"
+    },
+    {
+     "name": "Hank Zhu"
+    }
+   ]
+  },
+  "publishedAt": "2026-11-18T19:00:00.000Z",
+  "title": "Time Series Structure Learning with Local Causal Parent Discovery",
+  "numComments": 1
+ },
+ {
+  "paper": {
+   "id": "2611.26239",
+   "title": "Teaching Vision-Language-Action Models to Stop Safely",
+   "summary": "Vision-language-action (VLA) models enable robots to perform diverse tasks from visual observations and language instructions. While prior work has explored task suppression and refusal, stopping prohibited behavior once execution is underway and controlling the resulting physical response remain challenging. Our evaluation reveals that policies which suppress a task from its initial state can still complete it when taking over partway through execution. Even when the task remains unfinished, the robot may drop a held object, making non-completion an incomplete measure of safety. To address th",
+   "upvotes": 5,
+   "publishedAt": "2026-11-19T00:00:00.000Z",
+   "authors": [
+    {
+     "name": "Zheyuan Liu"
+    },
+    {
+     "name": "Chuhan Wang"
+    },
+    {
+     "name": "Jinduo Guo"
+    }
+   ]
+  },
+  "publishedAt": "2026-11-18T19:00:00.000Z",
+  "title": "Teaching Vision-Language-Action Models to Stop Safely",
+  "numComments": 2
+ },
+ {
+  "paper": {
+   "id": "2611.25604",
+   "title": "PAD: Policy-Aware Data Valuation for Autonomous Driving",
+   "summary": "End-to-end autonomous driving increasingly depends on scaling training demonstrations, yet data growth does not guarantee proportional gains. However, additional data do not guarantee better policies: a demonstration that benefits one planner may be redundant or harmful to another. Existing curation methods typically infer data value from intrinsic sample properties or training-dependent proxies that do not measure downstream policy utility. To address this, we introduce Policy-Aware Data Valuation (PAD), a framework that assigns each candidate demonstration a utility specific to the target dr",
+   "upvotes": 4,
+   "publishedAt": "2026-11-19T00:00:00.000Z",
+   "authors": [
+    {
+     "name": "Chengkai Xu"
+    },
+    {
+     "name": "Yicheng Guo"
+    },
+    {
+     "name": "Jiaqi Liu"
+    }
+   ]
+  },
+  "publishedAt": "2026-11-18T19:00:00.000Z",
+  "title": "PAD: Policy-Aware Data Valuation for Autonomous Driving",
+  "numComments": 2
+ },
+ {
+  "paper": {
+   "id": "2611.15941",
+   "title": "Lang-SVG: Hierarchical Image Vectorization with Language Priors",
+   "summary": "Image vectorization reconstructs raster images as compact scalable vector graph- ics (SVG), providing a structured and editable code representation of images. However, most existing vectorization methods optimize for pixel-level render- ing fidelity, often producing SVGs that lack alignment with human-perceived object-part hierarchies, making them difficult to manipulate. To address this, we propose Lang-SVG, which introduces an explicit tree structure to organize SVG primitives with semantic labels and parent-child relationships. Lang-SVG incorporates granularity-controllable and open-vocabul",
+   "upvotes": 1,
+   "publishedAt": "2026-11-11T00:00:00.000Z",
+   "authors": [
+    {
+     "name": "Xi Liu"
+    },
+    {
+     "name": "Chaoyi Zhou"
+    },
+    {
+     "name": "Run Wang"
+    }
+   ]
+  },
+  "publishedAt": "2026-11-10T19:00:00.000Z",
+  "title": "Lang-SVG: Hierarchical Image Vectorization with Language Priors",
+  "numComments": 2
+ },
+ {
+  "paper": {
+   "id": "2611.25200",
+   "title": "Squoosh Bench: Evaluating UX-1 on 318 Historical Website A/B Tests",
+   "summary": "Experimentation teams must decide which proposed website changes to test with live traffic. We evaluated whether forecasts from simulated shoppers could inform that choice. We screened 412 historical website A/B tests and evaluated four systems on the 318 that ran longer than 21 days. Each system predicted an original win, a variant win, or an inconclusive result. Page roles were masked and recorded outcomes were withheld during inference. Squoosh UX-1, a model fine-tuned on human browsing data, simulated 1,000 shoppers per arm and correctly classified 267 of 318 outcomes (84.0%, 95% Wilson in",
+   "upvotes": 3,
+   "publishedAt": "2026-11-18T00:00:00.000Z",
+   "authors": [
+    {
+     "name": "Rohith Pasula"
+    },
+    {
+     "name": "Johari Dramiga"
+    },
+    {
+     "name": "Viraj Shah"
+    }
+   ]
+  },
+  "publishedAt": "2026-11-17T19:00:00.000Z",
+  "title": "Squoosh Bench: Evaluating UX-1 on 318 Historical Website A/B Tests",
+  "numComments": 2
+ }
+]

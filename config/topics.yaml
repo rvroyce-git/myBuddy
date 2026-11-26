@@ -1,0 +1,221 @@
+# MyBuddy topics. Times are Asia/Kolkata (IST). Validate with: mybuddy check
+# `bit`: permanent Telegram start-link bit of each website (ai: true) topic. Never change or
+# reuse a bit, even when topics are reordered or removed (old links must keep working).
+
+# The HTTP client only contacts allowed hosts: the hosts of the URLs below, each source
+# type's fixed API hosts and the configured AI/delivery services. Add here (exact names, no
+# IPs or wildcards) any other host a feed redirects to. Checked 2026-11-26 with
+# `curl -sIL -w '%{url_effective}'`: every feed stays on its own host (blog.google only
+# redirects within blog.google), so none are needed. Item links are only displayed, never
+# fetched (Google News article links included).
+extra_allowed_hosts: []
+
+topics:
+  - id: ai_news
+    title: AI news
+    emoji: "🧠"
+    description: The day's AI news in plain words — models, labs, funding, policy and open source.
+    schedule: {time: "06:30", days: daily}
+    ai: true
+    bit: 0  # permanent start-link bit; never change or reuse
+    prompt: ai_news.md
+    sources:
+      - {type: rss, name: OpenAI News, url: "https://openai.com/news/rss.xml", max_age_hours: 72}
+      - {type: rss, name: Google AI Blog, url: "https://blog.google/technology/ai/rss/", max_age_hours: 72}
+      - {type: google_news, name: Google News AI, query: "artificial intelligence"}
+      - type: hackernews
+        name: Hacker News
+        keywords: [AI, LLM, GPT, OpenAI, Anthropic, model]
+        min_score: 100
+
+  - id: security
+    title: Cybersecurity alerts
+    emoji: "🛡️"
+    description: Fresh security advisories and breaches, with what they mean and what to do.
+    schedule: {time: "07:00", days: daily}
+    ai: true
+    bit: 1
+    prompt: security.md
+    sources:
+      - {type: rss, name: The Hacker News, url: "https://feeds.feedburner.com/TheHackersNews"}
+      - {type: rss, name: BleepingComputer, url: "https://www.bleepingcomputer.com/feed/"}
+      - {type: rss, name: CISA Advisories, url: "https://www.cisa.gov/cybersecurity-advisories/all.xml"}
+
+  - id: kev_alerts
+    title: Actively exploited vulnerabilities
+    emoji: "🚨"
+    description: A quick heads-up whenever CISA adds a vulnerability that attackers are already using.
+    schedule: {every_minutes: 60}
+    ai: false
+    max_items: 25
+    audience: security  # subscribers of "security" also get these hourly alerts
+    sources:
+      - {type: cisa_kev, name: CISA KEV, days: 1}
+
+  - id: github_trending
+    title: Trending GitHub repos
+    emoji: "⭐"
+    description: AI projects on GitHub that are picking up stars fastest right now.
+    schedule: {time: "07:15", days: daily}
+    ai: true
+    bit: 2
+    prompt: github_trending.md
+    sources:
+      - type: github_trending
+        name: GitHub Trending
+        topics: [llm, ai-agents, machine-learning]
+        limit: 10
+        rate_delay_seconds: 7
+
+  - id: deep_dive
+    title: Deep dive
+    emoji: "🔬"
+    description: One AI subject a weekday, explained simply with the latest papers.
+    schedule: {time: "07:30", days: [mon, tue, wed, thu, fri]}
+    ai: true
+    bit: 3
+    prompt: deep_dive.md
+    rotation:
+      mon:
+        title: RAG (retrieval-augmented generation)
+        sources:
+          - {type: arxiv, name: arXiv RAG, query: 'all:"retrieval augmented generation"', limit: 8}
+          - {type: google_news, name: Google News RAG, query: '"retrieval augmented generation"', limit: 4}
+      tue:
+        title: AI agents
+        sources:
+          - {type: arxiv, name: arXiv agents, query: 'all:"LLM agents" OR all:"agentic"', limit: 8}
+          - {type: google_news, name: Google News agents, query: '"AI agents"', limit: 4}
+      wed:
+        title: Training & fine-tuning
+        sources:
+          - {type: arxiv, name: arXiv fine-tuning, query: 'all:"fine-tuning" AND all:"language model"', limit: 8}
+          - {type: google_news, name: Google News fine-tuning, query: '"fine-tuning" LLM', limit: 4}
+      thu:
+        title: Audio & video AI
+        sources:
+          - {type: arxiv, name: arXiv audio & video, query: 'cat:eess.AS OR cat:cs.SD OR all:"video generation"', limit: 8}
+          - {type: google_news, name: Google News audio & video, query: 'AI voice OR "video generation" model', limit: 4}
+      fri:
+        title: Evaluation & benchmarks
+        sources:
+          - {type: arxiv, name: arXiv evaluation, query: 'all:"benchmark" AND all:"language models"', limit: 8}
+          - {type: google_news, name: Google News evals, query: 'AI benchmark evaluation', limit: 4}
+
+  - id: research_papers
+    title: AI research papers
+    emoji: "📄"
+    description: Today's notable AI papers, each boiled down to its key idea.
+    schedule: {time: "07:45", days: daily}
+    ai: true
+    bit: 4
+    prompt: research_papers.md
+    sources:
+      - {type: hf_papers, name: Hugging Face Daily Papers, limit: 8}
+      - {type: arxiv, name: arXiv AI/CL/LG, query: "cat:cs.CL OR cat:cs.LG OR cat:cs.AI", limit: 8}
+
+  - id: startups
+    title: Startup & product launches
+    emoji: "🚀"
+    description: New products and startup funding news — what it is and who it's for.
+    schedule: {time: "08:00", days: daily}
+    ai: true
+    bit: 5
+    prompt: startups.md
+    sources:
+      - {type: rss, name: Product Hunt, url: "https://www.producthunt.com/feed", max_age_hours: 72}
+      - {type: rss, name: TechCrunch Startups, url: "https://techcrunch.com/category/startups/feed/", max_age_hours: 72}
+      - {type: google_news, name: Google News Startups, query: "startup funding round"}
+
+  - id: ai_models
+    title: New open-source AI models
+    emoji: "🤖"
+    description: Open models trending on Hugging Face, with what they're good for.
+    schedule: {time: "08:15", days: daily}
+    ai: true
+    bit: 6
+    prompt: ai_models.md
+    sources:
+      - {type: hf_models, name: Hugging Face Trending, limit: 10}
+      - {type: rss, name: Hugging Face Blog, url: "https://huggingface.co/blog/feed.xml", max_age_hours: 72}
+
+  # ---- Telegram-only reports (`website: false`: not on the website, no start-link bit).
+  # Delivered to the owner; `audience: <website topic>` also sends them to that topic's
+  # subscribers. Runs are 15 min apart to stay far under Groq's per-minute limits.
+  # Groq budget for all scheduled reports: at most 11 AI runs a day (7 website topics, 4 of
+  # these; weekly_review replaces deep_dive's slot on Sundays), 1 call each, 2 with a 429
+  # retry: <= 22 requests and ~50K tokens a day (each call <= ~2.5K in + 2K out) against the
+  # free 1K requests / 200K tokens, leaving most of the quota for chat.
+
+  - id: morning_digest
+    title: Morning digest
+    emoji: "☀️"
+    description: One short summary of this morning's reports, with the top items across topics.
+    schedule: {time: "08:30", days: daily}
+    ai: true
+    website: false
+    kind: digest  # built from today's stored reports; no fetching
+    prompt: morning_digest.md
+
+  - id: health_check
+    title: Health check
+    emoji: "🩺"
+    description: Is MyBuddy working? Last runs, failed sources, disk and memory. Owner only.
+    schedule: {time: "10:15", days: daily}
+    ai: false
+    website: false
+    kind: health  # owner only (an audience is not allowed); also `mybuddy health`
+
+  - id: policy_watch
+    title: Tech policy watch
+    emoji: "⚖️"
+    description: New tech, AI, cybersecurity and data rules from India, the US and the EU.
+    schedule: {time: "09:15", days: daily}
+    ai: true
+    website: false
+    audience: ai_news
+    prompt: policy_watch.md
+    sources:
+      - {type: federal_register, name: US Federal Register (AI), term: '"artificial intelligence"', days: 7, limit: 4}
+      - {type: federal_register, name: US Federal Register (cyber & privacy), term: 'cybersecurity | "data privacy"', days: 7, limit: 4}
+      - {type: rss, name: European Commission, url: "https://ec.europa.eu/commission/presscorner/api/rss?language=en&text=artificial%20intelligence", max_age_hours: 72, limit: 5}
+      - {type: google_news, name: Google News India policy, query: 'MeitY OR CERT-In OR DPDP', max_age_hours: 48, limit: 6}
+
+  - id: product_recalls
+    title: Product recalls
+    emoji: "⚠️"
+    description: New US recalls of medicines, medical devices and household products.
+    schedule: {time: "09:30", days: daily}
+    ai: true
+    website: false
+    prompt: product_recalls.md
+    sources:
+      - {type: openfda_recalls, name: FDA drug recalls, category: drug, days: 14, limit: 4}
+      - {type: openfda_recalls, name: FDA device recalls, category: device, days: 14, limit: 4}
+      - {type: cpsc_recalls, name: CPSC recalls, days: 7, limit: 6}
+
+  - id: industry_signals
+    title: Industry signals
+    emoji: "📈"
+    description: Big deals, partnerships, capacity and layoffs across AI, chips and cloud.
+    schedule: {time: "09:45", days: daily}
+    ai: true
+    website: false
+    audience: startups
+    dedupe_with: [startups, ai_news]  # skip links those reports already sent
+    prompt: industry_signals.md
+    sources:
+      - {type: google_news, name: Google News AI deals, query: '(AI OR "artificial intelligence") (raises OR acquires OR acquisition OR partnership OR layoffs)', limit: 6}
+      - {type: google_news, name: Google News chips & cloud, query: '(semiconductor OR chipmaker OR Nvidia OR TSMC OR AWS OR Azure OR "Google Cloud") (deal OR partnership OR launch OR layoffs OR investment)', limit: 6}
+      - {type: rss, name: TechCrunch AI, url: "https://techcrunch.com/category/artificial-intelligence/feed/", max_age_hours: 48, limit: 5}
+      - {type: rss, name: DatacenterDynamics, url: "https://www.datacenterdynamics.com/en/rss/", max_age_hours: 48, limit: 5}
+
+  - id: weekly_review
+    title: Weekly review
+    emoji: "🗓️"
+    description: The week's top themes and most important stories, every Sunday.
+    schedule: {time: "10:00", days: [sun]}
+    ai: true
+    website: false
+    kind: weekly  # built from the last 7 days of stored reports; no fetching
+    prompt: weekly_review.md

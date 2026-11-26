@@ -1,0 +1,60 @@
+{
+ "meta": {
+  "disclaimer": "Do not rely on openFDA to make decisions regarding medical care. While we make every effort to ensure that data is accurate, you should assume all results are unvalidated. We may limit or otherwise restrict your access to the API in line with our Terms of Service.",
+  "terms": "https://open.fda.gov/terms/",
+  "license": "https://open.fda.gov/license/",
+  "last_updated": "2026-11-18",
+  "results": {
+   "skip": 0,
+   "limit": 3,
+   "total": 102
+  }
+ },
+ "results": [
+  {
+   "status": "Ongoing",
+   "classification": "Class II",
+   "product_type": "Drugs",
+   "event_id": "100140",
+   "recalling_firm": "ORL Labs LLC",
+   "distribution_pattern": "USA nationwide",
+   "recall_number": "D-0176-2027",
+   "product_description": "ORL Organic Oral Care Cinnamint toothpaste, 4 oz., ORL, ORL Labs, LLC, Scottsdale, Arizona, USA UPC# 850006245512",
+   "reason_for_recall": "Cross-contamination: The firm was notified by the FDA of sampling results which found the presence of progesterone, estradiol, or dehydroepiandrosterone (DHEA)",
+   "recall_initiation_date": "20261012",
+   "report_date": "20261118",
+   "state": "AZ",
+   "country": "United States"
+  },
+  {
+   "status": "Ongoing",
+   "classification": "Class II",
+   "product_type": "Drugs",
+   "event_id": "100140",
+   "recalling_firm": "ORL Labs LLC",
+   "distribution_pattern": "USA nationwide",
+   "recall_number": "D-0177-2027",
+   "product_description": "ORL Organic Oral Care Fresh Mint natural toothpaste, 4 oz., ORL, Manufactured in USA, ORL Labs, LLC, Scottsdale, Arizona, USA, UPC 850006245499",
+   "reason_for_recall": "Cross-contamination: The firm was notified by the FDA of sampling results which found the presence of progesterone, estradiol, or dehydroepiandrosterone (DHEA)",
+   "recall_initiation_date": "20261012",
+   "report_date": "20261118",
+   "state": "AZ",
+   "country": "United States"
+  },
+  {
+   "status": "Ongoing",
+   "classification": "Class II",
+   "product_type": "Drugs",
+   "event_id": "100140",
+   "recalling_firm": "ORL Labs LLC",
+   "distribution_pattern": "USA nationwide",
+   "recall_number": "D-0180-2027",
+   "product_description": "ORL Organic Oral Care Fresh mint mouthwash, 16.9 oz., ORL, Manufactured in USA, ORL Labs, LLC, Scottsdale, Arizona, USA, UPC# #850006245451",
+   "reason_for_recall": "Cross-contamination: The firm was notified by the FDA of sampling results which found the presence of progesterone, estradiol, or dehydroepiandrosterone (DHEA)",
+   "recall_initiation_date": "20261012",
+   "report_date": "20261118",
+   "state": "AZ",
+   "country": "United States"
+  }
+ ]
+}

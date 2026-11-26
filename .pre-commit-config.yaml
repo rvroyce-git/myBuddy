@@ -1,0 +1,27 @@
+# Install once per clone: .venv/bin/pre-commit install
+# `rev:` values are full commit SHAs (a tag can be moved; a SHA cannot); the comment names the
+# release. Update with `pre-commit autoupdate --freeze`, which writes SHAs with tag comments.
+# Test fixtures and the generated site data are never rewritten.
+exclude: ^(tests/fixtures/|site/data/)
+
+repos:
+  - repo: https://github.com/gitleaks/gitleaks
+    rev: 83d9cd684c87d95d656c1458ef04895a7f1cbd8e # v8.30.1
+    hooks:
+      - id: gitleaks # scans staged changes; uses .gitleaks.toml
+
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: 9026c9127e153371d7a78dfcb0c45ae2046a3d10 # v0.17.6 (keep in step with ruff in requirements/dev.txt)
+    hooks:
+      - id: ruff-check # (the old `ruff` id is now a legacy alias)
+        args: [--fix]
+      - id: ruff-format
+
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: 3e8a8703264a2f4a69428a0aa4dcb512790b2c8c # v6.0.0
+    hooks:
+      - id: check-yaml
+      - id: check-toml
+      - id: end-of-file-fixer
+      - id: trailing-whitespace
+        args: [--markdown-linebreak-ext=md]

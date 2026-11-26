@@ -1,0 +1,73 @@
+name: Publish website
+# Builds the site from main (site/) plus the latest reports from the `data` branch and pushes
+# it to the gh-pages branch, which GitHub Pages serves (Settings → Pages → Deploy from a
+# branch → gh-pages / root).
+#
+# Trust boundary: only this definition, on `main`, publishes. The server's deploy key can
+# push the `data` branch, but nothing on that branch is ever run: every 10 minutes this
+# workflow (scheduled runs always use main's copy) reads `data` as plain data, compares its
+# commit with the one recorded in the published site (.data-sha on gh-pages) and rebuilds
+# only when reports changed. Pushes to main that touch the site rebuild at once.
+
+on:
+  push:
+    branches: [main]
+    paths: ["site/**", ".github/workflows/pages.yml", ".github/scripts/build-pages.sh"]
+  schedule:
+    - cron: "*/10 * * * *" # GitHub may start scheduled runs a few minutes late
+  workflow_dispatch:
+
+permissions:
+  contents: write # push gh-pages (build-pages.sh passes GITHUB_TOKEN explicitly)
+
+# Reports can arrive minutes apart; let a running publish finish, then publish the newest.
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Fetch the data branch and the published site
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          remote="https://x-access-token:${GITHUB_TOKEN}@github.com/${GITHUB_REPOSITORY}.git"
+          git fetch -q --depth 1 "$remote" "+refs/heads/data:refs/remotes/origin/data" || true
+          git fetch -q --depth 1 "$remote" "+refs/heads/gh-pages:refs/remotes/origin/gh-pages" || true
+      - name: Decide whether to rebuild
+        id: decide
+        run: |
+          data_sha=$(git rev-parse -q --verify "refs/remotes/origin/data^{commit}" || true)
+          site_tree=$(git rev-parse HEAD:site)
+          published_data=$(git show refs/remotes/origin/gh-pages:.data-sha 2>/dev/null || true)
+          published_site=$(git show refs/remotes/origin/gh-pages:.site-tree 2>/dev/null || true)
+          echo "data branch:     ${data_sha:-none} (published: ${published_data:-none})"
+          echo "site/ on main:   $site_tree (published: ${published_site:-none})"
+          build=true
+          if [ "$GITHUB_EVENT_NAME" = schedule ] && [ "$data_sha" = "$published_data" ] \
+            && [ "$site_tree" = "$published_site" ]; then
+            build=false
+            echo "Nothing new to publish."
+          fi
+          if [ -n "$data_sha" ]; then
+            git show "$data_sha:reports.json" > "$RUNNER_TEMP/reports.json" 2>/dev/null || : > "$RUNNER_TEMP/reports.json"
+          else
+            : > "$RUNNER_TEMP/reports.json"
+          fi
+          {
+            echo "build=$build"
+            echo "data_sha=$data_sha"
+            echo "site_tree=$site_tree"
+          } >> "$GITHUB_OUTPUT"
+      - name: Publish site/ + reports to gh-pages
+        if: steps.decide.outputs.build == 'true'
+        run: bash .github/scripts/build-pages.sh site "$RUNNER_TEMP/reports.json"
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          DATA_SHA: ${{ steps.decide.outputs.data_sha }}
+          SITE_TREE: ${{ steps.decide.outputs.site_tree }}

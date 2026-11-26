@@ -1,0 +1,296 @@
+<!doctype html>
+<html lang="en" data-theme="dark" data-palette="periwinkle">
+<head>
+  <meta charset="utf-8">
+  <!-- CSP: the inline pre-paint script below is allowed by its hash. If you edit that script,
+       update the sha256 here (tests/ui/test_site_hardening.py checks it). -->
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'sha256-sZyqk7CtHwlRJ6XlyZ0nS3dXfGFxj/UUg4U3NIlkgEo='; style-src 'self' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data:; connect-src 'self'; object-src 'none'; base-uri 'none'; form-action 'none'; require-trusted-types-for 'script'; trusted-types 'none'">
+  <meta name="referrer" content="strict-origin-when-cross-origin">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>MyBuddy · Today's stories</title>
+  <meta name="description" content="Every morning, MyBuddy reads the news on seven topics and turns it into short AI stories.">
+  <meta name="color-scheme" content="dark light">
+  <meta name="theme-color" content="#0C0F1E">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ccircle cx='24' cy='26' r='16' fill='%23F4E1C6' stroke='%23D9B88F' stroke-width='3'/%3E%3Ccircle cx='76' cy='26' r='16' fill='%23F4E1C6' stroke='%23D9B88F' stroke-width='3'/%3E%3Ccircle cx='50' cy='56' r='38' fill='%23F4E1C6' stroke='%23D9B88F' stroke-width='3'/%3E%3Cellipse cx='50' cy='68' rx='16' ry='12' fill='%23FFF8EE'/%3E%3Ccircle cx='36' cy='50' r='4.5' fill='%234A3A30'/%3E%3Ccircle cx='64' cy='50' r='4.5' fill='%234A3A30'/%3E%3Cellipse cx='50' cy='63' rx='6' ry='4.5' fill='%234A3A30'/%3E%3C/svg%3E">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Nunito:wght@500;600;700;800&display=swap">
+  <script>
+    /* Pre-paint: saved theme choice (dark by default), pick the palette. Keep in sync with app.js. */
+    (function () {
+      var DEFAULT_PALETTE = 'periwinkle', PALETTES = ['honey', 'mint', 'periwinkle'];
+      var d = document.documentElement, p = DEFAULT_PALETTE;
+      var t = 'dark';
+      try { if (localStorage.getItem('mybuddy.theme') === 'light') t = 'light'; } catch (e) {}
+      d.setAttribute('data-theme', t);
+      try {
+        var q = new URLSearchParams(location.search).get('palette');
+        q = q ? q.toLowerCase().replace(/[^a-z-]/g, '').slice(0, 32) : '';
+        if (PALETTES.indexOf(q) >= 0) p = q;
+      } catch (e) {}
+      d.setAttribute('data-palette', p);
+    })();
+  </script>
+  <link rel="stylesheet" href="assets/styles.css">
+</head>
+<body>
+  <a class="skip" href="#deck">Skip to cards</a>
+
+  <div class="aurora" aria-hidden="true"><span></span><span></span><span></span></div>
+
+  <header class="nav" id="nav">
+    <div class="wrap nav-in">
+      <a class="brand" href="#" aria-label="MyBuddy home">
+        <svg class="bear bear-logo" viewBox="0 0 120 112" aria-hidden="true"><use href="#bear-head"/></svg>
+        <span class="brand-name">MyBuddy</span>
+      </a>
+      <div class="nav-actions">
+        <a class="icon-btn bell-btn" id="bellBtn" href="#subscribe">
+          <svg class="i-bell" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 16.5V11a6 6 0 0 1 12 0v5.5l1.6 2.1H4.4z"/><path d="M10 21a2.2 2.2 0 0 0 4 0"/></svg>
+          <span class="bell-txt">Get updates</span>
+        </a>
+        <button class="icon-btn" id="themeBtn" type="button" aria-label="Switch to light theme">
+          <svg class="i-sun" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4.5"/><path d="M12 2v2.5M12 19.5V22M2 12h2.5M19.5 12H22M4.9 4.9l1.8 1.8M17.3 17.3l1.8 1.8M4.9 19.1l1.8-1.8M17.3 6.7l1.8-1.8"/></svg>
+          <svg class="i-moon" viewBox="0 0 24 24" aria-hidden="true"><path d="M20 14.5A8 8 0 0 1 9.5 4a8 8 0 1 0 10.5 10.5z"/></svg>
+        </button>
+        <a class="icon-btn" href="https://github.com/rvroyce-git/myBuddy" target="_blank" rel="noopener noreferrer" aria-label="MyBuddy on GitHub (opens in a new tab)">
+          <svg class="i-gh" viewBox="0 0 16 16" aria-hidden="true"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.01 8.01 0 0 0 16 8c0-4.42-3.58-8-8-8z"/></svg>
+        </a>
+      </div>
+    </div>
+  </header>
+
+  <main id="main">
+    <!-- Story bubbles -->
+    <nav class="stories" aria-label="Today's stories">
+      <ul class="bubbles" id="bubbles">
+        <li>
+          <button class="bubble is-bear" type="button" id="bearBubble" aria-label="Play all of today's stories">
+            <span class="ring" aria-hidden="true"></span>
+            <span class="face"><svg class="bear" viewBox="0 0 120 112" aria-hidden="true"><use href="#bear-head"/></svg></span>
+            <span class="tick" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M6 12.5l4 4 8-9"/></svg></span>
+            <span class="label">Today</span>
+          </button>
+        </li>
+      </ul>
+    </nav>
+
+    <div class="stage wrap">
+      <!-- Hero -->
+      <section class="hero" aria-labelledby="heroTitle">
+        <p class="pill" id="updated" hidden><span class="live" aria-hidden="true"></span><span id="updatedText"></span></p>
+        <h1 class="hero-title" id="heroTitle">
+          <span class="w"><span>Your</span></span>
+          <span class="w"><span>morning</span></span>
+          <span class="w"><span>news,</span></span>
+          <span class="w"><span class="hl">bear&#8209;sized.</span></span>
+        </h1>
+        <p class="hero-sub"><span class="nw">Seven topics.</span> <span class="nw">Short AI summaries.</span> <span class="nw" id="readyBy">Ready every morning.</span></p>
+      </section>
+
+      <!-- Card deck -->
+      <section class="deck-zone" aria-label="Topic cards">
+        <div class="deck" id="deck" aria-roledescription="card deck" aria-label="Today's topics">
+          <div class="deck-bear" id="deckBear" aria-hidden="true">
+            <span class="say">All caught up!</span>
+            <svg class="bear" viewBox="0 0 150 124">
+              <g class="b-paw">
+                <ellipse cx="124" cy="86" rx="13" ry="22" transform="rotate(20 124 86)" class="b-fur"/>
+                <circle cx="132" cy="64" r="13.5" class="b-fur"/>
+                <ellipse cx="132" cy="66" rx="7" ry="6" class="b-pink"/>
+              </g>
+              <g transform="translate(8 10)"><use href="#bear-face"/></g>
+            </svg>
+          </div>
+          <div class="card skeleton" aria-hidden="true"><span class="shimmer"></span></div>
+          <div class="card skeleton" aria-hidden="true"></div>
+        </div>
+        <div class="deck-ctrl">
+          <div class="dots" id="dots" role="group" aria-label="Choose a topic"></div>
+          <div class="deck-nav">
+            <button class="round-btn" id="prevBtn" type="button" aria-label="Previous card">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg>
+            </button>
+            <span class="hint" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M9 11V6.5a1.5 1.5 0 0 1 3 0V11m0-1.5a1.5 1.5 0 0 1 3 0V11m0-.5a1.5 1.5 0 0 1 3 0V15a6 6 0 0 1-6 6h-1a6 6 0 0 1-4.6-2.2L4.5 15.5a1.5 1.5 0 0 1 2.2-2L9 15.5"/></svg>Swipe or tap</span>
+            <button class="round-btn" id="nextBtn" type="button" aria-label="Next card">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 5l7 7-7 7"/></svg>
+            </button>
+          </div>
+        </div>
+        <p class="sr-only" id="deckLive" aria-live="polite"></p>
+        <div class="load-err" id="loadErr" hidden>
+          <span>Couldn't load today's news.</span>
+          <button class="chip-btn" id="retryBtn" type="button">Retry</button>
+        </div>
+      </section>
+
+      <!-- All headlines at a glance -->
+      <section class="headlines" aria-labelledby="hlTitle">
+        <h2 class="hl-title" id="hlTitle">Today's headlines</h2>
+        <ul class="hl-list" id="hlList"></ul>
+      </section>
+    </div>
+
+    <!-- Get daily updates: topic chips come from data/reports.json (app.js) -->
+    <section class="subs wrap" id="subscribe" tabindex="-1" aria-labelledby="subsTitle">
+      <h2 class="subs-title" id="subsTitle">Updates on your phone</h2>
+      <div class="subs-card" id="subsCard">
+        <div class="subs-bear" aria-hidden="true">
+          <svg class="bear" viewBox="0 0 150 124">
+            <g class="b-paw">
+              <ellipse cx="124" cy="86" rx="13" ry="22" transform="rotate(20 124 86)" class="b-fur"/>
+              <circle cx="132" cy="64" r="13.5" class="b-fur"/>
+              <ellipse cx="132" cy="66" rx="7" ry="6" class="b-pink"/>
+            </g>
+            <g transform="translate(8 10)"><use href="#bear-face"/></g>
+          </svg>
+        </div>
+        <div class="subs-main">
+          <ol class="subs-steps">
+            <li><span class="ss-ico"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="4" width="16" height="16" rx="5"/><path d="M8.5 12.2l2.4 2.4 4.6-5"/></svg></span><span>Pick</span></li>
+            <li class="ss-hop" aria-hidden="true"><span class="hop"><i></i></span></li>
+            <li><span class="ss-ico"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M21 4L3 11l6.5 2.5L12 20l3-5 4.5 3z"/><path d="M9.5 13.5L21 4"/></svg></span><span>Tap Start</span></li>
+            <li class="ss-hop" aria-hidden="true"><span class="hop"><i></i></span></li>
+            <li><span class="ss-ico"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 16.5V11a6 6 0 0 1 12 0v5.5l1.6 2.1H4.4z"/><path d="M10 21a2.2 2.2 0 0 0 4 0"/></svg></span><span>Get alerts</span></li>
+          </ol>
+          <div class="subs-chips" id="subsChips" role="group" aria-label="Topics">
+            <span class="tchip skel" aria-hidden="true"></span><span class="tchip skel" aria-hidden="true"></span><span class="tchip skel" aria-hidden="true"></span><span class="tchip skel" aria-hidden="true"></span><span class="tchip skel" aria-hidden="true"></span>
+          </div>
+          <div class="subs-go">
+            <a class="subs-btn" id="subsBtn" role="link" tabindex="0" aria-disabled="true" target="_blank" rel="noopener noreferrer">
+              <span class="sb-ico" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M21 4L3 11l6.5 2.5L12 20l3-5 4.5 3z"/><path d="M9.5 13.5L21 4"/></svg></span>
+              <span class="sb-txt">Get daily updates</span>
+              <span class="sb-n" id="subsN" aria-hidden="true">0</span>
+            </a>
+            <p class="subs-invite" id="subsInvite">Invite-only for now — tap Start to ask for access.</p>
+            <p class="subs-help">Opens our chat bot. <a class="subs-web" id="subsWeb" target="_blank" rel="noopener noreferrer" aria-label="Open in browser: opens the MyBuddy chat bot in a new tab" hidden>Open in browser</a></p>
+            <p class="subs-note" id="subsNote"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M13 2.5L5.5 13.5h5.5l-1 8 7.5-11H12z"/></svg>Security adds urgent alerts too.</p>
+          </div>
+        </div>
+        <figure class="subs-qr" id="subsQr">
+          <div class="qr-tile"><svg id="qrSvg" role="img" aria-label="QR code for the same link"></svg></div>
+          <figcaption>Or scan with your phone</figcaption>
+        </figure>
+      </div>
+    </section>
+
+    <!-- How it works -->
+    <section class="how wrap" aria-labelledby="howTitle">
+      <h2 class="how-title" id="howTitle">How it works</h2>
+      <div class="steps-wrap">
+      <div class="track" aria-hidden="true"><span class="runner"><i></i></span></div>
+      <ol class="steps" id="steps">
+        <li>
+          <button class="step" type="button" aria-describedby="tip0"><span class="step-ico"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="6" cy="18" r="1.8" class="fill"/><path d="M5 11a8 8 0 0 1 8 8M5 5a14 14 0 0 1 14 14"/></svg><i class="step-i" aria-hidden="true">i</i></span><span class="step-txt">Reads sources</span></button>
+          <span class="tip" role="tooltip" id="tip0">From <span data-ist="06:30">early morning</span> daily, it checks 37 public feeds: OpenAI, Google AI, Hacker News, GitHub, arXiv, Hugging Face, CISA and more. Already-sent news is skipped.</span>
+        </li>
+        <li>
+          <button class="step" type="button" aria-describedby="tip1"><span class="step-ico"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M11 3l1.8 4.7 4.7 1.8-4.7 1.8L11 16l-1.8-4.7L4.5 9.5l4.7-1.8z"/><path d="M18.5 14.5l.8 2.2 2.2.8-2.2.8-.8 2.2-.8-2.2-2.2-.8 2.2-.8z"/></svg><i class="step-i" aria-hidden="true">i</i></span><span class="step-txt">AI summarises</span></button>
+          <span class="tip" role="tooltip" id="tip1">Groq AI writes a one-line headline and a two-sentence summary. Every link comes from the original source, never the AI.</span>
+        </li>
+        <li>
+          <button class="step" type="button" aria-describedby="tip2"><span class="step-ico"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M21 4L3 11l6.5 2.5L12 20l3-5 4.5 3z"/><path d="M9.5 13.5L21 4"/></svg><i class="step-i" aria-hidden="true">i</i></span><span class="step-txt">Instant alert</span></button>
+          <span class="tip" role="tooltip" id="tip2">Each report arrives as a private message on your phone. Actively exploited security bugs are flagged within the hour.</span>
+        </li>
+        <li>
+          <button class="step" type="button" aria-describedby="tip3"><span class="step-ico"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="4.5" width="18" height="15" rx="3"/><path d="M3 9h18M7 13h6M7 16h9"/></svg><i class="step-i" aria-hidden="true">i</i></span><span class="step-txt">Site updates</span></button>
+          <span class="tip" role="tooltip" id="tip3">A minute later this page refreshes on GitHub Pages — all seven topics, free and public.</span>
+        </li>
+      </ol>
+      </div>
+    </section>
+
+    <!-- What stays, what leaves -->
+    <section class="flow wrap" id="flow" aria-labelledby="flowTitle">
+      <h2 class="flow-title" id="flowTitle">What stays, what leaves</h2>
+      <div class="flow-grid">
+        <article class="flow-card stays" aria-labelledby="staysTitle">
+          <div class="flow-head">
+            <span class="flow-ico"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="3.5" width="16" height="7" rx="2.2"/><rect x="4" y="13.5" width="16" height="7" rx="2.2"/><path d="M8 7h.01M8 17h.01M12 7h4M12 17h4"/></svg></span>
+            <div><h3 id="staysTitle">Stays on our server</h3><p class="flow-sub">Oracle Cloud · free tier</p></div>
+          </div>
+          <ul class="flow-list">
+            <li><span class="fi"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7.5h16v11a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2z"/><path d="M3 4h18v3.5H3zM10 12h4"/></svg></span><span>Saved reports and what&rsquo;s already been sent</span></li>
+            <li><span class="fi"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="8" cy="15" r="4"/><path d="M11 12l8-8M16 7l2.5 2.5M14 9l2 2"/></svg></span><span>Settings, plus API keys in a private file</span></li>
+            <li><span class="fi"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 5.5h14a1.5 1.5 0 0 1 1.5 1.5v8.5a1.5 1.5 0 0 1-1.5 1.5h-7l-4.5 3.5V17H5a1.5 1.5 0 0 1-1.5-1.5V7A1.5 1.5 0 0 1 5 5.5z"/><path d="M8 10h8M8 13h5"/></svg></span><span>Subscriber chat IDs and chosen topics — nothing else</span></li>
+          </ul>
+        </article>
+        <article class="flow-card leaves" aria-labelledby="leavesTitle">
+          <div class="flow-head">
+            <span class="flow-ico"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M14 4h6v6M20 4l-9 9"/><path d="M18 14v4a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4"/></svg></span>
+            <div><h3 id="leavesTitle">Leaves the server</h3><p class="flow-sub">Public news only</p></div>
+          </div>
+          <ul class="flow-list">
+            <li><span class="fi"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 4h14v16H5z"/><path d="M8 8h8M8 12h8M8 16h5"/></svg></span><span>Public news text<span class="hop" aria-hidden="true"><i></i></span><span class="sr-only"> to </span><span class="to">Groq AI to summarise</span></span></li>
+            <li><span class="fi"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M21 4L3 11l6.5 2.5L12 20l3-5 4.5 3z"/><path d="M9.5 13.5L21 4"/></svg></span><span>Finished summary<span class="hop" aria-hidden="true"><i></i></span><span class="sr-only"> to </span><span class="to">subscribers&rsquo; phones, as private alerts</span></span></li>
+            <li><span class="fi"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8.5"/><path d="M3.5 12h17M12 3.5c2.5 2.6 2.5 14.4 0 17M12 3.5c-2.5 2.6-2.5 14.4 0 17"/></svg></span><span>Same summary<span class="hop" aria-hidden="true"><i></i></span><span class="sr-only"> to </span><span class="to">this public page</span></span></li>
+          </ul>
+        </article>
+      </div>
+      <p class="flow-note">Nothing personal is sent. The AI provider may log prompts — run a local model if nothing should leave.</p>
+    </section>
+  </main>
+
+  <footer class="foot wrap">
+    <svg class="bear bear-mini" viewBox="0 0 120 112" aria-hidden="true"><use href="#bear-head"/></svg>
+    <span>Free &amp; open source</span>
+    <span class="sep" aria-hidden="true">·</span>
+    <a href="https://github.com/rvroyce-git/myBuddy" target="_blank" rel="noopener noreferrer">GitHub</a>
+  </footer>
+
+  <!-- Full-screen story viewer -->
+  <div class="story" id="story" role="dialog" aria-modal="true" aria-label="Today's stories" hidden>
+    <div class="story-backdrop" id="storyBackdrop"></div>
+    <button class="story-side prev round-btn" id="storyPrev" type="button" aria-label="Previous story">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg>
+    </button>
+    <div class="story-frame" id="storyFrame" tabindex="-1">
+      <div class="story-bars" id="storyBars" aria-hidden="true"></div>
+      <div class="story-tools">
+        <button class="story-tool" id="storyPause" type="button" aria-label="Pause stories" aria-pressed="false">
+          <svg class="i-pause" viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5v14M16 5v14"/></svg>
+          <svg class="i-play" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 4.5v15l12-7.5z"/></svg>
+        </button>
+        <button class="story-tool" id="storyClose" type="button" aria-label="Close stories">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>
+        </button>
+      </div>
+      <div class="story-stage" id="storyStage"></div>
+      <p class="story-hint" id="storyHint" aria-hidden="true">Tap to continue<svg viewBox="0 0 24 24"><path d="M9 6l6 6-6 6"/></svg></p>
+      <div class="sticker" id="sticker" aria-hidden="true">
+        <svg class="bear" viewBox="0 0 150 124">
+              <g class="b-paw">
+                <ellipse cx="124" cy="86" rx="13" ry="22" transform="rotate(20 124 86)" class="b-fur"/>
+                <circle cx="132" cy="64" r="13.5" class="b-fur"/>
+                <ellipse cx="132" cy="66" rx="7" ry="6" class="b-pink"/>
+              </g>
+              <g transform="translate(8 10)"><use href="#bear-face"/></g>
+            </svg>
+      </div>
+    </div>
+    <button class="story-side next round-btn" id="storyNext" type="button" aria-label="Next story">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 5l7 7-7 7"/></svg>
+    </button>
+    <p class="sr-only" id="storyLive" aria-live="polite"></p>
+  </div>
+
+  <!-- Bear artwork (reused via <use>) -->
+  <svg class="sprite" width="0" height="0" aria-hidden="true" focusable="false">
+    <defs>
+      <g id="bear-face">
+        <circle cx="26" cy="28" r="17" class="b-fur"/><circle cx="26" cy="28" r="9" class="b-pink"/>
+        <circle cx="94" cy="28" r="17" class="b-fur"/><circle cx="94" cy="28" r="9" class="b-pink"/>
+        <ellipse cx="60" cy="62" rx="45" ry="41" class="b-fur"/>
+        <ellipse cx="33" cy="75" rx="8" ry="5" class="b-blush"/><ellipse cx="87" cy="75" rx="8" ry="5" class="b-blush"/>
+        <ellipse cx="60" cy="77" rx="19" ry="14" class="b-muzzle"/>
+        <g class="b-eyes"><circle cx="43" cy="58" r="5" class="b-eye"/><circle cx="77" cy="58" r="5" class="b-eye"/><circle cx="44.6" cy="56.3" r="1.6" class="b-shine"/><circle cx="78.6" cy="56.3" r="1.6" class="b-shine"/></g>
+        <ellipse cx="60" cy="70" rx="6.5" ry="4.8" class="b-eye"/>
+        <path d="M60 74.5v3.5M54 80c3 3 9 3 12 0" class="b-mouth"/>
+      </g>
+      <g id="bear-head"><use href="#bear-face"/></g>
+    </defs>
+  </svg>
+
+  <script type="module" src="assets/app.js"></script>
+</body>
+</html>

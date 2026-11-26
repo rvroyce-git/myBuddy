@@ -1,0 +1,47 @@
+[Unit]
+Description=MyBuddy AI news companion (scheduler)
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=mybuddy
+Group=mybuddy
+WorkingDirectory=/home/mybuddy/app
+Environment=PYTHONUNBUFFERED=1
+Environment=MYBUDDY_SITE_DATA=/home/mybuddy/app/site/data/reports.json
+# Read-only here; reloaded within a minute after an approved change (reload marker).
+Environment=MYBUDDY_CONFIG=/home/mybuddy/.config/mybuddy/config/topics.yaml
+ExecStart=/home/mybuddy/app/.venv/bin/mybuddy serve
+Restart=on-failure
+RestartSec=30
+# Keep the tiny 1 GB VM healthy
+MemoryMax=300M
+CPUQuota=50%
+# Hardening (the scheduler only needs outbound HTTPS, its SQLite file and reports.json).
+# UMask keeps new state files private; reports.json is chmod 644 explicitly by the app.
+UMask=0077
+NoNewPrivileges=true
+CapabilityBoundingSet=
+PrivateTmp=true
+PrivateDevices=true
+ProtectSystem=strict
+ProtectHome=read-only
+ReadWritePaths=/home/mybuddy/.local/share/mybuddy /home/mybuddy/app/site/data
+ProtectKernelTunables=true
+ProtectKernelModules=true
+ProtectKernelLogs=true
+ProtectControlGroups=true
+ProtectClock=true
+ProtectHostname=true
+RestrictAddressFamilies=AF_INET AF_INET6 AF_UNIX
+RestrictNamespaces=true
+RestrictRealtime=true
+RestrictSUIDSGID=true
+LockPersonality=true
+MemoryDenyWriteExecute=true
+SystemCallFilter=@system-service
+SystemCallArchitectures=native
+
+[Install]
+WantedBy=multi-user.target

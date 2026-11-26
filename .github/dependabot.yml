@@ -1,0 +1,30 @@
+version: 2
+updates:
+  # Hash-pinned lock files (see README: Updating pinned dependencies).
+  - package-ecosystem: pip
+    directory: /requirements
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 5
+    groups:
+      python:
+        patterns: ["*"]
+
+  # SHA-pinned actions in .github/workflows/*.yml (Dependabot updates the SHA and the
+  # trailing "# vX.Y.Z" comment together).
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+    groups:
+      actions:
+        patterns: ["*"]
+
+  # Dev-only ESLint tooling (package-lock.json).
+  - package-ecosystem: npm
+    directory: /
+    schedule:
+      interval: weekly
+    groups:
+      npm:
+        patterns: ["*"]
