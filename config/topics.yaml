@@ -161,7 +161,7 @@ topics:
     title: Health check
     emoji: "🩺"
     description: Is MyBuddy working? Last runs, failed sources, disk and memory. Owner only.
-    schedule: {time: "09:00", days: daily}
+    schedule: {time: "10:15", days: daily}
     ai: false
     website: false
     kind: health  # owner only (an audience is not allowed); also `mybuddy health`
