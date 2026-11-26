@@ -667,6 +667,7 @@ p { margin: 0; }
 .subs-btn[href] .sb-n { transform: none; opacity: 1; }
 .sb-n.pop { animation: chipPop .45s var(--pop); }
 .subs-help { font-size: .78rem; font-weight: 700; color: var(--ink-2); }
+.subs-invite { font-size: .78rem; font-weight: 700; color: var(--ink-2); }
 .subs-web { color: inherit; text-decoration: underline; text-underline-offset: 2px; }
 .subs-web:hover { color: var(--ink); }
 /* "+ urgent alerts": a bolt on the Security chip, and a note that fades in when it is picked.

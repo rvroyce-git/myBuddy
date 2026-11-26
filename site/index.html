@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <!-- CSP: the inline pre-paint script below is allowed by its hash. If you edit that script,
        update the sha256 here (tests/ui/test_site_hardening.py checks it). -->
-  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'sha256-aHl7gFDn5rsj/g0Az+GkuNy7NZyJr58QeNk0hFv9hn4='; style-src 'self' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data:; connect-src 'self'; object-src 'none'; base-uri 'none'; form-action 'none'; require-trusted-types-for 'script'; trusted-types 'none'">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'sha256-sZyqk7CtHwlRJ6XlyZ0nS3dXfGFxj/UUg4U3NIlkgEo='; style-src 'self' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data:; connect-src 'self'; object-src 'none'; base-uri 'none'; form-action 'none'; require-trusted-types-for 'script'; trusted-types 'none'">
   <meta name="referrer" content="strict-origin-when-cross-origin">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <title>MyBuddy · Today's stories</title>
@@ -16,12 +16,13 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Nunito:wght@500;600;700;800&display=swap">
   <script>
-    /* Pre-paint: always open dark (no saved theme), pick the palette. Keep in sync with app.js. */
+    /* Pre-paint: saved theme choice (dark by default), pick the palette. Keep in sync with app.js. */
     (function () {
       var DEFAULT_PALETTE = 'periwinkle', PALETTES = ['honey', 'mint', 'periwinkle'];
       var d = document.documentElement, p = DEFAULT_PALETTE;
-      d.setAttribute('data-theme', 'dark');
-      try { localStorage.removeItem('mybuddy.theme'); } catch (e) {}
+      var t = 'dark';
+      try { if (localStorage.getItem('mybuddy.theme') === 'light') t = 'light'; } catch (e) {}
+      d.setAttribute('data-theme', t);
       try {
         var q = new URLSearchParams(location.search).get('palette');
         q = q ? q.toLowerCase().replace(/[^a-z-]/g, '').slice(0, 32) : '';
@@ -161,6 +162,7 @@
               <span class="sb-txt">Get daily updates</span>
               <span class="sb-n" id="subsN" aria-hidden="true">0</span>
             </a>
+            <p class="subs-invite" id="subsInvite">Invite-only for now — tap Start to ask for access.</p>
             <p class="subs-help">Opens our chat bot. <a class="subs-web" id="subsWeb" target="_blank" rel="noopener noreferrer" aria-label="Open in browser: opens the MyBuddy chat bot in a new tab" hidden>Open in browser</a></p>
             <p class="subs-note" id="subsNote"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M13 2.5L5.5 13.5h5.5l-1 8 7.5-11H12z"/></svg>Security adds urgent alerts too.</p>
           </div>
