@@ -168,3 +168,11 @@ addresses never allowed, 20 s timeout and 5 MB cap per response; feed and chat t
 data, never as instructions, and no LLM has shell, file or network tools; links in reports come
 only from collected items. Supply chain: hash-pinned dependencies, SHA-pinned GitHub Actions,
 Dependabot.
+
+
+### Rebuild-trigger token
+
+Optional `GH_DISPATCH_TOKEN` (fine-grained, this repo, **Actions: Read and write** only) lives in its own
+`~/.config/mybuddy/dispatch.env` (mode 600), loaded only by `mybuddy-publish.service`. It can start
+workflows, which always run main's reviewed code; it cannot change code, files or settings. Rotate it
+like the other keys and re-run `deploy/set-dispatch-token.sh`.

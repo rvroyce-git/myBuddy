@@ -9,6 +9,8 @@ User=mybuddy
 Group=mybuddy
 # Let a burst of reports settle, then publish them in one commit.
 ExecStartPre=/bin/sleep 20
+# Only the rebuild-trigger token (GH_DISPATCH_TOKEN); the app's other secrets are not loaded here.
+EnvironmentFile=-/home/mybuddy/.config/mybuddy/dispatch.env
 ExecStart=/bin/bash /home/mybuddy/app/deploy/publish-reports.sh
 TimeoutStartSec=180
 # Hardening: git and ssh need to write in the home directory (data-repo),

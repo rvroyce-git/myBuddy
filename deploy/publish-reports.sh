@@ -22,6 +22,21 @@ python3 -c 'import json,sys; json.load(open(sys.argv[1]))' "$SRC"   # never publ
 [ -d "$REPO_DIR/.git" ] || git clone -q --depth 1 --branch "$BRANCH" "$REPO_URL" "$REPO_DIR"
 cd "$REPO_DIR"
 
+# Ask GitHub to run main's trusted "Publish website" workflow right away, instead of waiting for
+# its (often delayed) schedule. Needs a fine-grained token limited to this repository with only
+# "Actions: Read and write" — it can start workflows but cannot change code or files.
+# Optional: without GH_DISPATCH_TOKEN the scheduled run still publishes, just later.
+request_rebuild() {
+  local token=${GH_DISPATCH_TOKEN:-}
+  [ -n "$token" ] || { echo "no GH_DISPATCH_TOKEN; the scheduled build will publish"; return 0; }
+  local code
+  code=$(curl -sS -o /dev/null -w '%{http_code}' --max-time 20 -X POST \
+    -H "Authorization: Bearer $token" -H "Accept: application/vnd.github+json" \
+    "https://api.github.com/repos/${MYBUDDY_REPO:-rvroyce-git/myBuddy}/actions/workflows/pages.yml/dispatches" \
+    -d '{"ref":"main"}') || code=000
+  if [ "$code" = 204 ]; then echo "requested website rebuild"; else echo "rebuild request failed (HTTP $code); the scheduled build will publish" >&2; fi
+}
+
 for attempt in 1 2 3; do
   git fetch -q --depth 1 origin "$BRANCH"
   git reset -q --hard "origin/$BRANCH"
@@ -34,6 +49,7 @@ for attempt in 1 2 3; do
     commit -q -m "Update reports $(date '+%Y-%m-%d %H:%M %Z')" -- reports.json
   if git push -q origin "HEAD:$BRANCH"; then
     echo "published reports.json to $BRANCH (attempt $attempt)"
+    request_rebuild
     exit 0
   fi
   echo "push failed (attempt $attempt); retrying" >&2
