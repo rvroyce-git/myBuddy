@@ -211,6 +211,27 @@ def test_digest_uses_only_todays_latest_reports(store: Store) -> None:
     assert digest_items(TOPICS, store, THURSDAY + timedelta(days=1), "morning_digest") == []
 
 
+def test_digest_skips_duplicate_urls_and_falls_through_to_next_item(store: Store) -> None:
+    ai = _report("ai_news", THURSDAY, 4)
+    sec = _report("security", THURSDAY, 3)
+    # security's top item is the same story (case/slash/fragment differ) as ai_news' top item.
+    sec["items"][0]["url"] = "https://EXAMPLE.com/ai_news-feed/0/#x"
+    store.save_report("ai_news", THURSDAY - timedelta(hours=2), ai)
+    store.save_report("security", THURSDAY - timedelta(hours=1), sec)
+    urls = [i.url for i in digest_items(TOPICS, store, THURSDAY, "morning_digest")]
+    assert urls == [
+        "https://example.com/ai_news-feed/0",
+        "https://example.com/security-feed/1",
+        "https://example.com/ai_news-feed/1",
+        "https://example.com/security-feed/2",
+    ]
+
+
+def test_digest_caps_items_per_topic(store: Store) -> None:
+    store.save_report("ai_news", THURSDAY - timedelta(hours=1), _report("ai_news", THURSDAY, 6))
+    assert len(digest_items(TOPICS, store, THURSDAY, "morning_digest")) == 2
+
+
 def test_weekly_takes_each_reports_top_item_from_last_7_days(store: Store) -> None:
     sunday = datetime(2026, 11, 29, 10, 0, tzinfo=IST)
     for days_ago in (1, 3, 8):
@@ -407,7 +428,7 @@ def test_shipped_new_topics() -> None:
     by_id = {t.id: t for t in load_topics(DEFAULT_CONFIG_PATH)}
     expected = {
         "morning_digest": ("08:30", "digest", WEEKDAYS),
-        "health_check": ("09:00", "health", WEEKDAYS),
+        "health_check": ("10:15", "health", WEEKDAYS),
         "policy_watch": ("09:15", "news", WEEKDAYS),
         "product_recalls": ("09:30", "news", WEEKDAYS),
         "industry_signals": ("09:45", "news", WEEKDAYS),

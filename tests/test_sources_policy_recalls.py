@@ -11,7 +11,13 @@ from test_sources_support import FakeHttp, FixedClock, fixture_bytes, fixture_js
 from mybuddy.http import HttpError
 from mybuddy.sources import build_source
 from mybuddy.sources.federal_register import FR_API
-from mybuddy.sources.recalls import CPSC_API, FDA_RECALL_PAGE, OPENFDA_API
+from mybuddy.sources.recalls import (
+    CPSC_API,
+    FDA_RECALL_PAGE,
+    OPENFDA_API,
+    fda_title,
+    short_product,
+)
 from mybuddy.sources.rss import parse_feed
 
 NOW = datetime(2026, 11, 26, 3, 0, tzinfo=UTC)
@@ -108,6 +114,38 @@ def test_cpsc_empty_and_bad() -> None:
     assert _collect(spec, {CPSC_API + "*": bad})[0] == []
     with pytest.raises(ValueError, match="unexpected"):
         _collect(spec, {CPSC_API + "*": {"error": "x"}})
+
+
+# ------------------------------------------------------------- openFDA short titles
+
+
+def test_openfda_titles_are_short_with_class() -> None:
+    items, _ = _collect(
+        {"type": "openfda_recalls", "category": "drug"},
+        {OPENFDA_API + "*": fixture_json("openfda_drug.json")},
+    )
+    titles = {i.title for i in items}
+    assert "ORL Labs LLC: ORL Organic Oral Care Cinnamint toothpaste (Class II)" in titles
+    assert all(len(t) <= 90 and "…" not in t and "UPC" not in t for t in titles)
+    assert all("Product: ORL Organic" in i.snippet for i in items)
+    device, _ = _collect(
+        {"type": "openfda_recalls", "category": "device"},
+        {OPENFDA_API + "*": fixture_json("openfda_device.json")},
+    )
+    assert all(len(i.title) <= 90 and i.title.endswith(")") for i in device)
+    assert any(i.title.startswith("3B Medical, Inc.: Luna G3 BPAP System (") for i in device)
+
+
+def test_fda_title_edge_cases() -> None:
+    assert fda_title("", "Aspirin 81 mg tablets, NDC 1234-5678", "Class III") == (
+        "Aspirin (Class III)"
+    )
+    assert fda_title("Acme", "", "Class I") == "Acme (Class I)"
+    assert fda_title("", "", "Class I") == ""
+    title = fda_title("A Very Long Firm Name Incorporated Holdings", "Super " * 40, "Class I")
+    assert len(title) <= 90 and title.endswith("Super… (Class I)")
+    assert short_product("Widget (Lot 123) Deluxe Lot ABC") == "Widget Deluxe"
+    assert short_product("(only parens)") == "(only parens)"
 
 
 # ------------------------------------------------------------- EU press corner (rss)

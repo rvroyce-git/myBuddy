@@ -23,7 +23,7 @@ Telegram-only reports (`website: false` in `config/topics.yaml`; not on the webs
 | Report | When (IST) | Goes to |
 | --- | --- | --- |
 | Morning digest (from today's reports, no fetching) | Daily 08:30 | owner |
-| Health check (no AI; also `mybuddy health`, exit 1 if stale/failing) | Daily 09:00 | owner only |
+| Health check (no AI; also `mybuddy health`, exit 1 if stale/failing) | Daily 10:15 (after the 09:xx reports) | owner only |
 | Tech policy watch (India, US, EU) | Daily 09:15 | owner + AI news subscribers |
 | Product recalls (FDA drugs/devices, CPSC) | Daily 09:30 | owner |
 | Industry signals (AI, chips, cloud) | Daily 09:45 | owner + startup subscribers |
