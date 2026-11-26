@@ -117,3 +117,18 @@ Visitors pick topics on the website and subscribe to the existing bot `@myBuddy_
   Telegram chat id and topic ids are stored — no names, usernames or phone numbers.
 * **Limit**: `MYBUDDY_MAX_SUBSCRIBERS` (default 100) active subscribers; new ones beyond that get a
   polite "full" message. Per-chat flood guard: ignore more than 10 commands (or 40 picker taps) per minute.
+* **Access** (phase 2): private by default (`PUBLIC_SIGNUP=false`). Only the owner and
+  `CHAT_ALLOWLIST` chats can start a new subscription; others get a fixed "private" reply (at most
+  once per 10 minutes, no store write). Existing subscribers keep their reports, can change topics
+  and can always `/stop`. With `PUBLIC_SIGNUP=true` the flow above applies to everyone.
+* **Chat**: owner + `CHAT_ALLOWLIST` only. Plain text or `/ask <question>` is answered from the
+  latest saved reports (stateless; `/reset` just says so). Usage counts live in SQLite
+  `chat_usage(chat_id, at, day, tokens)` (no text), pruned after 3 days.
+* **Feedback**: each Telegram report's last message part has inline buttons 👍/👎 with
+  callback data `fb:<u|d>:<topic id>:<yymmddHHMM>` (the report's IST run time, ≤ 64 bytes).
+  Votes: SQLite `feedback(topic_id, report_ref, voter, vote, report_chars, at)`, voter = salted
+  hash; one vote per voter and report.
+* **Owner config commands** (`/config`, `/set`, `/topic`, `/time`, `/source`, `/limit`,
+  `/approve`, `/reject`, `/changes`, `/undo`, `/feedback`, `/note`): owner only; changes apply
+  only after `/approve <id>` within 10 minutes. Topics may carry `enabled: false` (scheduler
+  skips them; the website still lists them).

@@ -18,6 +18,7 @@ from typing import Any, TextIO
 from mybuddy.config import PROMPTS_DIR, Settings, Topic
 from mybuddy.http import HttpError
 from mybuddy.models import Clock, HttpClient, Item, Report, ReportItem
+from mybuddy.store import Store
 
 GROQ_URL = "https://api.groq.com/openai/v1/chat/completions"
 GEMINI_URL = "https://generativelanguage.googleapis.com/v1beta/openai/chat/completions"
@@ -56,6 +57,16 @@ class Provider:
     url: str
     api_key: str = field(repr=False)
     model: str
+
+
+def providers_for(settings: Settings) -> list[Provider]:
+    """Groq first, then Gemini, each only when its key is set."""
+    out = []
+    if settings.groq_api_key:
+        out.append(Provider("groq", GROQ_URL, settings.groq_api_key, settings.groq_model))
+    if settings.gemini_api_key:
+        out.append(Provider("gemini", GEMINI_URL, settings.gemini_api_key, settings.gemini_model))
+    return out
 
 
 def clean_text(text: str, limit: int) -> str:
@@ -165,6 +176,7 @@ class Summarizer:
         prompts_dir: Path = PROMPTS_DIR,
         sleep: Callable[[float], None] = time.sleep,
         log: TextIO | None = None,
+        store: Store | None = None,
     ) -> None:
         self.settings = settings
         self.http = http
@@ -172,18 +184,25 @@ class Summarizer:
         self.prompts_dir = prompts_dir
         self.sleep = sleep
         self.log = log
+        self.store = store
 
     def _log(self, msg: str) -> None:
         print(f"[mybuddy] {msg}", file=self.log or sys.stderr)
 
     def providers(self) -> list[Provider]:
-        out = []
-        s = self.settings
-        if s.groq_api_key:
-            out.append(Provider("groq", GROQ_URL, s.groq_api_key, s.groq_model))
-        if s.gemini_api_key:
-            out.append(Provider("gemini", GEMINI_URL, s.gemini_api_key, s.gemini_model))
-        return out
+        return providers_for(self.settings)
+
+    def _preference_hint(self, topic_id: str) -> str:
+        """Bounded, counts-only hint from 👍/👎 votes ("" without a store or votes)."""
+        if self.store is None:
+            return ""
+        from mybuddy.feedback import preference_hint
+
+        try:
+            return preference_hint(self.store, topic_id, self.clock.now())
+        except Exception as exc:  # feedback must never break a report
+            self._log(f"{topic_id}: feedback hint unavailable ({type(exc).__name__})")
+            return ""
 
     # ---- prompt
     def build_messages(
@@ -207,6 +226,9 @@ class Summarizer:
             for key in ("stars", "stars_gained"):
                 if key in item.extra:
                     lines.append(f"    {key.replace('_', ' ').title()}: {item.extra[key]}")
+        hint = self._preference_hint(topic.id)
+        if hint:
+            lines += ["", f"Reader feedback (from vote counts only): {hint}"]
         lines += [
             "",
             "Reply with only a JSON object of this exact shape:",

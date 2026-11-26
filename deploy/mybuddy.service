@@ -10,6 +10,8 @@ Group=mybuddy
 WorkingDirectory=/home/mybuddy/app
 Environment=PYTHONUNBUFFERED=1
 Environment=MYBUDDY_SITE_DATA=/home/mybuddy/app/site/data/reports.json
+# Read-only here; reloaded within a minute after an approved change (reload marker).
+Environment=MYBUDDY_CONFIG=/home/mybuddy/.config/mybuddy/config/topics.yaml
 ExecStart=/home/mybuddy/app/.venv/bin/mybuddy serve
 Restart=on-failure
 RestartSec=30

@@ -145,3 +145,68 @@ def test_bot_http_timeout_exceeds_poll() -> None:
     client = cli._bot_http(cli.TELEGRAM_HOSTS)
     assert client.timeout > mybuddy.bot.POLL_TIMEOUT_SECONDS + 5
     assert client.allowed_hosts == {"api.telegram.org"}
+
+
+def test_check_reports_access_mode(
+    env: dict[str, Any],  # noqa: F811
+    monkeypatch: pytest.MonkeyPatch,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    assert cli.main([*env["argv"], "check"]) == 0
+    out = capsys.readouterr().out
+    assert "mode: private (owner + allowlist only)" in out
+    assert "chat allowlist: owner (not set) + 0" in out
+    assert "chat: off (no AI key set)" in out
+
+    monkeypatch.setenv("GROQ_API_KEY", "gsk_test")
+    env["http"].get_responses[cli.GROQ_MODELS_URL] = {"data": [{"id": "openai/gpt-oss-120b"}]}
+    monkeypatch.setenv("TELEGRAM_CHAT_ID", str(CHATS[0]))
+    monkeypatch.setenv("CHAT_ALLOWLIST", f"{CHATS[1]},{CHATS[2]},nope")
+    monkeypatch.setenv("PUBLIC_SIGNUP", "true")
+    monkeypatch.setenv("CHAT_DAILY_CAP", "lots")
+    assert cli.main([*env["argv"], "check"]) == 0
+    out = capsys.readouterr().out
+    assert "mode: public signup" in out and "chat allowlist: owner + 2" in out
+    assert "CHAT_ALLOWLIST       set (2 id(s))" in out
+    assert "warning: CHAT_ALLOWLIST has 1 invalid entry" in out
+    assert "chat: on (5/min and 30/day per chat, 60000 tokens/day in total)" in out
+    assert "warning: CHAT_DAILY_CAP must be a whole number" in out
+    assert _no_chat_ids(out)
+
+    monkeypatch.setenv("CHAT_ENABLED", "false")
+    assert cli.main([*env["argv"], "check"]) == 0
+    assert "chat: off (CHAT_ENABLED=false)" in capsys.readouterr().out
+
+
+def test_bot_command_wires_access_and_chat(
+    env: dict[str, Any],  # noqa: F811
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    seen: dict[str, Any] = {}
+
+    def fake_run(self: mybuddy.bot.SubscriptionBot, max_polls: int | None = None) -> int:
+        seen.update(public=self.public_signup, allowed=self.allowed, chat=self.chat)
+        return 0
+
+    monkeypatch.setattr(mybuddy.bot.SubscriptionBot, "run", fake_run)
+    monkeypatch.setattr(mybuddy.bot.SubscriptionBot, "install_signal_handlers", lambda self: None)
+    monkeypatch.setattr(cli, "make_bot_http", lambda hosts: object())
+    chat_hosts: list[Any] = []
+    monkeypatch.setattr(cli, "make_chat_http", lambda hosts: chat_hosts.append(hosts) or object())
+    monkeypatch.setenv("TELEGRAM_BOT_TOKEN", TOKEN)
+    monkeypatch.setenv("TELEGRAM_CHAT_ID", "777")
+    monkeypatch.setenv("CHAT_ALLOWLIST", "888")
+    assert cli.main([*env["argv"], "bot"]) == 0
+    assert seen == {"public": False, "allowed": frozenset({777, 888}), "chat": None}
+    assert chat_hosts == []  # no AI key: no chat client at all
+
+    monkeypatch.setenv("GROQ_API_KEY", "gsk_test")
+    monkeypatch.setenv("PUBLIC_SIGNUP", "1")
+    assert cli.main([*env["argv"], "bot"]) == 0
+    assert seen["public"] is True and seen["chat"] is not None
+    assert chat_hosts == [frozenset({"api.groq.com"})]  # chat can reach only the AI provider
+
+
+def test_chat_http_has_short_timeout() -> None:
+    client = cli._chat_http(frozenset({"api.groq.com"}))
+    assert client.timeout <= 20 and client.allowed_hosts == {"api.groq.com"}

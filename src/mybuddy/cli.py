@@ -16,18 +16,26 @@ from pathlib import Path
 from typing import Any
 
 from mybuddy import __version__
-from mybuddy.allowlist import TELEGRAM_HOSTS, build_allowed_hosts, topic_source_specs
+from mybuddy.allowlist import (
+    TELEGRAM_HOSTS,
+    build_allowed_hosts,
+    provider_hosts,
+    topic_source_specs,
+)
 from mybuddy.config import (
     DEFAULT_CONFIG_PATH,
     DEFAULT_ENV_FILE,
     SETTING_ENV_VARS,
+    Config,
     ConfigError,
     Settings,
     Topic,
     load_config,
     load_env_file,
+    parse_chat_allowlist,
     parse_max_subscribers,
 )
+from mybuddy.configedit import RELOAD_MARKER, ConfigEditor, make_reloader
 from mybuddy.deliver import TELEGRAM_API, TOKEN_RE, make_deliverer
 from mybuddy.engine import Deps, RunResult, run_topic
 from mybuddy.export import export, schedule_label
@@ -36,7 +44,7 @@ from mybuddy.models import Clock
 from mybuddy.schedule import Scheduler, SystemClock, next_run
 from mybuddy.store import Store
 from mybuddy.subscriptions import full_mask, mask_chat_id, topic_bits, website_topics
-from mybuddy.summarize import Summarizer
+from mybuddy.summarize import GEMINI_URL, GROQ_URL, Summarizer
 
 GROQ_MODELS_URL = "https://api.groq.com/openai/v1/models"
 EX_CONFIG = 78  # "not configured": the systemd unit does not restart on this exit code
@@ -52,9 +60,16 @@ def _bot_http(allowed_hosts: Collection[str]) -> UrllibHttpClient:
     return UrllibHttpClient(allowed_hosts=allowed_hosts, timeout=HTTP_TIMEOUT_SECONDS)
 
 
+def _chat_http(allowed_hosts: Collection[str]) -> UrllibHttpClient:
+    from mybuddy.chat import TIMEOUT_SECONDS
+
+    return UrllibHttpClient(allowed_hosts=allowed_hosts, timeout=TIMEOUT_SECONDS)
+
+
 # Factories are module attributes so tests can swap in fakes. Each takes the host allowlist.
 make_http: Any = _http
 make_bot_http: Any = _bot_http  # long polling needs a longer timeout than the default 20 s
+make_chat_http: Any = _chat_http  # bot chat: AI provider hosts only, short timeout
 make_clock: Any = SystemClock
 
 
@@ -115,7 +130,7 @@ def _build_deps(
         http=http,
         clock=clock,
         store=store,
-        summarizer=Summarizer(settings, http, clock),
+        summarizer=Summarizer(settings, http, clock, store=store),
         deliverer=make_deliverer(settings, http, clock, store=store, topics=topics),
         topics=list(topics),
         export_path=settings.site_data,
@@ -169,16 +184,32 @@ def cmd_run(
 
 
 def cmd_serve(
-    topics: Sequence[Topic], settings: Settings, clock: Clock, allowed_hosts: Collection[str]
+    topics: Sequence[Topic],
+    settings: Settings,
+    clock: Clock,
+    allowed_hosts: Collection[str],
+    config_path: Path | None = None,
 ) -> int:
-    deps = _build_deps(settings, topics, clock, allowed_hosts)
-    scheduler = Scheduler(topics, lambda t: run_topic(t, deps), clock)
+    state = {"deps": _build_deps(settings, topics, clock, allowed_hosts)}
+
+    def on_reload(config: Config) -> None:
+        # New sources may need new hosts: rebuild the HTTP client, deliverer and store.
+        allowed = build_allowed_hosts(config.topics, settings, config.extra_allowed_hosts)
+        old = state["deps"]
+        state["deps"] = _build_deps(settings, config.topics, clock, allowed)
+        old.store.close()
+
+    reload = None
+    if config_path is not None:
+        marker = settings.data_dir / RELOAD_MARKER
+        reload = make_reloader(config_path, marker, load_config, on_reload)
+    scheduler = Scheduler(topics, lambda t: run_topic(t, state["deps"]), clock, reload=reload)
     scheduler.install_signal_handlers()
     print(f"[mybuddy] serving {len(topics)} topics (fake={settings.fake})", file=sys.stderr)
     try:
         scheduler.loop()
     finally:
-        deps.store.close()
+        state["deps"].store.close()
     return 0
 
 
@@ -242,6 +273,8 @@ def cmd_check(config_path: Path, settings: Settings, clock: Clock, env_file: Pat
             shown = "set"
         elif name == "TELEGRAM_CHAT_ID":  # personal data: masked like everywhere else
             shown = f"set ({mask_chat_id(value)})"
+        elif name == "CHAT_ALLOWLIST":  # chat ids are personal data: count only
+            shown = f"set ({len(parse_chat_allowlist(value)[0])} id(s))"
         else:
             shown = "set (" + "".join(c if c.isprintable() else "?" for c in value[:80]) + ")"
         print(f"  {name:<20} {shown}")
@@ -274,6 +307,7 @@ def cmd_check(config_path: Path, settings: Settings, clock: Clock, env_file: Pat
         parse_max_subscribers(os.environ.get("MYBUDDY_MAX_SUBSCRIBERS"))
     except ConfigError as exc:
         print(f"  warning: {exc}; using {settings.max_subscribers}")
+    _print_access(settings)
 
     if settings.groq_api_key and not settings.fake:
         print("connectivity:")
@@ -308,6 +342,33 @@ def cmd_check(config_path: Path, settings: Settings, clock: Clock, env_file: Pat
         return 1
     print("all good")
     return 0
+
+
+def _print_access(settings: Settings) -> None:
+    """Who may subscribe and chat, and the chat limits. Chat ids are never printed."""
+    print("access:")
+    mode = "public signup" if settings.public_signup else "private (owner + allowlist only)"
+    print(f"  mode: {mode}")
+    owner = 1 if settings.telegram_chat_id else 0
+    print(
+        f"  chat allowlist: owner{'' if owner else ' (not set)'} + {len(settings.chat_allowlist)}"
+    )
+    _, bad = parse_chat_allowlist(os.environ.get("CHAT_ALLOWLIST"))
+    if bad:
+        print(f"  warning: CHAT_ALLOWLIST has {bad} invalid entr{'y' if bad == 1 else 'ies'}")
+    if settings.chat_active:
+        print(
+            f"  chat: on ({settings.chat_rate_per_min}/min and {settings.chat_daily_cap}/day "
+            f"per chat, {settings.chat_daily_token_budget} tokens/day in total)"
+        )
+    elif not (settings.groq_api_key or settings.gemini_api_key):
+        print("  chat: off (no AI key set)")
+    else:
+        print("  chat: off (CHAT_ENABLED=false)")
+    for name in ("CHAT_RATE_PER_MIN", "CHAT_DAILY_CAP", "CHAT_DAILY_TOKEN_BUDGET"):
+        raw = os.environ.get(name, "").strip()
+        if raw and not re.fullmatch(r"[0-9]{1,9}", raw):
+            print(f"  warning: {name} must be a whole number; using the default")
 
 
 def _disallowed_urls(
@@ -415,7 +476,22 @@ def _write_private(path: Path, text: str) -> None:
         raise
 
 
-def cmd_bot(topics: Sequence[Topic], settings: Settings, clock: Clock) -> int:
+def _config_editor(
+    config_path: Path | None, store: Store, clock: Clock, settings: Settings
+) -> ConfigEditor | None:
+    """Owner config changes need a config file the bot can write (MYBUDDY_CONFIG on the VM)."""
+    if config_path is None:
+        return None
+    path = config_path.expanduser()
+    if not os.access(path, os.W_OK) or not os.access(path.parent, os.W_OK):
+        _err(f"[mybuddy-bot] {path} is not writable; config changes from chat are off")
+        return None
+    return ConfigEditor(path, store, clock, marker_path=settings.data_dir / RELOAD_MARKER)
+
+
+def cmd_bot(
+    topics: Sequence[Topic], settings: Settings, clock: Clock, config_path: Path | None = None
+) -> int:
     from mybuddy.bot import SubscriptionBot
 
     token = settings.telegram_bot_token
@@ -426,6 +502,14 @@ def cmd_bot(topics: Sequence[Topic], settings: Settings, clock: Clock) -> int:
         _err("MYBUDDY_FAKE is on; the subscription bot needs the real Telegram API")
         return EX_CONFIG
     with Store(settings.data_dir) as store:
+        chat = None
+        if settings.chat_active:
+            from mybuddy.chat import ChatResponder
+
+            # Only the AI provider hosts: chat can reach nothing else.
+            hosts = frozenset(h for h in map(url_host, (GROQ_URL, GEMINI_URL)) if h)
+            hosts &= frozenset(provider_hosts(settings))
+            chat = ChatResponder(settings, make_chat_http(hosts), store, topics, clock)
         bot = SubscriptionBot(
             token,
             make_bot_http(TELEGRAM_HOSTS),
@@ -435,6 +519,10 @@ def cmd_bot(topics: Sequence[Topic], settings: Settings, clock: Clock) -> int:
             owner_chat_id=settings.telegram_chat_id,
             max_subscribers=settings.max_subscribers,
             bot_username=settings.bot_username,
+            public_signup=settings.public_signup,
+            chat_allowlist=settings.chat_allowlist,
+            chat=chat,
+            editor=_config_editor(config_path, store, clock, settings),
         )
         bot.install_signal_handlers()
         bot.run()
@@ -509,11 +597,11 @@ def _dispatch(
     if args.command == "run":
         return cmd_run(args.topic, topics, settings, clock, args.dry_run, allowed)
     if args.command == "serve":
-        return cmd_serve(topics, settings, clock, allowed)
+        return cmd_serve(topics, settings, clock, allowed, config_path)
     if args.command == "export":
         return cmd_export(topics, settings, clock)
     if args.command == "bot":
-        return cmd_bot(topics, settings, clock)
+        return cmd_bot(topics, settings, clock, config_path)
     if args.command == "subscribers":
         return cmd_subscribers(topics, settings)
     if args.command == "health":

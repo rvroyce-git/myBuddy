@@ -35,7 +35,8 @@ weekly topics) is flagged STALE in the health check.
 
 ## Public subscriptions (Telegram)
 
-Anyone can subscribe through the bot [@myBuddy_update_bot](https://t.me/myBuddy_update_bot).
+When public signup is on (see [Chat and access](#chat-and-access)), anyone can subscribe
+through the bot [@myBuddy_update_bot](https://t.me/myBuddy_update_bot).
 Visitors pick topics on the website, which opens
 `https://t.me/myBuddy_update_bot?start=<payload>`; the bot subscribes them when they tap Start.
 
@@ -55,6 +56,68 @@ Visitors pick topics on the website, which opens
   `mybuddy subscribers` prints counts per topic; `mybuddy check` shows the active total.
 * `mybuddy telegram-setup` and the bot both read updates, so stop `mybuddy-bot` before running
   it.
+
+## Chat and access
+
+MyBuddy is **private by default**: only the owner (`TELEGRAM_CHAT_ID`) and chats in
+`CHAT_ALLOWLIST` can subscribe or chat. Anyone else gets one polite "private" reply (at most every
+10 minutes; no AI call, nothing stored). People who subscribed earlier keep getting reports and
+can always `/stop`.
+
+Allowed chats can ask about the latest reports: send a plain question or `/ask <question>`. Groq
+answers (Gemini only as a fallback, if set) from the saved reports only, citing items like
+`[security #2]`; the bot adds those items' stored links and removes any other URL. Messages and
+feed text are treated as data, the model has no tools, and nothing is remembered between
+messages (`/reset` just confirms that). Logs show masked chat ids and sizes, never text.
+
+| Setting | Default | Meaning |
+| --- | --- | --- |
+| `PUBLIC_SIGNUP` | `false` | `true` lets anyone subscribe (chat stays owner + allowlist) |
+| `CHAT_ALLOWLIST` | empty | extra chat ids, comma separated (the owner is always allowed) |
+| `CHAT_ENABLED` | `true` if `GROQ_API_KEY` is set | `false` turns chat off |
+| `CHAT_RATE_PER_MIN` | `5` | messages per minute per chat |
+| `CHAT_DAILY_CAP` | `30` | messages per chat per day (IST) |
+| `CHAT_DAILY_TOKEN_BUDGET` | `60000` | Groq tokens per day for all chat together, so reports keep their quota |
+
+Limits are counted in SQLite, so restarts don't reset them. To add someone: ask them to message
+the bot, get their chat id (e.g. from @userinfobot), then on the VM add
+`CHAT_ALLOWLIST=123456789,987654321` to `~/.config/mybuddy/env` and
+`sudo systemctl restart mybuddy-bot`. To open signup to everyone, add `PUBLIC_SIGNUP=true` the
+same way. `mybuddy check` prints the current mode, allowlist size and limits.
+
+### Config changes from chat (owner only)
+
+The owner (never allowlisted chats) can change the config from Telegram. No AI is involved;
+the bot understands only these commands:
+
+`/topic on|off <id>` · `/time <id> HH:MM` · `/source add <topic> <https feed url>` ·
+`/source remove <topic> <name>` · `/limit chat-daily|chat-rate|chat-tokens <n>` · `/undo`
+(also as `/set …`; `/set help` lists them). `/config` shows the current settings and
+`/changes` the change log.
+
+Each request is answered with a YAML diff (or the limit change), the result of the real config
+validation and a change id. Nothing changes until you send `/approve <id>` within 10 minutes;
+`/reject <id>` cancels it. On approval the bot keeps a timestamped backup (`backups/`, mode
+600, newest 20), writes the file atomically, and the scheduler reloads it within a minute.
+`/undo` restores the newest backup through the same approval. A new feed must be https; its
+host is added to `extra_allowed_hosts`, and nothing is fetched until the next run. Secrets
+can't be read or set from chat; `/limit` values are stored as overrides in the database.
+Approved edits rewrite the file without its comments (the first backup keeps them).
+
+On the VM both services use `MYBUDDY_CONFIG=~/.config/mybuddy/config/topics.yaml`, a writable
+copy that `deploy.sh` seeds once from `config/topics.yaml`. Later repo changes to the topics
+file are **not** copied over it (deploy prints a note when they differ): merge them by hand, or
+delete the copy and redeploy to re-seed. Only that folder is writable for the bot; the env
+file stays read-only.
+
+### Feedback
+
+Every Telegram report has 👍 / 👎 buttons. Taps from the owner, allowlisted chats and
+subscribers count once per person per report (a second tap can change the vote). Voters are
+stored as salted hashes, not chat ids. `/feedback` (owner) shows the last 7 days per topic.
+`/note <text>` (owner) saves a note that shows in `/feedback` and is never sent to the AI. The
+summariser gets one short line per topic built from vote counts and report lengths only, e.g.
+"Readers liked 4 of 5 recent briefs; disliked ones were longer, so keep it tight."
 
 ## Develop and test
 
