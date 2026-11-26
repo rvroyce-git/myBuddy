@@ -23,7 +23,13 @@ from pathlib import Path
 from typing import Any
 
 from mybuddy.allowlist import build_allowed_hosts
-from mybuddy.cli.check import _disallowed_urls, access_lines, groq_check, telegram_check
+from mybuddy.cli.check import (
+    _disallowed_urls,
+    access_lines,
+    chat_users_today,
+    groq_check,
+    telegram_check,
+)
 from mybuddy.config import DEFAULT_CONFIG_PATH, ConfigError, Settings, Topic, load_config
 from mybuddy.configedit import RELOAD_MARKER
 from mybuddy.models import Clock
@@ -137,7 +143,7 @@ class Doctor:
 
     def check_access(self) -> None:
         """Private by default: who may subscribe and chat (counts only, never chat ids)."""
-        lines = access_lines(self.settings)
+        lines = access_lines(self.settings, chat_users_today(self.settings))
         warnings = [text for kind, text in lines if kind == "warning"]
         info = "; ".join(text for kind, text in lines if kind == "info")
         self.add("WARN" if warnings else "PASS", "access", "; ".join([info, *warnings]))

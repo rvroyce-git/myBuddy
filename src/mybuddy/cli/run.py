@@ -12,7 +12,7 @@ from mybuddy.config import Config, Settings, Topic, load_config
 from mybuddy.configedit import RELOAD_MARKER, make_reloader
 from mybuddy.deliver import make_deliverer
 from mybuddy.engine import Deps, RunResult, run_topic
-from mybuddy.export import export, schedule_label
+from mybuddy.export import export, schedule_label, signup_mode
 from mybuddy.models import Clock
 from mybuddy.schedule import Scheduler, next_run
 from mybuddy.store import Store
@@ -113,6 +113,12 @@ def cmd_serve(
 
 def cmd_export(topics: Sequence[Topic], settings: Settings, clock: Clock) -> int:
     with Store(settings.data_dir) as store:
-        export(topics, store, settings.site_data, clock.now())
+        export(
+            topics,
+            store,
+            settings.site_data,
+            clock.now(),
+            signup=signup_mode(settings.public_signup),
+        )
     print(f"wrote {settings.site_data}")
     return 0

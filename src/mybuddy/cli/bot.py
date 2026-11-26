@@ -62,6 +62,7 @@ def cmd_bot(
             bot_username=settings.bot_username,
             public_signup=settings.public_signup,
             chat_allowlist=settings.chat_allowlist,
+            chat_public=settings.chat_public,
             chat=chat,
             editor=_config_editor(config_path, store, clock, settings),
             site_url=settings.site_url,

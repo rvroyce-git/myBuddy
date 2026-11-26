@@ -13,7 +13,7 @@ from urllib.parse import urlsplit
 from mybuddy import reports
 from mybuddy.config import Settings, Topic
 from mybuddy.deliver import Deliverer, format_report
-from mybuddy.export import export, report_to_dict
+from mybuddy.export import export, report_to_dict, signup_mode
 from mybuddy.models import Clock, HttpClient, Item, Report, Source
 from mybuddy.schedule import weekday_key
 from mybuddy.store import Store, url_hash
@@ -290,7 +290,8 @@ def _run_news(topic: Topic, deps: Deps, *, dry_run: bool = False) -> RunResult:
 
     if deps.export_path is not None and deps.topics:
         try:
-            export(deps.topics, deps.store, deps.export_path, now)
+            signup = None if deps.settings is None else signup_mode(deps.settings.public_signup)
+            export(deps.topics, deps.store, deps.export_path, now, signup=signup)
         except Exception as exc:  # the website is secondary; never fail the run for it
             _log(deps, f"export failed: {type(exc).__name__}: {exc}")
     return result

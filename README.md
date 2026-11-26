@@ -64,6 +64,22 @@ MyBuddy is **private by default**: only the owner (`TELEGRAM_CHAT_ID`) and chats
 10 minutes; no AI call, nothing stored). People who subscribed earlier keep getting reports and
 can always `/stop`.
 
+Two switches open it up (both default `false`):
+
+* **Open signup** – `PUBLIC_SIGNUP=true`: anyone who taps Start can pick topics and subscribe.
+  The website's subscribe card then says "Tap Start, pick topics, ask anything." (it reads the
+  `signup` field of `reports.json`; when private it says "Invite-only for now").
+* **Public chat** – `CHAT_PUBLIC=true`: anyone can ask questions, still limited per person
+  (`CHAT_RATE_PER_MIN`, `CHAT_DAILY_CAP`), by the shared daily token budget and quiet window, and
+  by `CHAT_MAX_USERS_PER_DAY` distinct people per day (new people get a friendly "paused until
+  tomorrow" reply; the owner is never capped). Owner commands (`/config`, `/set`, `/note`,
+  `/feedback` …) stay owner-only.
+
+For open access put `PUBLIC_SIGNUP=true` and `CHAT_PUBLIC=true` in `~/.config/mybuddy/env` on
+the VM, then `sudo systemctl restart mybuddy-bot` (the website line updates at the next report
+export, or run `mybuddy export`). Set them back to `false` (and restart) to go private again.
+`mybuddy check` and `mybuddy doctor` show both modes and today's chatting people vs the limit.
+
 Allowed chats can ask about the latest reports: send a plain question or `/ask <question>`. Groq
 answers (Gemini only as a fallback, if set) from the saved reports only, citing items like
 `[security #2]`; the bot adds those items' stored links and removes any other URL. Messages and
@@ -74,6 +90,8 @@ messages (`/reset` just confirms that). Logs show masked chat ids and sizes, nev
 | --- | --- | --- |
 | `PUBLIC_SIGNUP` | `false` | `true` lets anyone subscribe (chat stays owner + allowlist) |
 | `CHAT_ALLOWLIST` | empty | extra chat ids, comma separated (the owner is always allowed) |
+| `CHAT_PUBLIC` | `false` | `true` lets anyone chat (within the limits below) |
+| `CHAT_MAX_USERS_PER_DAY` | `50` | distinct people who may chat per day (IST), owner excluded |
 | `CHAT_ENABLED` | `true` if `GROQ_API_KEY` is set | `false` turns chat off |
 | `CHAT_RATE_PER_MIN` | `2` | messages per minute per chat |
 | `CHAT_DAILY_CAP` | `30` | messages per chat per day (IST) |

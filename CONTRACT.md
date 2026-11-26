@@ -87,6 +87,10 @@ Every source returns `Item`s with absolute https URLs. Verify each endpoint with
 ```
 `report` may be `null` when a topic has not run yet. The website must handle that.
 
+Optional top-level `"signup": "open" | "private"` (from `PUBLIC_SIGNUP`). The subscribe card shows
+"Tap Start, pick topics, ask anything." for `"open"`, and the invite-only line for anything else,
+including a missing field.
+
 ## Subscriptions contract (website ↔ Telegram bot)
 
 Visitors pick topics on the website and subscribe to the existing bot `@myBuddy_update_bot`

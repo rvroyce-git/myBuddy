@@ -30,6 +30,7 @@ DEFAULT_BOT_USERNAME = "myBuddy_update_bot"
 # token budget, never more than MAX_CHAT_DAILY_TOKEN_BUDGET.
 DEFAULT_CHAT_RATE_PER_MIN = 2
 DEFAULT_CHAT_DAILY_CAP = 30
+DEFAULT_CHAT_MAX_USERS_PER_DAY = 50  # distinct chatting people per IST day (public chat)
 DEFAULT_CHAT_DAILY_TOKEN_BUDGET = 60_000
 MAX_CHAT_DAILY_TOKEN_BUDGET = 80_000
 DEFAULT_SITE_URL = "https://rvroyce-git.github.io/myBuddy/"
@@ -140,6 +141,8 @@ class Settings:
     # Access: private by default. The owner (telegram_chat_id) is always allowed.
     public_signup: bool = False
     chat_allowlist: tuple[int, ...] = field(default=(), repr=False)  # extra chat ids
+    chat_public: bool = False  # true: any private chat may use AI chat (within the limits)
+    chat_max_users_per_day: int = DEFAULT_CHAT_MAX_USERS_PER_DAY
     chat_enabled: bool = True  # only takes effect with an AI key (see chat_active)
     chat_rate_per_min: int = DEFAULT_CHAT_RATE_PER_MIN
     chat_daily_cap: int = DEFAULT_CHAT_DAILY_CAP
@@ -178,6 +181,10 @@ class Settings:
             bot_username=_bot_username_or_default(get("MYBUDDY_BOT_USERNAME")),
             public_signup=parse_flag(get("PUBLIC_SIGNUP"), default=False),
             chat_allowlist=parse_chat_allowlist(get("CHAT_ALLOWLIST"))[0],
+            chat_public=parse_flag(get("CHAT_PUBLIC"), default=False),
+            chat_max_users_per_day=parse_count(
+                get("CHAT_MAX_USERS_PER_DAY"), DEFAULT_CHAT_MAX_USERS_PER_DAY, 100_000
+            ),
             chat_enabled=parse_flag(get("CHAT_ENABLED"), default=bool(get("GROQ_API_KEY"))),
             chat_rate_per_min=parse_count(
                 get("CHAT_RATE_PER_MIN"), DEFAULT_CHAT_RATE_PER_MIN, 1000

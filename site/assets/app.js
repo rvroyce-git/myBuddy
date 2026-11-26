@@ -78,6 +78,9 @@ async function load() {
     Deck.build();
     buildList();
     Subs.build(topics);
+    $('#subsInvite').textContent = raw.signup === 'open'
+      ? 'Tap Start, pick topics, ask anything.'
+      : 'Invite-only for now — tap Start to ask for access.';
     clampAll();
     if (doc.fonts && doc.fonts.ready) doc.fonts.ready.then(clampAll).catch(() => {});
   } catch (err) {

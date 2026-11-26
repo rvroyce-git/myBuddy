@@ -4,8 +4,10 @@ from __future__ import annotations
 
 import os
 import re
+import sqlite3
 import stat
 from collections.abc import Collection, Sequence
+from datetime import datetime
 from pathlib import Path
 
 from mybuddy.allowlist import build_allowed_hosts, topic_source_specs
@@ -24,6 +26,7 @@ from mybuddy.config import (
 from mybuddy.deliver import TOKEN_RE
 from mybuddy.http import HttpError, url_host
 from mybuddy.models import Clock
+from mybuddy.schedule import IST
 from mybuddy.store import Store
 from mybuddy.subscriptions import mask_chat_id
 
@@ -144,7 +147,7 @@ def cmd_check(config_path: Path, settings: Settings, clock: Clock, env_file: Pat
     return 0
 
 
-def access_lines(settings: Settings) -> list[tuple[str, str]]:
+def access_lines(settings: Settings, users_today: int | None = None) -> list[tuple[str, str]]:
     """Who may subscribe and chat, and the chat limits, as (kind, text) with kind "info" or
     "warning", in display order. Chat ids are never included (counts only)."""
     out: list[tuple[str, str]] = []
@@ -158,6 +161,16 @@ def access_lines(settings: Settings) -> list[tuple[str, str]]:
             f"{len(settings.chat_allowlist)}",
         )
     )
+    used = "" if users_today is None else f"{users_today}/"
+    if settings.chat_public:
+        out.append(
+            (
+                "info",
+                f"public chat: on (anyone; {used}{settings.chat_max_users_per_day} people/day)",
+            )
+        )
+    else:
+        out.append(("info", "public chat: off (owner + allowlist only)"))
     _, bad = parse_chat_allowlist(os.environ.get("CHAT_ALLOWLIST"))
     if bad:
         out.append(
@@ -175,7 +188,12 @@ def access_lines(settings: Settings) -> list[tuple[str, str]]:
         out.append(("info", "chat: off (no AI key set)"))
     else:
         out.append(("info", "chat: off (CHAT_ENABLED=false)"))
-    for name in ("CHAT_RATE_PER_MIN", "CHAT_DAILY_CAP", "CHAT_DAILY_TOKEN_BUDGET"):
+    for name in (
+        "CHAT_RATE_PER_MIN",
+        "CHAT_DAILY_CAP",
+        "CHAT_DAILY_TOKEN_BUDGET",
+        "CHAT_MAX_USERS_PER_DAY",
+    ):
         raw = os.environ.get(name, "").strip()
         if raw and not re.fullmatch(r"[0-9]{1,9}", raw):
             out.append(("warning", f"{name} must be a whole number; using the default"))
@@ -191,10 +209,29 @@ def access_lines(settings: Settings) -> list[tuple[str, str]]:
     return out
 
 
+def chat_users_today(settings: Settings) -> int | None:
+    """Distinct people who chatted today (IST), or None when there is no database yet."""
+    path = settings.data_dir / "mybuddy.db"
+    if not path.exists():
+        return None
+    try:  # read-only: never creates tables or touches permissions
+        db = sqlite3.connect(f"{path.as_uri()}?mode=ro", uri=True, timeout=2)
+        try:
+            row = db.execute(
+                "SELECT COUNT(DISTINCT chat_id) FROM chat_usage WHERE day=?",
+                (datetime.now(IST).date().isoformat(),),
+            ).fetchone()
+        finally:
+            db.close()
+        return int(row[0])
+    except Exception:
+        return None
+
+
 def _print_access(settings: Settings) -> None:
     """Who may subscribe and chat, and the chat limits. Chat ids are never printed."""
     print("access:")
-    for kind, text in access_lines(settings):
+    for kind, text in access_lines(settings, chat_users_today(settings)):
         print(f"  {'warning: ' if kind == 'warning' else ''}{text}")
 
 
