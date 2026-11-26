@@ -19,6 +19,7 @@ from mybuddy.bot import (
     DENY_REPLY_INTERVAL_SECONDS,
     HELP,
     NOT_SUBSCRIBED,
+    OWNER_HELP,
     PRIVATE,
     PRIVATE_TAP,
     STOPPED,
@@ -294,7 +295,7 @@ def test_chat_disabled_falls_back_to_commands(
     bot.handle_update(msg("hello", chat=OWNER))
     bot.handle_update(msg("/ask hello", chat=OWNER))
     bot.handle_update(msg("/help", chat=OWNER))
-    assert tg.texts() == [UNKNOWN, CHAT_UNAVAILABLE, HELP] and aihttp.calls == []
+    assert tg.texts() == [UNKNOWN, CHAT_UNAVAILABLE, HELP + OWNER_HELP] and aihttp.calls == []
 
 
 def test_ask_and_reset(bot: SubscriptionBot, tg: TgHttp, aihttp: FakeHttp) -> None:

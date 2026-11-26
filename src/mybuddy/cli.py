@@ -26,6 +26,7 @@ from mybuddy.config import (
     DEFAULT_CONFIG_PATH,
     DEFAULT_ENV_FILE,
     SETTING_ENV_VARS,
+    Config,
     ConfigError,
     Settings,
     Topic,
@@ -34,6 +35,7 @@ from mybuddy.config import (
     parse_chat_allowlist,
     parse_max_subscribers,
 )
+from mybuddy.configedit import RELOAD_MARKER, ConfigEditor, make_reloader
 from mybuddy.deliver import TELEGRAM_API, TOKEN_RE, make_deliverer
 from mybuddy.engine import Deps, RunResult, run_topic
 from mybuddy.export import export, schedule_label
@@ -125,7 +127,7 @@ def _build_deps(
         http=http,
         clock=clock,
         store=store,
-        summarizer=Summarizer(settings, http, clock),
+        summarizer=Summarizer(settings, http, clock, store=store),
         deliverer=make_deliverer(settings, http, clock, store=store, topics=topics),
         topics=list(topics),
         export_path=settings.site_data,
@@ -177,16 +179,32 @@ def cmd_run(
 
 
 def cmd_serve(
-    topics: Sequence[Topic], settings: Settings, clock: Clock, allowed_hosts: Collection[str]
+    topics: Sequence[Topic],
+    settings: Settings,
+    clock: Clock,
+    allowed_hosts: Collection[str],
+    config_path: Path | None = None,
 ) -> int:
-    deps = _build_deps(settings, topics, clock, allowed_hosts)
-    scheduler = Scheduler(topics, lambda t: run_topic(t, deps), clock)
+    state = {"deps": _build_deps(settings, topics, clock, allowed_hosts)}
+
+    def on_reload(config: Config) -> None:
+        # New sources may need new hosts: rebuild the HTTP client, deliverer and store.
+        allowed = build_allowed_hosts(config.topics, settings, config.extra_allowed_hosts)
+        old = state["deps"]
+        state["deps"] = _build_deps(settings, config.topics, clock, allowed)
+        old.store.close()
+
+    reload = None
+    if config_path is not None:
+        marker = settings.data_dir / RELOAD_MARKER
+        reload = make_reloader(config_path, marker, load_config, on_reload)
+    scheduler = Scheduler(topics, lambda t: run_topic(t, state["deps"]), clock, reload=reload)
     scheduler.install_signal_handlers()
     print(f"[mybuddy] serving {len(topics)} topics (fake={settings.fake})", file=sys.stderr)
     try:
         scheduler.loop()
     finally:
-        deps.store.close()
+        state["deps"].store.close()
     return 0
 
 
@@ -453,7 +471,22 @@ def _write_private(path: Path, text: str) -> None:
         raise
 
 
-def cmd_bot(topics: Sequence[Topic], settings: Settings, clock: Clock) -> int:
+def _config_editor(
+    config_path: Path | None, store: Store, clock: Clock, settings: Settings
+) -> ConfigEditor | None:
+    """Owner config changes need a config file the bot can write (MYBUDDY_CONFIG on the VM)."""
+    if config_path is None:
+        return None
+    path = config_path.expanduser()
+    if not os.access(path, os.W_OK) or not os.access(path.parent, os.W_OK):
+        _err(f"[mybuddy-bot] {path} is not writable; config changes from chat are off")
+        return None
+    return ConfigEditor(path, store, clock, marker_path=settings.data_dir / RELOAD_MARKER)
+
+
+def cmd_bot(
+    topics: Sequence[Topic], settings: Settings, clock: Clock, config_path: Path | None = None
+) -> int:
     from mybuddy.bot import SubscriptionBot
 
     token = settings.telegram_bot_token
@@ -484,6 +517,7 @@ def cmd_bot(topics: Sequence[Topic], settings: Settings, clock: Clock) -> int:
             public_signup=settings.public_signup,
             chat_allowlist=settings.chat_allowlist,
             chat=chat,
+            editor=_config_editor(config_path, store, clock, settings),
         )
         bot.install_signal_handlers()
         bot.run()
@@ -545,11 +579,11 @@ def _dispatch(
     if args.command == "run":
         return cmd_run(args.topic, topics, settings, clock, args.dry_run, allowed)
     if args.command == "serve":
-        return cmd_serve(topics, settings, clock, allowed)
+        return cmd_serve(topics, settings, clock, allowed, config_path)
     if args.command == "export":
         return cmd_export(topics, settings, clock)
     if args.command == "bot":
-        return cmd_bot(topics, settings, clock)
+        return cmd_bot(topics, settings, clock, config_path)
     if args.command == "subscribers":
         return cmd_subscribers(topics, settings)
     return 2  # pragma: no cover - argparse enforces choices

@@ -70,6 +70,40 @@ the bot, get their chat id (e.g. from @userinfobot), then on the VM add
 `sudo systemctl restart mybuddy-bot`. To open signup to everyone, add `PUBLIC_SIGNUP=true` the
 same way. `mybuddy check` prints the current mode, allowlist size and limits.
 
+### Config changes from chat (owner only)
+
+The owner (never allowlisted chats) can change the config from Telegram. No AI is involved;
+the bot understands only these commands:
+
+`/topic on|off <id>` · `/time <id> HH:MM` · `/source add <topic> <https feed url>` ·
+`/source remove <topic> <name>` · `/limit chat-daily|chat-rate|chat-tokens <n>` · `/undo`
+(also as `/set …`; `/set help` lists them). `/config` shows the current settings and
+`/changes` the change log.
+
+Each request is answered with a YAML diff (or the limit change), the result of the real config
+validation and a change id. Nothing changes until you send `/approve <id>` within 10 minutes;
+`/reject <id>` cancels it. On approval the bot keeps a timestamped backup (`backups/`, mode
+600, newest 20), writes the file atomically, and the scheduler reloads it within a minute.
+`/undo` restores the newest backup through the same approval. A new feed must be https; its
+host is added to `extra_allowed_hosts`, and nothing is fetched until the next run. Secrets
+can't be read or set from chat; `/limit` values are stored as overrides in the database.
+Approved edits rewrite the file without its comments (the first backup keeps them).
+
+On the VM both services use `MYBUDDY_CONFIG=~/.config/mybuddy/config/topics.yaml`, a writable
+copy that `deploy.sh` seeds once from `config/topics.yaml`. Later repo changes to the topics
+file are **not** copied over it (deploy prints a note when they differ): merge them by hand, or
+delete the copy and redeploy to re-seed. Only that folder is writable for the bot; the env
+file stays read-only.
+
+### Feedback
+
+Every Telegram report has 👍 / 👎 buttons. Taps from the owner, allowlisted chats and
+subscribers count once per person per report (a second tap can change the vote). Voters are
+stored as salted hashes, not chat ids. `/feedback` (owner) shows the last 7 days per topic.
+`/note <text>` (owner) saves a note that shows in `/feedback` and is never sent to the AI. The
+summariser gets one short line per topic built from vote counts and report lengths only, e.g.
+"Readers liked 4 of 5 recent briefs; disliked ones were longer, so keep it tight."
+
 ## Develop and test
 
 ```bash

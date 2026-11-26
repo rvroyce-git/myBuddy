@@ -299,12 +299,26 @@ class ChatResponder:
     def _log(self, msg: str) -> None:
         print(f"[mybuddy-bot] {msg}", file=self.log or sys.stderr, flush=True)
 
+    def limits(self) -> dict[str, int]:
+        """Effective limits: settings, overridden by approved owner changes (/limit)."""
+        out = {
+            "chat_rate_per_min": self.rate_per_min,
+            "chat_daily_cap": self.daily_cap,
+            "chat_daily_token_budget": self.token_budget,
+        }
+        for name, value in self.store.limit_overrides().items():
+            if name in out:
+                out[name] = value
+        return out
+
     def limited(self, chat_id: int) -> str | None:
         """The fixed reply when this chat is over its per-minute or daily limit, else None."""
         now = self.clock.now()
-        if self.store.chat_uses_since(chat_id, now - timedelta(minutes=1)) >= self.rate_per_min:
+        limits = self.limits()
+        since = now - timedelta(minutes=1)
+        if self.store.chat_uses_since(chat_id, since) >= limits["chat_rate_per_min"]:
             return RATE_LIMITED
-        if self.store.chat_uses_on(chat_id, ist_day(self.clock)) >= self.daily_cap:
+        if self.store.chat_uses_on(chat_id, ist_day(self.clock)) >= limits["chat_daily_cap"]:
             return DAILY_LIMIT
         return None
 
@@ -334,7 +348,8 @@ class ChatResponder:
         messages = build_messages(context, question)
         prompt_chars = sum(len(m["content"]) for m in messages)
         estimate = estimate_tokens(prompt_chars) + MAX_TOKENS
-        if self.store.chat_tokens_on(day) + estimate > self.token_budget:
+        budget = self.limits()["chat_daily_token_budget"]
+        if self.store.chat_tokens_on(day) + estimate > budget:
             self._log(f"chat {masked}: daily chat token budget reached")
             return BUDGET_LIMIT
         row = self.store.record_chat_use(chat_id, self.clock.now(), day)

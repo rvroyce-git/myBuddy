@@ -18,6 +18,7 @@ from typing import Any, TextIO
 from mybuddy.config import PROMPTS_DIR, Settings, Topic
 from mybuddy.http import HttpError
 from mybuddy.models import Clock, HttpClient, Item, Report, ReportItem
+from mybuddy.store import Store
 
 GROQ_URL = "https://api.groq.com/openai/v1/chat/completions"
 GEMINI_URL = "https://generativelanguage.googleapis.com/v1beta/openai/chat/completions"
@@ -175,6 +176,7 @@ class Summarizer:
         prompts_dir: Path = PROMPTS_DIR,
         sleep: Callable[[float], None] = time.sleep,
         log: TextIO | None = None,
+        store: Store | None = None,
     ) -> None:
         self.settings = settings
         self.http = http
@@ -182,12 +184,25 @@ class Summarizer:
         self.prompts_dir = prompts_dir
         self.sleep = sleep
         self.log = log
+        self.store = store
 
     def _log(self, msg: str) -> None:
         print(f"[mybuddy] {msg}", file=self.log or sys.stderr)
 
     def providers(self) -> list[Provider]:
         return providers_for(self.settings)
+
+    def _preference_hint(self, topic_id: str) -> str:
+        """Bounded, counts-only hint from 👍/👎 votes ("" without a store or votes)."""
+        if self.store is None:
+            return ""
+        from mybuddy.feedback import preference_hint
+
+        try:
+            return preference_hint(self.store, topic_id, self.clock.now())
+        except Exception as exc:  # feedback must never break a report
+            self._log(f"{topic_id}: feedback hint unavailable ({type(exc).__name__})")
+            return ""
 
     # ---- prompt
     def build_messages(
@@ -211,6 +226,9 @@ class Summarizer:
             for key in ("stars", "stars_gained"):
                 if key in item.extra:
                     lines.append(f"    {key.replace('_', ' ').title()}: {item.extra[key]}")
+        hint = self._preference_hint(topic.id)
+        if hint:
+            lines += ["", f"Reader feedback (from vote counts only): {hint}"]
         lines += [
             "",
             "Reply with only a JSON object of this exact shape:",

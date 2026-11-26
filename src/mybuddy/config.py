@@ -46,6 +46,7 @@ _TOPIC_KEYS = {
     "max_items",
     "audience",
     "bit",
+    "enabled",
 }
 _REQUIRED_TOPIC_KEYS = ("id", "title", "emoji", "description", "schedule", "ai")
 _SCHEDULE_KEYS = {"time", "days", "every_minutes"}
@@ -97,6 +98,9 @@ class Topic:
     # AI (website) topics only: permanent bit in Telegram start-link payloads. Never change or
     # reuse a bit, even when topics are reordered or removed.
     bit: int | None = None
+    # `enabled: false` keeps the topic in the config (and on the website) but the scheduler
+    # skips it. Owner can toggle it from the bot (/topic on|off <id>).
+    enabled: bool = True
 
 
 @dataclass(frozen=True)
@@ -444,7 +448,12 @@ def _parse_topic(
         if ai:
             raise ConfigError(f"{where}.audience: only non-AI topics can borrow an audience")
 
+    enabled = data.get("enabled", True)
+    if not isinstance(enabled, bool):
+        raise ConfigError(f"{where}.enabled: must be true or false")
+
     return Topic(
+        enabled=enabled,
         id=topic_id,
         title=title,
         emoji=emoji,
@@ -527,6 +536,15 @@ def parse_topics(
                 "id of an AI topic in this file"
             )
     return topics
+
+
+def validate_config_text(text: str, *, origin: str = "topics.yaml") -> Config:
+    """Parse and validate topics.yaml text exactly as load_config would. Raises ConfigError."""
+    try:
+        data = yaml.safe_load(text)
+    except yaml.YAMLError as exc:
+        raise ConfigError(f"{origin}: invalid YAML: {exc}") from exc
+    return parse_config(data, origin=origin, source_types=_known_source_types())
 
 
 def load_topics(
