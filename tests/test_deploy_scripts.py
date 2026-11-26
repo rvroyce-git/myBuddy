@@ -263,3 +263,50 @@ def test_budget_alert_never_hardcodes_an_email() -> None:
 def test_security_list_script_backs_up_and_guards_anywhere() -> None:
     text = _text("oci-security-list-ssh.sh")
     assert "--allow-anywhere" in text and "backup" in text and "--dry-run" in text
+
+
+def test_build_pages_runs_without_data_sha(tmp_path) -> None:
+    """publish-data.yml (data branch) calls build-pages.sh without DATA_SHA/SITE_TREE; under
+    `set -u` that must not abort (it did on bash 5, so no report was published)."""
+    import os
+
+    if shutil.which("git") is None:
+        pytest.skip("git not installed")
+    script = DEPLOY.parent / ".github" / "scripts" / "build-pages.sh"
+    remote = tmp_path / "remote.git"
+    subprocess.run(["git", "init", "-q", "--bare", str(remote)], check=True)
+    site = tmp_path / "site"
+    (site / "data").mkdir(parents=True)
+    (site / "index.html").write_text("<p>hi</p>", encoding="utf-8")
+    data = tmp_path / "data"
+    data.mkdir()
+    (data / "reports.json").write_text('{"topics": []}', encoding="utf-8")
+    git = ["git", "-C", str(data), "-c", "user.name=t", "-c", "user.email=t@t"]
+    subprocess.run(["git", "init", "-q", str(data)], check=True)
+    subprocess.run([*git, "add", "-A"], check=True)
+    subprocess.run([*git, "commit", "-q", "-m", "data"], check=True)
+    data_sha = subprocess.run(
+        [*git, "rev-parse", "HEAD"], capture_output=True, text=True, check=True
+    ).stdout.strip()
+    gitconfig = tmp_path / "gitconfig"
+    gitconfig.write_text(
+        f'[url "{remote}"]\n\tinsteadOf = https://x-access-token:T@github.com/o/r.git\n',
+        encoding="utf-8",
+    )
+    env = {k: v for k, v in os.environ.items() if k not in ("DATA_SHA", "SITE_TREE")}
+    env.update(
+        GITHUB_TOKEN="T",
+        GITHUB_REPOSITORY="o/r",
+        GITHUB_SHA="abcdef0123",
+        GIT_CONFIG_GLOBAL=str(gitconfig),
+    )
+    subprocess.run(
+        ["bash", str(script), str(site), str(data / "reports.json")], env=env, check=True
+    )
+    shown = subprocess.run(
+        ["git", "-C", str(remote), "show", "gh-pages:.data-sha"],
+        capture_output=True,
+        text=True,
+        check=True,
+    )
+    assert shown.stdout.strip() == data_sha
