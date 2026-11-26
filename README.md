@@ -126,6 +126,18 @@ fails (and GitHub emails the owner) if the live reports are more than 26 hours o
 * The services run as an unprivileged `mybuddy` user with systemd hardening. The app opens no
   inbound ports (the bot uses long polling).
 
+## More documentation
+
+* [SECURITY.md](SECURITY.md): reporting, secrets, key rotation, what was hardened
+* [CONTRIBUTING.md](CONTRIBUTING.md): branch + PR workflow, checks, commit style
+* [docs/ssh-access.md](docs/ssh-access.md): closing port 22 (OCI Bastion, Tailscale, fixed IPs)
+* [docs/costs.md](docs/costs.md): free tiers and the budget alert ·
+  [docs/privacy.md](docs/privacy.md): what is stored and sent where
+* [docs/troubleshooting.md](docs/troubleshooting.md) ·
+  [docs/walkthrough.md](docs/walkthrough.md): redirects, subscription links, systemd hardening
+* Server scripts: `deploy/harden.sh`, `deploy/create-vm.sh`, `deploy/oci-security-list-ssh.sh`,
+  `deploy/budget-alert.sh` (all support `--dry-run`)
+
 ## License
 
 MIT — see [LICENSE](LICENSE).
