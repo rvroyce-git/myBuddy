@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import os
-from collections.abc import Sequence
+from collections.abc import Collection, Sequence
 from pathlib import Path
 
 from mybuddy.allowlist import TELEGRAM_HOSTS, provider_hosts
@@ -13,6 +13,7 @@ from mybuddy.configedit import RELOAD_MARKER, ConfigEditor
 from mybuddy.deliver import TOKEN_RE
 from mybuddy.http import url_host
 from mybuddy.models import Clock
+from mybuddy.ondemand import OnDemandRunner
 from mybuddy.store import Store
 from mybuddy.summarize import GEMINI_URL, GROQ_URL
 
@@ -30,8 +31,26 @@ def _config_editor(
     return ConfigEditor(path, store, clock, marker_path=settings.data_dir / RELOAD_MARKER)
 
 
+def _runner(
+    topics: Sequence[Topic],
+    settings: Settings,
+    clock: Clock,
+    allowed_hosts: Collection[str] | None,
+) -> OnDemandRunner | None:
+    """The owner's /run: same hosts as `mybuddy run`; reports go to the owner only."""
+    if allowed_hosts is None:
+        return None
+    from mybuddy.cli.run import owner_run
+
+    return OnDemandRunner(owner_run(settings, topics, clock, allowed_hosts), settings.data_dir)
+
+
 def cmd_bot(
-    topics: Sequence[Topic], settings: Settings, clock: Clock, config_path: Path | None = None
+    topics: Sequence[Topic],
+    settings: Settings,
+    clock: Clock,
+    config_path: Path | None = None,
+    allowed_hosts: Collection[str] | None = None,
 ) -> int:
     from mybuddy.bot import SubscriptionBot
 
@@ -66,6 +85,7 @@ def cmd_bot(
             chat=chat,
             editor=_config_editor(config_path, store, clock, settings),
             site_url=settings.site_url,
+            runner=_runner(topics, settings, clock, allowed_hosts),
         )
         bot.install_signal_handlers()
         bot.run()

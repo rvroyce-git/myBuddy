@@ -201,7 +201,7 @@ def _dispatch(
     if args.command == "export":
         return cmd_export(topics, settings, clock)
     if args.command == "bot":
-        return cmd_bot(topics, settings, clock, config_path)
+        return cmd_bot(topics, settings, clock, config_path, allowed)
     if args.command == "subscribers":
         return cmd_subscribers(topics, settings)
     if args.command == "health":

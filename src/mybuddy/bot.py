@@ -30,10 +30,17 @@ from typing import Any, TextIO
 from mybuddy.chat import RESET, ChatResponder
 from mybuddy.config import DEFAULT_BOT_USERNAME, DEFAULT_MAX_SUBSCRIBERS, DEFAULT_SITE_URL, Topic
 from mybuddy.configedit import ConfigEditor
-from mybuddy.deliver import TOKEN_RE, chat_is_gone, telegram_description, telegram_url
+from mybuddy.deliver import (
+    TOKEN_RE,
+    chat_is_gone,
+    split_message,
+    telegram_description,
+    telegram_url,
+)
 from mybuddy.feedback import CALLBACK_RE, weekly_summary
 from mybuddy.http import HttpError
 from mybuddy.models import Clock, HttpClient
+from mybuddy.ondemand import OnDemandRunner, format_latest, latest_request, run_request
 from mybuddy.store import Store, report_chars
 from mybuddy.subscriptions import (
     decode_payload,
@@ -95,8 +102,20 @@ PRIVATE_TEMPLATE = (
 )
 PRIVATE = PRIVATE_TEMPLATE.format(site_url=DEFAULT_SITE_URL)  # with the default SITE_URL
 PRIVATE_TAP = "MyBuddy is private for now."
-CHAT_HELP = "\n\nAsk me about the latest reports: just send a question, or /ask <question>."
-CHAT_WELCOME = "\nYou can also ask me anything about the latest reports – just send a question."
+CHAT_HELP = (
+    "\n\nAsk me about the latest reports: just send a question, or /ask <question>. "
+    "Follow-up questions work too (I remember the last few messages for 30 minutes; "
+    "/reset forgets them).\n/latest <topic> – today's report for a topic"
+)
+CHAT_WELCOME = (
+    "\nYou can also ask me anything about the latest reports – just send a question. "
+    "Follow-up questions work too."
+)
+RUN_OWNER_ONLY = "Sorry, running reports on demand is for the owner only. Try /latest <topic>."
+RUN_OFF = "Running reports from chat isn't set up on this server."
+RUN_BUSY = "A report is already running. Please wait for it to finish."
+RUN_STARTED = "Running {title} now. I'll send it to you shortly."
+NO_LATEST = "There's no saved {title} report yet."
 CHAT_UNAVAILABLE = "Chat isn't available here. Send /help to see what I can do."
 OWNER_ONLY = "That command is for the owner only."
 CONFIG_OFF = "Config changes from chat aren't set up on this server."
@@ -174,6 +193,7 @@ class SubscriptionBot:
         chat: ChatResponder | None = None,
         editor: ConfigEditor | None = None,
         site_url: str = DEFAULT_SITE_URL,
+        runner: OnDemandRunner | None = None,
     ) -> None:
         if not TOKEN_RE.fullmatch(token):
             raise ValueError("TELEGRAM_BOT_TOKEN does not look like a bot token")
@@ -206,6 +226,7 @@ class SubscriptionBot:
         self.editor = editor
         self._denied: dict[int, float] = {}  # chat -> when it last got the PRIVATE reply
         self.private_reply = PRIVATE_TEMPLATE.format(site_url=site_url)
+        self.runner = runner
 
     # ------------------------------------------------------------------ plumbing
     def _log(self, msg: str) -> None:
@@ -295,6 +316,60 @@ class SubscriptionBot:
             self._send(chat_id, CHAT_UNAVAILABLE)
             return
         self._send(chat_id, self.chat.answer(chat_id, question))
+
+    # ------------------------------------------------------------------ on demand
+    def _topic_choices(self, chat_id: int) -> str:
+        ids = [t.id for t in self._visible_topics(chat_id)]
+        return "Topics: " + ", ".join(ids)
+
+    def _visible_topics(self, chat_id: int) -> list[Topic]:
+        owner = self.owner is not None and chat_id == self.owner
+        return [t for t in self.all_topics if owner or t.kind != "health"]
+
+    def _run(self, chat_id: int, arg: str) -> None:
+        """Owner only: run a topic now in the background; the report goes to the owner only."""
+        if self.owner is None or chat_id != self.owner:
+            self._send(chat_id, RUN_OWNER_ONLY)
+            return
+        if self.runner is None:
+            self._send(chat_id, RUN_OFF)
+            return
+        topic = run_request("run " + arg, self.all_topics) if arg else None
+        if topic is None:
+            self._send(chat_id, "Which report? Send /run <topic>.\n" + self._topic_choices(chat_id))
+            return
+
+        def done(reply: str) -> None:
+            self._send(chat_id, reply)
+
+        if not self.runner.start(topic, done):
+            self._send(chat_id, RUN_BUSY)
+            return
+        self._log(f"chat {mask_chat_id(chat_id)}: on-demand run of {topic.id} started")
+        self._send(chat_id, RUN_STARTED.format(title=topic.title))
+
+    def _latest(self, chat_id: int, topic: Topic | None) -> None:
+        """Anyone: the topic's latest stored report, formatted like the scheduled message."""
+        if topic is None or topic not in self._visible_topics(chat_id):
+            self._send(
+                chat_id, "Which report? Send /latest <topic>.\n" + self._topic_choices(chat_id)
+            )
+            return
+        data = self.store.latest_report(topic.id)
+        if not data:
+            self._send(chat_id, NO_LATEST.format(title=topic.title))
+            return
+        for part in split_message(format_latest(topic, data), TELEGRAM_TEXT_MAX):
+            self._call(
+                "sendMessage",
+                {
+                    "chat_id": chat_id,
+                    "text": part,
+                    "parse_mode": "HTML",
+                    "link_preview_options": {"is_disabled": True},
+                },
+                chat_id,
+            )
 
     # ------------------------------------------------------------------ owner tools
     def _owner_command(self, chat_id: int, command: str, arg: str) -> None:
@@ -464,13 +539,24 @@ class SubscriptionBot:
         if not self._may_subscribe(chat_id) and not can_chat:
             self._deny(chat_id)
             return
+        is_owner = self.owner is not None and chat_id == self.owner
         if command in OWNER_COMMANDS:
             self._owner_command(chat_id, command, arg)
+        elif command == "run":
+            self._run(chat_id, arg)
+        elif command == "latest":
+            self._latest(chat_id, latest_request("show me today's " + arg, self.all_topics))
+        elif command is None and (wanted := latest_request(text, self.all_topics)):
+            self._latest(chat_id, wanted)
+        elif command is None and is_owner and run_request(text, self.all_topics):
+            self._run(chat_id, text)
         elif command is None and text and not text.startswith("/") and can_chat:
             self._chat(chat_id, text)
         elif command == "ask":
             self._chat(chat_id, arg)
         elif command == "reset":
+            if can_chat and self.chat is not None:
+                self.chat.reset(chat_id)
             self._send(chat_id, RESET if can_chat else UNKNOWN)
         elif command == "start":
             topic_ids = decode_payload(arg, self.bits) if arg else None
