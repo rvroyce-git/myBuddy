@@ -14,3 +14,5 @@ __pycache__/
 site/data/reports.json
 .claude/
 node_modules/
+# Written by `mybuddy init` (mode 600); per-install, never committed.
+config/topics.local.yaml

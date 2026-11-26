@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import contextlib
+import sqlite3
 import sys
 from collections.abc import Collection, Sequence
 
@@ -14,6 +16,30 @@ from mybuddy.models import Clock
 from mybuddy.schedule import Scheduler, next_run
 from mybuddy.store import Store
 from mybuddy.summarize import Summarizer
+
+LAST_RUN_KEY = "_run:{}"  # snapshot key per topic ('_' never starts a topic id); see doctor
+
+
+def record_run(store: Store, topic_id: str, status: str, clock: Clock) -> None:
+    """Remember when a topic last ran (even with nothing new) so `mybuddy doctor` can spot
+    a stalled scheduler. Best effort: bookkeeping never fails a run."""
+    with contextlib.suppress(sqlite3.Error, OSError):
+        store.save_snapshot(
+            LAST_RUN_KEY.format(topic_id),
+            {"at": clock.now().isoformat(timespec="seconds"), "status": status},
+        )
+
+
+def _run_and_record(topic: Topic, deps: Deps, *, dry_run: bool = False) -> RunResult:
+    try:
+        result = run_topic(topic, deps, dry_run=dry_run)
+    except Exception:
+        if not dry_run:
+            record_run(deps.store, topic.id, "failed", deps.clock)
+        raise
+    if not dry_run:
+        record_run(deps.store, topic.id, result.status, deps.clock)
+    return result
 
 
 def _build_deps(
@@ -65,7 +91,7 @@ def cmd_run(
     try:
         for topic in selected:
             try:
-                results.append(run_topic(topic, deps, dry_run=dry_run))
+                results.append(_run_and_record(topic, deps, dry_run=dry_run))
             except Exception as exc:
                 _err(f"[mybuddy] {topic.id}: crashed: {type(exc).__name__}: {exc}")
                 results.append(RunResult(topic.id, "failed", errors=[str(exc)]))
@@ -80,7 +106,7 @@ def cmd_serve(
     topics: Sequence[Topic], settings: Settings, clock: Clock, allowed_hosts: Collection[str]
 ) -> int:
     deps = _build_deps(settings, topics, clock, allowed_hosts)
-    scheduler = Scheduler(topics, lambda t: run_topic(t, deps), clock)
+    scheduler = Scheduler(topics, lambda t: _run_and_record(t, deps), clock)
     scheduler.install_signal_handlers()
     print(f"[mybuddy] serving {len(topics)} topics (fake={settings.fake})", file=sys.stderr)
     try:

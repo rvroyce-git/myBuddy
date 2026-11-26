@@ -1,8 +1,9 @@
 """Command line: mybuddy list | run <topic|all> [--dry-run] | serve | check | export |
-telegram-setup [--save] | bot | subscribers.
+telegram-setup [--save] | bot | subscribers | init | doctor.
 
-One module per command group: run (list/run/serve/export), check, telegram (telegram-setup),
-bot and subscribers. This package wires the parser and keeps the swappable factories.
+One module per command group: run (list/run/serve/export), check, doctor, init, telegram
+(telegram-setup), bot and subscribers. This package wires the parser and keeps the
+swappable factories.
 """
 
 from __future__ import annotations
@@ -18,6 +19,8 @@ from mybuddy.allowlist import TELEGRAM_HOSTS, build_allowed_hosts
 from mybuddy.cli._common import EX_CONFIG, _config_path, _err
 from mybuddy.cli.bot import cmd_bot
 from mybuddy.cli.check import GROQ_MODELS_URL, cmd_check
+from mybuddy.cli.doctor import cmd_doctor
+from mybuddy.cli.init import DEFAULT_OUTPUT, cmd_init
 from mybuddy.cli.run import cmd_export, cmd_list, cmd_run, cmd_serve
 from mybuddy.cli.subscribers import cmd_subscribers
 from mybuddy.cli.telegram import cmd_telegram_setup
@@ -41,6 +44,8 @@ __all__ = [
     "TELEGRAM_HOSTS",
     "cmd_bot",
     "cmd_check",
+    "cmd_doctor",
+    "cmd_init",
     "cmd_export",
     "cmd_list",
     "cmd_run",
@@ -101,6 +106,28 @@ def _parser() -> argparse.ArgumentParser:
     tg.add_argument("--save", action="store_true", help="write TELEGRAM_CHAT_ID to the env file")
     sub.add_parser("bot", help="run the Telegram bot that lets visitors subscribe to topics")
     sub.add_parser("subscribers", help="count public Telegram subscribers per topic")
+    init = sub.add_parser(
+        "init", help="guided setup: shows the plan and writes nothing until you type yes"
+    )
+    init.add_argument("--answers", type=Path, help="YAML answers file (topics, delivery, schedule)")
+    init.add_argument("--yes", action="store_true", help="with --answers: write without asking")
+    init.add_argument("--force", action="store_true", help="with --yes: overwrite the output")
+    init.add_argument(
+        "--from",
+        dest="base",
+        type=Path,
+        default=DEFAULT_CONFIG_PATH,
+        help=f"topics to choose from (default: {DEFAULT_CONFIG_PATH})",
+    )
+    init.add_argument(
+        "--output",
+        type=Path,
+        default=DEFAULT_OUTPUT,
+        help=f"topics file to write (default: {DEFAULT_OUTPUT})",
+    )
+    sub.add_parser(
+        "doctor", help="check config, secrets (names only), files, data, services: PASS/WARN/FAIL"
+    )
     return p
 
 
@@ -129,6 +156,17 @@ def _dispatch(
 ) -> int:
     if args.command == "check":
         return cmd_check(config_path, settings, clock, env_file)
+    if args.command == "doctor":
+        return cmd_doctor(config_path, settings, clock, env_file)
+    if args.command == "init":
+        return cmd_init(
+            env_file,
+            base_path=args.base,
+            output=args.output,
+            answers_file=args.answers,
+            assume_yes=args.yes,
+            force=args.force,
+        )
     if args.command == "telegram-setup":
         return cmd_telegram_setup(settings, env_file, args.save)
     try:

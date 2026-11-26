@@ -41,6 +41,34 @@ Visitors pick topics on the website, which opens
 * `mybuddy telegram-setup` and the bot both read updates, so stop `mybuddy-bot` before running
   it.
 
+## Setup
+
+```bash
+.venv/bin/mybuddy init       # guided: pick topics, delivery channel, optional times (IST)
+.venv/bin/mybuddy doctor     # check everything: PASS / WARN / FAIL, exit 1 on any FAIL
+```
+
+`mybuddy init` asks which topics to enable (from `config/topics.yaml`), the delivery channel
+(Telegram, Discord or the local outbox) and optional time changes; the timezone is always IST.
+It then shows the complete plan (topics, times, sources and hosts, files it will write, the
+secrets still missing, by name only) and writes nothing unless you type exactly `yes`. It
+writes `config/topics.local.yaml` (mode 600, not committed; `--output` to change), validated
+with the normal config loader, and sets `MYBUDDY_CONFIG` to it in the env file. It never asks
+for secrets: set those with `deploy/set-secrets.sh`. Re-running with the same answers changes
+nothing. Non-interactive: `mybuddy init --answers answers.yaml --yes` (keys `topics`: `all` or
+a list of ids, `delivery`, `schedule`: `{topic_id: "HH:MM"}`); an existing, different file is
+only overwritten with `--force`. The delivery channel decides which secrets the plan lists;
+delivery itself still follows the secrets that are set.
+
+`mybuddy doctor` checks the config, which env vars are set (names only), the env file (600)
+and data dir (700) permissions, that the data dir is writable, SQLite integrity, each topic's
+last run (stale after 26 h, or the topic's longest scheduled gap + 2 h), the age of
+`reports.json`, Groq (if a key is set: reachable and `GROQ_MODEL` offered), the Telegram bot
+(`getMe`; the token is never printed), that the host allowlist covers every config URL, free
+disk and memory, and the systemd units (`mybuddy`, `mybuddy-bot`; `mybuddy-publish.path` only
+warns). Checks that do not apply (no key; on macOS no `/proc/meminfo` or `systemctl`) are
+SKIPped. `mybuddy check` is the older, more verbose subset.
+
 ## Develop and test
 
 ```bash
@@ -67,6 +95,12 @@ Pre-commit hooks (gitleaks secret scan, ruff lint + format, YAML/whitespace chec
 
 The fake tokens in `tests/` are allowlisted value-by-value in `.gitleaks.toml`; CI also scans
 the full git history with a pinned, checksum-verified gitleaks binary.
+
+The website's JavaScript (`site/assets/app.js`, the entry module, plus the ES modules in
+`site/assets/js/`; no build step) is linted with ESLint (`eslint.config.js`: recommended rules,
+browser globals). CI jobs: `test` (ruff, mypy, pytest), `ui` (browser tests), `secrets`
+(gitleaks) and `lint-js` (ESLint on Node LTS, `npm ci` from the committed `package-lock.json`).
+Lint locally with `npm ci && npx eslint .`.
 
 ### Updating pinned dependencies
 

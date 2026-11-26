@@ -115,29 +115,19 @@ def cmd_check(config_path: Path, settings: Settings, clock: Clock, env_file: Pat
 
     if settings.groq_api_key and not settings.fake:
         print("connectivity:")
-        try:
-            data = new_http(allowed).get_json(
-                GROQ_MODELS_URL, headers={"Authorization": f"Bearer {settings.groq_api_key}"}
-            )
-            models = {m.get("id") for m in data.get("data", []) if isinstance(m, dict)}
-            print(f"  ok: Groq reachable ({len(models)} models)")
-            if models and settings.groq_model not in models:
-                problems.append(f"GROQ_MODEL {settings.groq_model!r} not offered by Groq")
-        except (HttpError, AttributeError, TypeError) as exc:
-            problems.append(f"Groq check failed: {exc}")
-    if settings.telegram_bot_token and not TOKEN_RE.fullmatch(settings.telegram_bot_token):
-        problems.append("TELEGRAM_BOT_TOKEN does not look like a bot token")
-    elif settings.telegram_bot_token and not settings.fake:
-        bot_name = _telegram_bot_name(settings.telegram_bot_token)
-        if bot_name:
-            print(f"  ok: Telegram bot @{bot_name}")
-            if bot_name.lower() != settings.bot_username.lower():
-                print(
-                    f"  warning: website links point to @{settings.bot_username}; "
-                    "set MYBUDDY_BOT_USERNAME to match"
-                )
-        else:
-            problems.append("Telegram check failed: token rejected or Telegram unreachable")
+        ok, issue = groq_check(settings, allowed)
+        if ok:
+            print(f"  ok: {ok}")
+        if issue:
+            problems.append(issue)
+    if settings.telegram_bot_token:
+        ok, warning, issue = telegram_check(settings)
+        if ok:
+            print(f"  ok: {ok}")
+        if warning:
+            print(f"  warning: {warning}")
+        if issue:
+            problems.append(issue)
 
     if problems:
         print("problems:")
@@ -161,3 +151,44 @@ def _disallowed_urls(
     if webhook and url_host(webhook) not in allowed:
         out.append("DISCORD_WEBHOOK_URL: host not allowed (use a host name, not an IP)")
     return out
+
+
+def groq_check(settings: Settings, allowed: Collection[str]) -> tuple[str | None, str | None]:
+    """Groq reachable and GROQ_MODEL offered? Returns (ok message, problem). Needs the key.
+
+    The key travels only in the Authorization header; messages never contain it.
+    """
+    try:
+        data = new_http(allowed).get_json(
+            GROQ_MODELS_URL, headers={"Authorization": f"Bearer {settings.groq_api_key}"}
+        )
+        models = {m.get("id") for m in data.get("data", []) if isinstance(m, dict)}
+    except (HttpError, AttributeError, TypeError) as exc:
+        return None, f"Groq check failed: {exc}"
+    ok = f"Groq reachable ({len(models)} models)"
+    if models and settings.groq_model not in models:
+        return ok, f"GROQ_MODEL {settings.groq_model!r} not offered by Groq"
+    return ok, None
+
+
+def telegram_check(settings: Settings) -> tuple[str | None, str | None, str | None]:
+    """Bot token valid (getMe)? Returns (ok, warning, problem); the token is never printed.
+
+    Skipped (all None) when no token is set or in fake mode.
+    """
+    token = settings.telegram_bot_token
+    if not token:
+        return None, None, None
+    if not TOKEN_RE.fullmatch(token):
+        return None, None, "TELEGRAM_BOT_TOKEN does not look like a bot token"
+    if settings.fake:
+        return None, None, None
+    bot_name = _telegram_bot_name(token)
+    if not bot_name:
+        return None, None, "Telegram check failed: token rejected or Telegram unreachable"
+    warning = None
+    if bot_name.lower() != settings.bot_username.lower():
+        warning = (
+            f"website links point to @{settings.bot_username}; set MYBUDDY_BOT_USERNAME to match"
+        )
+    return f"Telegram bot @{bot_name}", warning, None
