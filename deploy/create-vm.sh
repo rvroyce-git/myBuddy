@@ -62,18 +62,38 @@ while [ $# -gt 0 ]; do
 done
 
 # ---------------------------------------------------------------- validate (Always Free only)
-[ -n "$COMPARTMENT" ] || die "--compartment is required"
-[ -n "$AD" ] || die "--ad is required (oci iam availability-domain list)"
-[ -n "$SUBNET" ] || die "--subnet is required (a public subnet of your VCN)"
-[ -n "$SSH_KEY" ] || die "--ssh-key is required (path to your .pub file)"
-[[ "$COMPARTMENT" == ocid1.compartment.* || "$COMPARTMENT" == ocid1.tenancy.* ]] ||
+# is_placeholder VALUE: "<something>" (allowed only with --dry-run, to print the plan).
+is_placeholder() { [[ "$1" =~ ^\<[^\<\>]+\>$ ]]; }
+missing=()
+[ -n "$COMPARTMENT" ] || missing+=("--compartment OCID [OCI_COMPARTMENT_ID]")
+[ -n "$AD" ] || missing+=("--ad NAME [OCI_AD] (oci iam availability-domain list)")
+[ -n "$SUBNET" ] || missing+=("--subnet OCID [OCI_SUBNET_ID] (a public subnet of your VCN)")
+[ -n "$SSH_KEY" ] || missing+=("--ssh-key PATH [MYBUDDY_SSH_PUBKEY] (your .pub file)")
+if [ "${#missing[@]}" -gt 0 ]; then
+  if [ "$DRY_RUN" = 1 ]; then
+    echo "NOTE: dry run with placeholders for: ${missing[*]%% *}" >&2
+    COMPARTMENT=${COMPARTMENT:-<compartment-ocid>}
+    AD=${AD:-<availability-domain>}
+    SUBNET=${SUBNET:-<subnet-ocid>}
+    SSH_KEY=${SSH_KEY:-<ssh-public-key.pub>}
+  else
+    { echo "ERROR: missing required arguments:"; printf '  %s\n' "${missing[@]}"; } >&2
+    exit 1
+  fi
+fi
+for v in "$COMPARTMENT" "$AD" "$SUBNET" "$SSH_KEY"; do
+  if is_placeholder "$v" && [ "$DRY_RUN" = 0 ]; then die "placeholder $v is only allowed with --dry-run"; fi
+done
+is_placeholder "$COMPARTMENT" || [[ "$COMPARTMENT" == ocid1.compartment.* || "$COMPARTMENT" == ocid1.tenancy.* ]] ||
   die "--compartment must be a compartment or tenancy OCID"
-[[ "$SUBNET" == ocid1.subnet.* ]] || die "--subnet must be a subnet OCID"
+is_placeholder "$SUBNET" || [[ "$SUBNET" == ocid1.subnet.* ]] || die "--subnet must be a subnet OCID"
 [[ "$NAME" =~ ^[A-Za-z0-9._-]{1,64}$ ]] || die "--name: letters, digits, . _ - only"
-[ -r "$SSH_KEY" ] || die "cannot read SSH key file $SSH_KEY"
-grep -q 'PRIVATE KEY' "$SSH_KEY" && die "$SSH_KEY is a PRIVATE key; pass the .pub file"
-grep -qE '^(ssh-ed25519|ssh-rsa|ecdsa-sha2-[a-z0-9-]+) ' "$SSH_KEY" ||
-  die "$SSH_KEY does not look like an SSH public key"
+if ! is_placeholder "$SSH_KEY"; then
+  [ -r "$SSH_KEY" ] || die "cannot read SSH key file $SSH_KEY"
+  grep -q 'PRIVATE KEY' "$SSH_KEY" && die "$SSH_KEY is a PRIVATE key; pass the .pub file"
+  grep -qE '^(ssh-ed25519|ssh-rsa|ecdsa-sha2-[a-z0-9-]+) ' "$SSH_KEY" ||
+    die "$SSH_KEY does not look like an SSH public key"
+fi
 [[ "$BOOT_GB" =~ ^[0-9]+$ ]] && [ "$BOOT_GB" -ge "$BOOT_MIN_GB" ] && [ "$BOOT_GB" -le "$BOOT_MAX_GB" ] ||
   die "--boot-gb must be $BOOT_MIN_GB..$BOOT_MAX_GB (Always Free: 200 GB of block storage in total)"
 

@@ -36,14 +36,32 @@ while [ $# -gt 0 ]; do
   shift
 done
 
-[ -n "$EMAIL" ] || die "--email is required (where the alert goes)"
-[[ "$EMAIL" =~ ^[^[:space:]@,\;]+@[^[:space:]@,\;]+\.[^[:space:]@,\;]+$ ]] || die "--email does not look like one email address"
-[[ "$NAME" =~ ^[A-Za-z0-9_-]{1,100}$ ]] || die "--name: letters, digits, _ and - only"
+is_placeholder() { [[ "$1" =~ ^\<[^\<\>]+\>$ ]]; }
 if [ -z "$TENANCY" ]; then
   cfg=${OCI_CLI_CONFIG_FILE:-$HOME/.oci/config}
-  [ -r "$cfg" ] && TENANCY=$(awk -F= '/^\[/{p=($0=="[DEFAULT]")} p&&$1~/^[[:space:]]*tenancy[[:space:]]*$/{gsub(/[[:space:]]/,"",$2);print $2;exit}' "$cfg")
+  if [ -r "$cfg" ]; then
+    TENANCY=$(awk -F= '/^\[/{p=($0=="[DEFAULT]")} p&&$1~/^[[:space:]]*tenancy[[:space:]]*$/{gsub(/[[:space:]]/,"",$2);print $2;exit}' "$cfg")
+  fi
 fi
-[[ "$TENANCY" == ocid1.tenancy.* ]] || die "tenancy OCID unknown: pass --tenancy (Profile > Tenancy in the console)"
+missing=()
+[ -n "$EMAIL" ] || missing+=("--email ADDRESS (where the alert goes)")
+[ -n "$TENANCY" ] || missing+=("--tenancy OCID [OCI_TENANCY_ID] (Profile > Tenancy in the console, or tenancy= in ~/.oci/config)")
+if [ "${#missing[@]}" -gt 0 ]; then
+  if [ "$DRY_RUN" = 1 ]; then
+    echo "NOTE: dry run with placeholders for: ${missing[*]%% *}" >&2
+    EMAIL=${EMAIL:-<email>}
+    TENANCY=${TENANCY:-<tenancy-ocid>}
+  else
+    { echo "ERROR: missing required arguments:"; printf '  %s\n' "${missing[@]}"; } >&2
+    exit 1
+  fi
+fi
+for v in "$EMAIL" "$TENANCY"; do
+  if is_placeholder "$v" && [ "$DRY_RUN" = 0 ]; then die "placeholder $v is only allowed with --dry-run"; fi
+done
+is_placeholder "$EMAIL" || [[ "$EMAIL" =~ ^[^[:space:]@,\;]+@[^[:space:]@,\;]+\.[^[:space:]@,\;]+$ ]] || die "--email does not look like one email address"
+[[ "$NAME" =~ ^[A-Za-z0-9_-]{1,100}$ ]] || die "--name: letters, digits, _ and - only"
+is_placeholder "$TENANCY" || [[ "$TENANCY" == ocid1.tenancy.* ]] || die "--tenancy must be a tenancy OCID (Profile > Tenancy in the console)"
 if [ "$DRY_RUN" = 0 ]; then
   command -v oci >/dev/null || die "oci CLI not found"
 fi

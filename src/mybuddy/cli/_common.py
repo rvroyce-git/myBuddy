@@ -27,9 +27,23 @@ def _config_path(args: argparse.Namespace) -> Path:
     return Path(env) if env else DEFAULT_CONFIG_PATH
 
 
+def make_private_dirs(folder: Path) -> None:
+    """Create `folder` and any missing parents with mode 0700 (umask-proof)."""
+    missing: list[Path] = []
+    p = folder
+    while not p.exists():
+        missing.append(p)
+        if p.parent == p:
+            break
+        p = p.parent
+    for d in reversed(missing):
+        d.mkdir(mode=0o700, exist_ok=True)
+        os.chmod(d, 0o700)
+
+
 def write_private(path: Path, text: str) -> None:
     """Atomically replace `path` with a 0600 file (it holds secrets; never briefly 0644)."""
-    path.parent.mkdir(parents=True, exist_ok=True, mode=0o700)
+    make_private_dirs(path.parent)
     fd, tmp = tempfile.mkstemp(prefix=f".{path.name}.", suffix=".tmp", dir=path.parent)
     try:
         with os.fdopen(fd, "w", encoding="utf-8") as fh:
