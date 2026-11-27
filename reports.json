@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-11-27T08:00:07+05:30",
+  "generated_at": "2026-11-27T08:15:06+05:30",
   "topics": [
     {
       "id": "ai_news",
@@ -281,30 +281,30 @@
       "schedule": "Daily · 08:15 IST",
       "bit": 6,
       "report": {
-        "created_at": "2026-11-26T08:15:04+05:30",
-        "headline": "Three new open-source models are gaining traction on Hugging Face",
-        "summary": "prism-ml released a 27B text generator, llamaindex added a tiny OCR model, and inclusionAI posted Ling-3.2-air. All are trending with hundreds of downloads.",
+        "created_at": "2026-11-27T08:15:04+05:30",
+        "headline": "New open-source models expand image generation and parsing capabilities",
+        "summary": "Nvidia released a 30‑billion‑parameter text‑to‑image model, while Lightricks launched an image‑to‑video generator. Nemotron 3.5 Parse offers faster inference for parsing tasks.",
         "items": [
           {
-            "title": "prism-ml/Ternary-Bonsai-2.5-27B-GGUF",
-            "url": "https://huggingface.co/prism-ml/Ternary-Bonsai-2.5-27B-GGUF",
+            "title": "nvidia/Nemotron-Labs-Image-30B-A3B",
+            "url": "https://huggingface.co/nvidia/Nemotron-Labs-Image-30B-A3B",
             "source": "Hugging Face Trending",
-            "blurb": "prism-ml’s Ternary-Bonsai-2.5-27B-GGUF is a 27-billion-parameter text generator, trending on Hugging Face",
-            "published": "2026-11-24T16:32:20+00:00"
+            "blurb": "Nvidia's Nemotron‑Labs‑Image‑30B‑A3B: 30B‑parameter text‑to‑image model, open‑source.",
+            "published": "2026-09-24T21:13:25+00:00"
           },
           {
-            "title": "llamaindex/OCRia-nano-1",
-            "url": "https://huggingface.co/llamaindex/OCRia-nano-1",
+            "title": "Lightricks/LTX-2.5",
+            "url": "https://huggingface.co/Lightricks/LTX-2.5",
             "source": "Hugging Face Trending",
-            "blurb": "llamaindex’s OCRia-nano-1 converts images to text, a tiny OCR model gaining likes",
-            "published": "2026-11-03T21:44:40+00:00"
+            "blurb": "Lightricks LTX‑2.5 generates short videos from images, available on Hugging Face.",
+            "published": "2026-07-23T07:55:24+00:00"
           },
           {
-            "title": "inclusionAI/Ling-3.2-air",
-            "url": "https://huggingface.co/inclusionAI/Ling-3.2-air",
-            "source": "Hugging Face Trending",
-            "blurb": "inclusionAI’s Ling-3.2-air is a new model attracting downloads, details sparse",
-            "published": "2026-11-23T03:55:12+00:00"
+            "title": "Building on Nemotron 3.5 Parse: Open Data, Fine-Tuning, and Faster Inference",
+            "url": "https://huggingface.co/blog/nvidia/building-on-nemotron-35-parse-open-data-fine-tunin",
+            "source": "Hugging Face Blog",
+            "blurb": "Nemotron 3.5 Parse fine‑tuned for parsing, using open data and faster inference.",
+            "published": "2026-11-26T05:05:36+00:00"
           }
         ]
       }
