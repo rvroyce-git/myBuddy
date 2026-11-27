@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-11-27T07:15:20+05:30",
+  "generated_at": "2026-11-27T07:30:05+05:30",
   "topics": [
     {
       "id": "ai_news",
@@ -145,51 +145,51 @@
       "schedule": "Mon–Fri · 07:30 IST",
       "bit": 3,
       "report": {
-        "created_at": "2026-11-26T07:30:04+05:30",
-        "headline": "New AI tools boost audio‑video understanding, synthesis, and realistic generation",
-        "summary": "Audio‑video AI is advancing from better dialogue captioning and speech detection to realistic video synthesis and physics‑aware generation. Recent papers introduce tools for automatic captioning, multi‑camera…",
+        "created_at": "2026-11-27T07:30:04+05:30",
+        "headline": "New benchmarks aim to test AI more realistically across diverse tasks",
+        "summary": "Today's items show fresh benchmarks for math reasoning, wearable fall detection, marine robotics, legal reasoning, AI performance, and time‑series tasks, each targeting more realistic evaluation.",
         "items": [
           {
-            "title": "DiaCap: Jointly Learning Who Speaks When for Audiovisual Dialogue Captioning",
-            "url": "https://arxiv.org/abs/2611.33153v1",
-            "source": "arXiv audio & video",
-            "blurb": "DiaCap creates transcripts, timestamps, and speaker visual descriptions for video dialogue using an audiovisual LLM.",
-            "published": "2026-11-24T18:59:08+00:00"
+            "title": "Diverse Alternative Reasoning Traces for Hard Math Problems",
+            "url": "https://arxiv.org/abs/2611.34928v1",
+            "source": "arXiv evaluation",
+            "blurb": "Diverse reasoning traces help evaluate LLMs on hard math where standard solutions are rare.",
+            "published": "2026-11-25T18:59:11+00:00"
           },
           {
-            "title": "One Take, Many Cameras: Audio-Grounded Shot Synthesis for Dialogue Re-Cinematography",
-            "url": "https://arxiv.org/abs/2611.33147v1",
-            "source": "arXiv audio & video",
-            "blurb": "One Take, Many Cameras synthesizes missing camera angles for dialogue scenes, reducing costly multi‑camera shoots.",
-            "published": "2026-11-24T18:58:32+00:00"
+            "title": "Standardized Deep Learning Benchmark Tests Wearable AI Models for Fall Detection",
+            "url": "https://news.google.com/rss/articles/CBMiqAFBVV95cUxPRnlONXNjTTFNUFRicUVNekZ1N3l2N0dfbmliUmVGWDJTZHZpZ3BDS25rS1lKQjIxNWpVdG1yd3dLY1RGa2pOYkJOejBXQjhuLThIZzFVNllmeUpvZDlySlpockZ6X0YxVlBZUzlPUUVuSUlOcHp6Z1FKNTVjN2dUNkdiclItcWJjTTVrYkpMd0V2czloOG5aODkwR0xyUGNzZS1fdk1mOGY?oc=5",
+            "source": "Bioengineer.org",
+            "blurb": "Standardized benchmark tests wearable AI models' ability to detect falls accurately.",
+            "published": "2026-11-26T11:26:38+00:00"
           },
           {
-            "title": "iWAM: Efficient Action Prediction from World Models without Explicit Future Prediction",
-            "url": "https://arxiv.org/abs/2611.33141v1",
-            "source": "arXiv audio & video",
-            "blurb": "iWAM predicts actions efficiently by using world models without generating full future video frames.",
-            "published": "2026-11-24T18:56:04+00:00"
+            "title": "One Ocean, Many Tasks: A Data-Grounded Simulation Suite and Benchmark for Marine Robotics",
+            "url": "https://arxiv.org/abs/2611.34925v1",
+            "source": "arXiv evaluation",
+            "blurb": "OneOcean provides a data‑grounded simulation suite and benchmark for marine robotics tasks.",
+            "published": "2026-11-25T18:58:56+00:00"
           },
           {
-            "title": "ClusterVAD: Threshold-Free Unsupervised Voice Activity Detection with Pre-Trained Neural Representations",
-            "url": "https://arxiv.org/abs/2611.33059v1",
-            "source": "arXiv audio & video",
-            "blurb": "ClusterVAD detects speech activity without thresholds or labeled data using pre‑trained neural representations.",
-            "published": "2026-11-24T18:03:21+00:00"
+            "title": "IMDA and Scale Advance AI Evaluation with New Legal Reasoning Benchmark",
+            "url": "https://news.google.com/rss/articles/CBMiwgFBVV95cUxPTzB0a2tsVWh1ODJOZ2tZR0J2dlpFWkluOGhsb2VGa1B3cW9MYVhaYjBTeVhxbWVHSWFuNi1sR29GRHR4TEFfZkVqZHN4ajJkSkhkbEZxSGJtUndIMVBhREkwVUp0N20zWDN5T205cVdKZmlGRFFhUDJRX1NFY0pRSFhLZHUtVkhERXR4Z3BYN0xKaktvdkE4V1RaN0lZa0NtSmRPRWswQ1ZxZEpWOFFDOW1DVTgxMEVaQWd6M0VMZTBDUQ?oc=5",
+            "source": "IMDA",
+            "blurb": "New legal reasoning benchmark released by IMDA and Scale Advance to evaluate AI.",
+            "published": "2026-11-26T02:53:17+00:00"
           },
           {
-            "title": "Mask-Based Speech Enhancement for Spatial Audio: Effects of Signal Representation and Channel-Specific Masking",
-            "url": "https://arxiv.org/abs/2611.32910v1",
-            "source": "arXiv audio & video",
-            "blurb": "Mask‑Based Speech Enhancement improves spatial audio quality while preserving scene directionality via…",
-            "published": "2026-11-24T16:29:52+00:00"
+            "title": "OpenClaw launches an AI performance benchmark that it argues is more realistic than others",
+            "url": "https://news.google.com/rss/articles/CBMi2AFBVV95cUxNdWlCRUt4Mk9ncUFRenYzbWtSbU5IZUpWLS1jVkp0MHBaWlI5NldkT09GTUY5ZlZZWHNqeVJyeHRnYVREWkVWTzVQMjdlRmt2WlhlclZwS2FyV05WMGl0UnZvV18tMWZvd1QyZmRrUkxHdDZYaGZEZEV4LUlPdkdpLTlfM183eGE1X2lWc19ZTXBVc1lFRHlqZndBLWZVOGRDLW1MNXhPbGZUNmlTaWhDMkFoakZXbVJqQU4xZHdxSzNaM1NaTVlrY0FLX0tmd3VSSnlkM3hCc2k?oc=5",
+            "source": "Computerworld",
+            "blurb": "OpenClaw's AI performance benchmark claims greater realism than existing tests.",
+            "published": "2026-11-25T02:35:40+00:00"
           },
           {
-            "title": "PhysMend: Verification-Guided Program Refinement for Physics-Aware Video Generation",
-            "url": "https://arxiv.org/abs/2611.32821v1",
-            "source": "arXiv audio & video",
-            "blurb": "PhysMend adds physics verification to video generation, correcting unrealistic object interactions post‑hoc.",
-            "published": "2026-11-24T15:37:39+00:00"
+            "title": "Put the World Back: Timestamps Matter in Time Series Reasoning",
+            "url": "https://arxiv.org/abs/2611.34848v1",
+            "source": "arXiv evaluation",
+            "blurb": "Timestamp‑aware evaluation highlights whether models truly link events to time series data.",
+            "published": "2026-11-25T18:23:07+00:00"
           }
         ]
       }
