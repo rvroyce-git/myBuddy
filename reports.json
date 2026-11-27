@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-11-27T07:30:05+05:30",
+  "generated_at": "2026-11-27T07:45:07+05:30",
   "topics": [
     {
       "id": "ai_news",
@@ -202,51 +202,16 @@
       "schedule": "Daily · 07:45 IST",
       "bit": 4,
       "report": {
-        "created_at": "2026-11-26T07:45:04+05:30",
-        "headline": "New AI papers tackle belief‑aligned agents, smarter robots, and efficient learning",
-        "summary": "Researchers propose methods for agents to act on verified beliefs, improve robot decision‑making with mirrors and counterfactual models, and boost learning efficiency in vision, hardware repair, and multimodal reasoning.",
+        "created_at": "2026-11-27T07:45:05+05:30",
+        "headline": "New AI tools aim to bridge real-world data, medical insight, and multimedia tasks",
+        "summary": "Researchers release platforms to turn videos into simulations, scale medical AI, and improve visual and video editing with generated images, while highlighting evaluation pitfalls and better multi-page document handling.",
         "items": [
           {
-            "title": "Lazy Agents Answer Against Their Own Beliefs: Reinforcement Learning with Verifiable Beliefs Teaches Them to Act on What They Believe",
-            "url": "https://huggingface.co/papers/2611.32884",
+            "title": "Real2SimLab: A Unified Platform for Real-to-Simulation Transfer",
+            "url": "https://huggingface.co/papers/2611.34849",
             "source": "Hugging Face Daily Papers",
-            "blurb": "Agents often commit answers before evidence; verifiable beliefs guide actions to match their confidence.",
-            "published": "2026-11-23T19:00:00+00:00"
-          },
-          {
-            "title": "REFORGE: LLM-Assisted RTL Bug Repair with Structured Context and Verification Feedback",
-            "url": "https://arxiv.org/abs/2611.33748v1",
-            "source": "arXiv AI/CL/LG",
-            "blurb": "LLM‑assisted RTL bug repair adds structured context and verification feedback to ensure fixes work.",
-            "published": "2026-11-25T04:08:43+00:00"
-          },
-          {
-            "title": "Embodied AI Fails the Mirror Test: How a Simple Mirror Breaks Robot Policies",
-            "url": "https://huggingface.co/papers/2611.33010",
-            "source": "Hugging Face Daily Papers",
-            "blurb": "A simple mirror reveals current robot policies struggle with self‑reflexive scenes, exposing perception gaps.",
-            "published": "2026-11-23T19:00:00+00:00"
-          },
-          {
-            "title": "WhatIf: Counterfactual World Models over Action-Grounded Causal Graphs for Robotic Manipulation",
-            "url": "https://arxiv.org/abs/2611.33745v1",
-            "source": "arXiv AI/CL/LG",
-            "blurb": "Counterfactual world models use action‑grounded causal graphs to compare outcomes before acting.",
-            "published": "2026-11-25T04:06:11+00:00"
-          },
-          {
-            "title": "ThinkMorph-SSL: Scaling Interleaved Multimodal Reasoning with Pretext Tasks",
-            "url": "https://huggingface.co/papers/2611.32183",
-            "source": "Hugging Face Daily Papers",
-            "blurb": "ThinkMorph‑SSL trains models to interleave images and text, scaling multimodal reasoning via pretext tasks.",
-            "published": "2026-11-23T19:00:00+00:00"
-          },
-          {
-            "title": "Teaching Students to Stand on Their Own: Distilling Vision Foundation Models for Fine-Grained Few-Shot Class-Incremental Learning",
-            "url": "https://arxiv.org/abs/2611.33749v1",
-            "source": "arXiv AI/CL/LG",
-            "blurb": "Distilled vision foundation models enable few‑shot, fine‑grained class‑incremental learning without forgetting prior…",
-            "published": "2026-11-25T04:10:53+00:00"
+            "blurb": "Unified platform lets AI turn video recordings into simulation code, easing real‑to‑simulation transfer.",
+            "published": "2026-11-24T19:00:00+00:00"
           }
         ]
       }
