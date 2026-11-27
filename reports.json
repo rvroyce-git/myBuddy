@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-11-27T07:00:08+05:30",
+  "generated_at": "2026-11-27T07:15:20+05:30",
   "topics": [
     {
       "id": "ai_news",
@@ -123,16 +123,16 @@
       "schedule": "Daily · 07:15 IST",
       "bit": 2,
       "report": {
-        "created_at": "2026-11-26T07:15:19+05:30",
-        "headline": "DeepTutor gains attention as a Python AI tutoring platform",
-        "summary": "DeepTutor offers lifelong personalized tutoring using AI, built in Python. It’s trending with 457 new stars, reaching over 62 k total.",
+        "created_at": "2026-11-27T07:15:18+05:30",
+        "headline": "AI engineering tutorial repo surges with 486 new stars",
+        "summary": "Rohitg00's Python guide teaches AI engineering end‑to‑end, attracting many learners. Its recent 486‑star jump shows strong community interest.",
         "items": [
           {
-            "title": "HKUDS/DeepTutor",
-            "url": "https://github.com/HKUDS/DeepTutor",
+            "title": "rohitg00/ai-engineering-from-scratch",
+            "url": "https://github.com/rohitg00/ai-engineering-from-scratch",
             "source": "GitHub Trending",
-            "blurb": "Personalized AI tutoring tool, useful for students and educators, gained 457 stars, total 62,799",
-            "published": "2026-11-24T06:57:44+00:00"
+            "blurb": "Python AI engineering tutorial, useful for beginners, gained 486 stars, total 80,621",
+            "published": "2026-11-25T15:31:09+00:00"
           }
         ]
       }
