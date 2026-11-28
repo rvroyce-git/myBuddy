@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-11-28T08:00:05+05:30",
+  "generated_at": "2026-11-28T08:15:05+05:30",
   "topics": [
     {
       "id": "ai_news",
@@ -302,30 +302,23 @@
       "schedule": "Daily · 08:15 IST",
       "bit": 6,
       "report": {
-        "created_at": "2026-11-27T08:15:04+05:30",
-        "headline": "New open-source models expand image generation and parsing capabilities",
-        "summary": "Nvidia released a 30‑billion‑parameter text‑to‑image model, while Lightricks launched an image‑to‑video generator. Nemotron 3.5 Parse offers faster inference for parsing tasks.",
+        "created_at": "2026-11-28T08:15:03+05:30",
+        "headline": "New open-source models debut for video creation and text generation",
+        "summary": "LTX-2.5 targets video generation, announced on Hugging Face Blog. Inkling-2-Mini, a text‑generation model from ISTA‑DASLab, is gaining traction with thousands of downloads.",
         "items": [
           {
-            "title": "nvidia/Nemotron-Labs-Image-30B-A3B",
-            "url": "https://huggingface.co/nvidia/Nemotron-Labs-Image-30B-A3B",
-            "source": "Hugging Face Trending",
-            "blurb": "Nvidia's Nemotron‑Labs‑Image‑30B‑A3B: 30B‑parameter text‑to‑image model, open‑source.",
-            "published": "2026-09-24T21:13:25+00:00"
-          },
-          {
-            "title": "Lightricks/LTX-2.5",
-            "url": "https://huggingface.co/Lightricks/LTX-2.5",
-            "source": "Hugging Face Trending",
-            "blurb": "Lightricks LTX‑2.5 generates short videos from images, available on Hugging Face.",
-            "published": "2026-07-23T07:55:24+00:00"
-          },
-          {
-            "title": "Building on Nemotron 3.5 Parse: Open Data, Fine-Tuning, and Faster Inference",
-            "url": "https://huggingface.co/blog/nvidia/building-on-nemotron-35-parse-open-data-fine-tunin",
+            "title": "Taking Trainium3 to the Track: Generating Videos with LTX-2.5",
+            "url": "https://huggingface.co/blog/video-trainium3",
             "source": "Hugging Face Blog",
-            "blurb": "Nemotron 3.5 Parse fine‑tuned for parsing, using open data and faster inference.",
-            "published": "2026-11-26T05:05:36+00:00"
+            "blurb": "LTX-2.5 is a new model for generating videos, announced on Hugging Face Blog.",
+            "published": "2026-11-27T00:00:00+00:00"
+          },
+          {
+            "title": "ISTA-DASLab/Inkling-2-Mini-GSQ-RCO-GGUF",
+            "url": "https://huggingface.co/ISTA-DASLab/Inkling-2-Mini-GSQ-RCO-GGUF",
+            "source": "Hugging Face Trending",
+            "blurb": "Inkling-2-Mini is a text‑generation model from ISTA‑DASLab, already downloaded over 24k times.",
+            "published": "2026-11-26T13:01:01+00:00"
           }
         ]
       }
