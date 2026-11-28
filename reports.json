@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-11-28T00:00:01+05:30",
+  "generated_at": "2026-11-28T06:30:44+05:30",
   "topics": [
     {
       "id": "ai_news",
@@ -9,51 +9,44 @@
       "schedule": "Daily · 06:30 IST",
       "bit": 0,
       "report": {
-        "created_at": "2026-11-27T06:30:46+05:30",
-        "headline": "OpenAI trims GPT-6.2 usage amid cost-cutting moves",
-        "summary": "OpenAI is cutting GPT-6.2 usage limits, while Google forces AI agents onto MCP servers and Japan’s JERA plans Anthropic and Meta data centers near power plants. New research also debunks rogue-AI myths.",
+        "created_at": "2026-11-28T06:30:43+05:30",
+        "headline": "Study warns AI chatbots could amplify government speech restrictions",
+        "summary": "A new study flags chatbots spreading government speech limits, while AI now simulates electron hops far longer than before. Unions demand safeguards, drones get AI guidance for palm pollination, and Meta’s moderation…",
         "items": [
           {
-            "title": "OpenAI cuts GPT-6.2 usage: Astra hits limits 40% faster, Sol 25% faster",
-            "url": "https://twitter.com/thsottiaux/status/2125784147889393806",
-            "source": "Hacker News",
-            "blurb": "OpenAI limits GPT-6.2 usage; Astra hits limits 40% faster, Sol 25% faster.",
-            "published": "2026-11-26T03:36:58+00:00"
+            "title": "AI chatbots are at risk of spreading government restrictions on online speech, a new study says",
+            "url": "https://news.google.com/rss/articles/CBMi0gFBVV95cUxNVjFuOFg0OGc1Q2h0QU00eks0ckNYclRuaXJsS0d3WThkNWlkS2VhNnhuVzZXbmdCWlJJS1dvWGdBWEJhM3pGVklJZm4tSnNHVTJJQWdyLS1HcGtCclp5dDJRM0pqQVNqaXpTam96MUFmMDRSWUhYdnJ6NmlWNzJtUmdkTTYwZ3hxQVY5ZU5sVnlock5kOFItSFlGaG1vcFd1RVpNWjBGRkNXSldZSUR0ZFZMWnhiWnloS3JQTkFRZkVEQzlyVllJTmFrcHdDOGVVV3c?oc=5",
+            "source": "Genocide Watch",
+            "blurb": "Study finds chatbots may spread government-imposed speech restrictions, raising free‑speech concerns.",
+            "published": "2026-11-28T00:36:51+00:00"
           },
           {
-            "title": "Google Will Make AI Agents Use Its MCP Servers. The Gmail One Can't Send Email",
-            "url": "https://techstackups.com/articles/google-workspace-ai-agents-mcp/",
-            "source": "Hacker News",
-            "blurb": "Google requires AI agents to run on MCP servers; Gmail agent cannot send email.",
-            "published": "2026-11-26T09:44:23+00:00"
+            "title": "AI simulates electron hops over far longer times than conventional quantum calculations",
+            "url": "https://news.google.com/rss/articles/CBMiggFBVV95cUxPekhZSHFNRGZyV0hnQnFadmpWanZFVmZrV1MwdFhuM3BTb1lCN215TDNBNld3RWF0WEZkd0ItdTlzMWkwc3JUNXFYakx6cFR2LWIwUmxZa0UzcVdXalEtNlQ3dGRMWThxLXNkODYyOFl6VVFsZTh0VkhNQkxXaGl1aUVR?oc=5",
+            "source": "Phys.org",
+            "blurb": "AI simulates electron hops over much longer times than traditional quantum calculations, boosting research speed.",
+            "published": "2026-11-27T23:40:05+00:00"
           },
           {
-            "title": "Japan's JERA aims to build Anthropic, Meta data centers near power plants",
-            "url": "https://news.google.com/rss/articles/CBMi1wFBVV95cUxPN0FKWlltSXhpMTdpTnRja2JXb3VyWlBnVG9ITFA3YnRiN0lYMzYwNE1vMmF0WEZzLTJyM09jMnVoZks4alExa09oUTA5ZnZLYzl4UllpZjBiWHFuazQ4WkFhUGw1SC1nRGNRQUpoZ25sUFMzQ25EckVCSWZCdWJMVmhfR0s0dlBxSUZwYjdyVUUzN1ppbzBDLWw2eEszQUE0NWNKZ0hicF9oVzlmaXFVXzNtR1FVdlBmalNIOU4xZDRLUXp5bFQ0MnZYdWFwR3lRWWF1LUhDTQ?oc=5",
-            "source": "Nikkei Asia",
-            "blurb": "Japan’s JERA will build Anthropic and Meta data centers near its power plants.",
-            "published": "2026-11-26T21:51:00+00:00"
+            "title": "AITUC meet in Bengaluru calls for safeguards against AI-driven worker exploitation",
+            "url": "https://news.google.com/rss/articles/CBMi3gFBVV95cUxPeVh1SUtxb2E5SmpHa21KOExSY0YxQ1VZb0d4R1VfbTVPaGVINTZzcXI0MHg3cW5CUWVuNmZ6dVZCZk5xaUNjaE50X25JdlFwYkwxZUhubUVNSjNHYjBQemhHWWRERWcyR3Y0RERhd2Znd2U5Z3I3VkZieFhNLXVjZXNabGNkTVBFRFJoZWhrZ1pCc2lNQXpyZ3dZZGpVTk1HeDNScW9kV1J2YUhuVzNnVDhfc1dOTzRBOGZ4bUFLYzRadWdWclFJTXBKSjRNWWtwN0FjcE9lQ2pKTkJ3OGc?oc=5",
+            "source": "Deccan Herald",
+            "blurb": "AITUC meeting in Bengaluru urges safeguards against AI‑driven worker exploitation.",
+            "published": "2026-11-27T23:35:38+00:00"
           },
           {
-            "title": "Artificial Intelligence Attribution: Debunking the Rogue AI Myth and Uncovering Human-Driven Cyber Operations + Video",
-            "url": "https://news.google.com/rss/articles/CBMiO0FVX3lxTE4zcFNsOExTSzMtOTRtS0dXcHg1bmFxSjFpMEJHeDZFazFRRk9STUkydFdZNEZMV1ROcGFV?oc=5",
-            "source": "Howl.Link",
-            "blurb": "Research debunks rogue-AI myth, showing human-driven cyber operations behind attacks.",
-            "published": "2026-11-26T23:58:39+00:00"
+            "title": "Offboard Artificial Intelligence Guides Low Cost Drone for Oil Palm Pollination",
+            "url": "https://news.google.com/rss/articles/CBMipwFBVV95cUxQNUxDd3BjV05wQ3VERnFscjN4Q1lJQTY4MGVTZEFkSjdob1FxOUtybV9aWDN4VDhvWFNMcGQ4VlN3dG5UVFk1aC1MVHZrVGcxTDdBc20wZVpRWjl2Ym1WZEZJVHR2dnN2bGxXaWZnVzhGeDNoTjZ6aGVxc21OSTFySGM1OUpEUEhvNGxBQzdyR0tlTFZmdFBLR29STlR1UXc2YUs2UlBtNA?oc=5",
+            "source": "Bioengineer.org",
+            "blurb": "Offboard AI guides low‑cost drone for oil palm pollination, showing agricultural use.",
+            "published": "2026-11-27T21:12:46+00:00"
           },
           {
-            "title": "OpenAI may be in cost control mode",
-            "url": "https://micjm.com/blog/openai-is-in-cost-control-mode/",
-            "source": "Hacker News",
-            "blurb": "OpenAI appears to be tightening spending, possibly entering cost-control mode.",
-            "published": "2026-11-26T07:33:12+00:00"
-          },
-          {
-            "title": "AI made self-hosting fun again",
-            "url": "https://janlukas.blog/posts/ai-self-hosting",
-            "source": "Hacker News",
-            "blurb": "New tool makes self-hosting AI models easier and more enjoyable.",
-            "published": "2026-11-26T21:47:45+00:00"
+            "title": "Meta's Content Moderation Said to Be Severely Broken After Moving to Human Reviewers to AI",
+            "url": "https://news.google.com/rss/articles/CBMihAFBVV95cUxPczY1UEsxblVVakRQbk5hNU9TSXU1NjdCS0tSZDllbGs2VjJ3di1WTWZld29aVnYwM3p3c2JtcElmWWhrM1RuWnVTMThlZmZYQkRtWFE5dWZ5RWs4d2t5R2djdEZBM1NBWXl2VXR3Z3dSRWw2QzZsRFFZbm80dV83SnczRkg?oc=5",
+            "source": "Futurism",
+            "blurb": "Meta’s shift to AI‑assisted moderation leaves system broken, according to reports.",
+            "published": "2026-11-27T19:51:00+00:00"
           }
         ]
       }
