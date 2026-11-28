@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-11-28T07:45:06+05:30",
+  "generated_at": "2026-11-28T08:00:05+05:30",
   "topics": [
     {
       "id": "ai_news",
@@ -245,51 +245,51 @@
       "schedule": "Daily · 08:00 IST",
       "bit": 5,
       "report": {
-        "created_at": "2026-11-27T08:00:05+05:30",
-        "headline": "AI and tech startups secure $34.5M funding while new AI tools launch",
-        "summary": "Green Aero, XEBO.ai and Vegapay each raised over $10 million to expand jet engines, AI customer experience, and payment solutions. New tools like Claude‑Mem, Superframes and Pax aim to simplify AI memory, video editing…",
+        "created_at": "2026-11-28T08:00:04+05:30",
+        "headline": "AI startups secure major funding while unveiling new tools",
+        "summary": "European AI firms raised over €20 million across seed and follow‑on rounds, and several new AI‑powered products launched to help creators, marketers, and healthcare teams.",
         "items": [
           {
-            "title": "Green Aero Raises $14 Million in Series A Funding to Advance Indigenous Jet Engine Technology",
-            "url": "https://news.google.com/rss/articles/CBMizgFBVV95cUxPWFFxVk5EVEhWMEpYSmEwNm1nTGFjODdCcjBHQ04za1hrOUpTR1haVUNIdDA1by1UVHcxVnJVRDZweWJtdnpHVGdKcVRLUno2RFYxd2NPVDA0dFdzaU5PdENRT0FsaHF3Tjlvd0kyOUhwMVk0Sk5tWUYyWGVBS3JGME5ILUQ3VzJqelVaOFNzd1FXUXczVmlicko0eHNnMDd5OHMzalRsX2dIWExpN01OdzFxczJqMDMyMDVISm55OEhrUm9tZnlBWDQwTkdvdw?oc=5",
-            "source": "Indian Startup Times",
-            "blurb": "Green Aero raised $14M Series A to develop indigenous jet engine technology, boosting local aerospace.",
-            "published": "2026-11-26T15:01:31+00:00"
+            "title": "Nextesy, Swiss AI Startup with Balkan Roots, Raises €9M Seed Led by Swisscom Ventures",
+            "url": "https://news.google.com/rss/articles/CBMitgFBVV95cUxNdjFmSDBka0x5Zm1KYzJWd0hCb3BRVHhJR01CZk83b1I4TWNOVlBQS3VjWWVKdkJpTDEwWTJQd0pEcU0wZm9ZdWVPenpLcE1IVlZoSXFDTnhyVU1nNWdaalVOazFhQ1VnNjhZbEZkWi0wbjIydzdwZm5tMUlDLVJmZDF0ME03ZTltb3Rpdlc0X25fM0NCRHM1cFFBVmRXQXFCWmxQVHlZUngwdkhobWlBZHhBVXpEQQ?oc=5",
+            "source": "The Recursive",
+            "blurb": "Nextesy secured €9 M seed funding, boosting its AI solutions for businesses.",
+            "published": "2026-11-27T13:06:13+00:00"
           },
           {
-            "title": "XEBO.ai Raises $10.5 Million in Series A Funding to Expand AI-Powered Customer Experience Platform",
-            "url": "https://news.google.com/rss/articles/CBMi1AFBVV95cUxQQldfV2o4aFE0clBDaU1wSDFtTnBJWm1qQVdNWFp4ZGVHbk5kS2JvTXB0WkRISUhHejZqYWl0T2Z2OEh2SVlLc1F3UTduWmR5U1QwY05yaWRLYzl6ZFR1Y09Wd3JBN0xuYjdodEdLLVg5OE9EV1NsRWVlTDlnZGV4cGEtRElBSlhCV1BRRTB1NC1kSmp4YkFOTEFvSGtLVXk0Rmc0UTFQRWJQUzhicVRmc1J1T1NXVERUUEkxWnp4LUVjMUtUT3ZIUW1SN083MWpJLXpmMQ?oc=5",
-            "source": "Indian Startup Times",
-            "blurb": "XEBO.ai secured $10.5M Series A to grow its AI‑powered customer experience platform.",
-            "published": "2026-11-26T15:09:43+00:00"
+            "title": "Dunzo founder Kabeer Biswas' AI startup M raises $9 million in follow-on round led by RTP",
+            "url": "https://news.google.com/rss/articles/CBMi5wFBVV95cUxQb01fX3dUN2t3VXhNbzJCUy1uY250T1d6cGtWQjVBSDhtbU9UeW1HQUZGZ2dUT1huS2FieEt0VWxxRFdHcWxHWHNOV2ZaaDgtRkRCQkxWZkhMRU9TWU5JbUNPaXFUT2NWN0hTZER5TFhYT05mVFJRMm9qdjl5WGlNRXM5alBMV3FHQmhKMnFYd3U1bHFpam1RMVNfeFBabTNSdDFQRHBZTFZfQ2NDQ0lhOHpnZzNaMENrZXJ4Sk1hMWN1TFJvZkxsdl9NWUVUVkNqNVl5YTI0N3AzTGpqRUt3NTdJVzN1dUE?oc=5",
+            "source": "Moneycontrol.com",
+            "blurb": "M raised $9 M in a follow‑on round, expanding its AI platform for brands.",
+            "published": "2026-11-27T09:13:00+00:00"
           },
           {
-            "title": "Vegapay raises $10M in Series A round co-led by Vertex Ventures, Prosus",
-            "url": "https://news.google.com/rss/articles/CBMioAFBVV95cUxPVEdlM1ctQ3RHc0VBNTRKTnA3TmMzVnBxUjAySHlOM0hqSDF1Tml5UWp1aTJLRlprTGNrV2hIdHduNjhHSGlFMUtaS1FkMHdpUGJGWW1MX2lIZFBPRWdWR0s0SVVkVm5EUDZDU2VDdy02dDRkMDFiVFRUYVJvQnZBTEl0VDlrRUNaeDNjZFMzYnBhLTRyeVI4YU9fQzBtT0Jh?oc=5",
-            "source": "YourStory.com",
-            "blurb": "Vegapay closed $10M Series A, backed by Vertex Ventures and Prosus, to expand payment services.",
-            "published": "2026-11-26T13:25:14+00:00"
+            "title": "Dutch startup SPCTR raises €2.8 million to bring real-time tumour margin assessment to cancer surgery",
+            "url": "https://news.google.com/rss/articles/CBMi1AFBVV95cUxPamk4dkVsX1pjV3hKLVZNdS1sNnJJNEw0SmRfeGtYSG9USENMODVzTkRRTWJCZWxGdWxiMzNVM1pNNmd5bTlOVS1uV0Z1NVZhUDJtajdoWm9aYmR2alp0TFRmR08yRXpSanFTb19Qay1qOHlJa3JDSnplOU50MVptVFdYVVBqTjBmdVBHWFVCQzdlUHE3bEdFdVJObkg4S0F4OHY4UnEwdVFLQnRrRUlHcGFBb0VxeG9VRk1STzFienpFUC1HUW1WZDNINHBGNzZYTVNCRg?oc=5",
+            "source": "EU-Startups",
+            "blurb": "SPCTR obtained €2.8 M to develop real‑time tumour margin tools for surgeons.",
+            "published": "2026-11-27T08:31:52+00:00"
           },
           {
-            "title": "Claude-Mem Cloud Sync",
-            "url": "https://www.producthunt.com/products/claude-mem",
+            "title": "Belgian cyber insurance startup Inqase raises €1M",
+            "url": "https://news.google.com/rss/articles/CBMihgFBVV95cUxQZDlkbzA0Nlk1TXR4Tm1SLUxxZWhkNzd5NzRJUjBCVkVETFByQ0k2Yzl0RkIyNVpsd1hjS2hmV21sbG5QdHNMMHFfRE1zZWxxSzF5U2JqMFNlUzhCS05RNnlCYWdSQjFVWUFpZS00aTlXLVlwOFlLNTMtamQ2REVaOHo0NUU4UQ?oc=5",
+            "source": "Tech.eu",
+            "blurb": "Inqase lifted €1 M to grow its Belgian cyber‑insurance offering.",
+            "published": "2026-11-27T15:25:13+00:00"
+          },
+          {
+            "title": "Woomool",
+            "url": "https://www.producthunt.com/products/woomool",
             "source": "Product Hunt",
-            "blurb": "Claude‑Mem Cloud Sync lets users keep AI agents’ memory synced across devices, easing continuity.",
-            "published": "2026-11-26T07:58:18+00:00"
+            "blurb": "Woomool launches an AI Canvas that turns ideas into visual drafts.",
+            "published": "2026-11-27T05:09:46+00:00"
           },
           {
-            "title": "Superframes",
-            "url": "https://www.producthunt.com/products/superframes-ai-video-editor",
+            "title": "Depost AI",
+            "url": "https://www.producthunt.com/products/depost-ai",
             "source": "Product Hunt",
-            "blurb": "Superframes offers an AI Director you brief to edit entire videos, speeding production.",
-            "published": "2026-11-26T05:09:09+00:00"
-          },
-          {
-            "title": "Pax by Pydantic",
-            "url": "https://www.producthunt.com/products/pydantic",
-            "source": "Product Hunt",
-            "blurb": "Pax provides a coding agent where coding functions act as plugins, simplifying development.",
-            "published": "2026-11-26T04:04:50+00:00"
+            "blurb": "Depost AI introduces a LinkedIn agent that learns brand‑specific content strategies.",
+            "published": "2026-11-27T03:17:55+00:00"
           }
         ]
       }
