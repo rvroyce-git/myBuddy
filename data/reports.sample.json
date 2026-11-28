@@ -1,0 +1,259 @@
+{
+  "generated_at": "2026-11-22T08:15:04+05:30",
+  "sample": true,
+  "topics": [
+    {
+      "id": "ai_news",
+      "title": "AI news",
+      "emoji": "🧠",
+      "description": "Models, labs, funding, policy and open source.",
+      "schedule": "Daily · 06:30 IST",
+      "report": {
+        "created_at": "2026-11-22T06:30:11+05:30",
+        "headline": "Sample: a compact open model now runs well on a single laptop GPU.",
+        "summary": "This is sample data: a lab released a small open-weights model for local use. Regulators also published draft rules on labelling AI-generated media.",
+        "items": [
+          {
+            "title": "Lab releases compact open-weights model for laptops",
+            "url": "https://example.com/ai/compact-open-model",
+            "source": "Example Tech Daily",
+            "blurb": "Targets 8 GB GPUs and ships under a permissive licence.",
+            "published": "2026-11-22T00:40:00+00:00"
+          },
+          {
+            "title": "Regulators publish draft rules on labelling AI media",
+            "url": "https://example.com/policy/ai-labels-draft",
+            "source": "Example Policy Wire",
+            "blurb": "Platforms would have to mark synthetic images and audio; comments open for 60 days.",
+            "published": "2026-11-21T19:05:00+00:00"
+          },
+          {
+            "title": "Inference-chip startup closes a larger-than-expected round",
+            "url": "https://example.org/funding/inference-chips",
+            "source": "Sample Ventures Weekly",
+            "blurb": "The money goes towards shipping developer boards next year.",
+            "published": "2026-11-21T16:20:00+00:00"
+          },
+          {
+            "title": "Open benchmark adds long-document reasoning tests",
+            "url": "https://example.net/benchmarks/long-docs",
+            "source": "Example ML Notes",
+            "blurb": "400 new tasks that need reading documents longer than 50 pages.",
+            "published": "2026-11-21T12:00:00+00:00"
+          },
+          {
+            "title": "Popular coding assistant adds an offline mode",
+            "url": "https://example.com/tools/offline-assistant",
+            "source": "Example Dev Journal",
+            "blurb": "Falls back to a smaller local model when there is no connection.",
+            "published": "2026-11-21T09:30:00+00:00"
+          }
+        ]
+      }
+    },
+    {
+      "id": "security",
+      "title": "Cybersecurity alerts",
+      "emoji": "🛡️",
+      "description": "Breaches, patches and actively exploited bugs. Hourly alerts for CISA KEV entries.",
+      "schedule": "Daily · 07:00 IST + hourly KEV alerts",
+      "report": {
+        "created_at": "2026-11-22T07:00:08+05:30",
+        "headline": "Sample: two VPN appliances get urgent patches for flaws already being exploited.",
+        "summary": "This is sample data: two vendors fixed remote-code bugs in VPN gateways under active attack. Patch those gateways first.",
+        "items": [
+          {
+            "title": "CVE-2026-00001: Example Networks VPN Gateway — auth bypass",
+            "url": "https://example.com/security/cve-2026-00001",
+            "source": "CISA KEV (sample)",
+            "blurb": "Listed as actively exploited; the fix is in the latest firmware.",
+            "published": "2026-11-22T00:10:00+00:00"
+          },
+          {
+            "title": "Second VPN vendor ships emergency remote-code patch",
+            "url": "https://example.org/advisories/vpn-rce",
+            "source": "Example Security Brief",
+            "blurb": "Rotate admin credentials after patching, the advisory says.",
+            "published": "2026-11-21T21:45:00+00:00"
+          },
+          {
+            "title": "Logging library fixes a denial-of-service bug",
+            "url": "https://example.net/oss/logging-dos",
+            "source": "Example OSS Advisories",
+            "blurb": "Crafted log lines could exhaust memory; version 3.4.2 fixes it.",
+            "published": "2026-11-21T15:30:00+00:00"
+          },
+          {
+            "title": "Parcel-delivery phishing kit spreads by SMS",
+            "url": "https://example.com/threats/parcel-sms",
+            "source": "Sample Threat Watch",
+            "blurb": "Targets phones with fake delivery-fee payment pages.",
+            "published": "2026-11-21T11:10:00+00:00"
+          }
+        ]
+      }
+    },
+    {
+      "id": "github_trending",
+      "title": "Trending GitHub repos",
+      "emoji": "⭐",
+      "description": "Repos ranked by stars actually gained since yesterday's snapshot.",
+      "schedule": "Daily · 07:15 IST",
+      "report": {
+        "created_at": "2026-11-22T07:15:20+05:30",
+        "headline": "Sample: a tiny local-agent framework gained the most stars overnight.",
+        "summary": "This is sample data: a minimal agent library led with about 1,200 new stars. A dataset browser for the terminal came second.",
+        "items": [
+          {
+            "title": "example-org/tiny-agents (+1,214 stars)",
+            "url": "https://example.com/repos/tiny-agents",
+            "source": "GitHub (sample)",
+            "blurb": "A small Python library for tool-using agents with few dependencies.",
+            "published": "2026-11-22T01:00:00+00:00"
+          },
+          {
+            "title": "example-dev/dataset-tui (+640 stars)",
+            "url": "https://example.com/repos/dataset-tui",
+            "source": "GitHub (sample)",
+            "blurb": "Browse and filter large CSV and Parquet files in the terminal.",
+            "published": "2026-11-22T01:00:00+00:00"
+          },
+          {
+            "title": "sample-labs/whisper-home (+512 stars)",
+            "url": "https://example.com/repos/whisper-home",
+            "source": "GitHub (sample)",
+            "blurb": "Self-hosted speech-to-text with a simple upload page.",
+            "published": "2026-11-22T01:00:00+00:00"
+          },
+          {
+            "title": "demo-team/prompt-diff (+301 stars)",
+            "url": "https://example.com/repos/prompt-diff",
+            "source": "GitHub (sample)",
+            "blurb": "Compare model outputs for two prompt versions side by side.",
+            "published": "2026-11-22T01:00:00+00:00"
+          }
+        ]
+      }
+    },
+    {
+      "id": "deep_dive",
+      "title": "One deep AI topic",
+      "emoji": "🔭",
+      "description": "Mon RAG · Tue agents · Wed training & fine-tuning · Thu audio & video · Fri evaluation.",
+      "schedule": "Mon–Fri · 07:30 IST",
+      "report": null
+    },
+    {
+      "id": "research_papers",
+      "title": "AI research papers",
+      "emoji": "📄",
+      "description": "New papers from arXiv and Hugging Face daily papers, in plain words.",
+      "schedule": "Daily · 07:45 IST",
+      "report": {
+        "created_at": "2026-11-22T07:45:15+05:30",
+        "headline": "Sample: cleaner data lets small models match bigger ones on maths.",
+        "summary": "This is sample data: one paper finds data quality beats size for maths problems. Another offers a cheap test for memorised benchmark answers.",
+        "items": [
+          {
+            "title": "Clean Data Beats Scale for Grade-School Maths",
+            "url": "https://example.com/papers/clean-data-maths",
+            "source": "arXiv (sample)",
+            "blurb": "A 3B model on filtered data matches a 13B baseline on two benchmarks.",
+            "published": "2026-11-21T18:00:00+00:00"
+          },
+          {
+            "title": "Cheap Contamination Checks for Public Benchmarks",
+            "url": "https://example.com/papers/contamination-checks",
+            "source": "HF Papers (sample)",
+            "blurb": "Spots memorised test answers with only a few hundred queries.",
+            "published": "2026-11-21T14:00:00+00:00"
+          },
+          {
+            "title": "Streaming Speech Recognition Under 100 ms",
+            "url": "https://example.com/papers/streaming-asr",
+            "source": "arXiv (sample)",
+            "blurb": "Real-time transcription on a phone CPU with a small accuracy drop.",
+            "published": "2026-11-21T10:00:00+00:00"
+          }
+        ]
+      }
+    },
+    {
+      "id": "startups",
+      "title": "Startup & product launches",
+      "emoji": "🚀",
+      "description": "Launches, funding rounds and new products worth a look.",
+      "schedule": "Daily · 08:00 IST",
+      "report": {
+        "created_at": "2026-11-22T08:00:09+05:30",
+        "headline": "Sample: a note-taking app launches search that never leaves your device.",
+        "summary": "This is sample data: a note app added fully on-device search. A budgeting tool for freelancers also opened to everyone.",
+        "items": [
+          {
+            "title": "Note-taking app launches private on-device search",
+            "url": "https://example.com/launches/notes-search",
+            "source": "Example Launch Board",
+            "blurb": "Search runs locally, so notes are never uploaded for indexing.",
+            "published": "2026-11-21T22:00:00+00:00"
+          },
+          {
+            "title": "Budgeting tool for freelancers opens to the public",
+            "url": "https://example.org/launches/freelance-budget",
+            "source": "Sample Product Digest",
+            "blurb": "Tracks irregular income and sets tax money aside automatically.",
+            "published": "2026-11-21T17:30:00+00:00"
+          },
+          {
+            "title": "Meal-planning startup raises a seed round",
+            "url": "https://example.net/funding/meal-planner",
+            "source": "Example Startup News",
+            "blurb": "Builds weekly meal plans from what is already in your fridge.",
+            "published": "2026-11-21T13:15:00+00:00"
+          }
+        ]
+      }
+    },
+    {
+      "id": "ai_models",
+      "title": "New open-source AI models",
+      "emoji": "🧩",
+      "description": "Freshly trending open models on Hugging Face.",
+      "schedule": "Daily · 08:15 IST",
+      "report": {
+        "created_at": "2026-11-22T08:15:02+05:30",
+        "headline": "Sample: an open text-to-speech model with 20 voices tops the trending list.",
+        "summary": "This is sample data: a multilingual text-to-speech model leads today. A small vision-language model and a code-search embedder follow.",
+        "items": [
+          {
+            "title": "example-org/voices-20 — multilingual text-to-speech",
+            "url": "https://example.com/models/voices-20",
+            "source": "Hugging Face (sample)",
+            "blurb": "Twenty voices across eight languages, Apache-2.0 licence.",
+            "published": "2026-11-21T20:00:00+00:00"
+          },
+          {
+            "title": "sample-ai/tiny-vision-2b — small vision-language model",
+            "url": "https://example.com/models/tiny-vision-2b",
+            "source": "Hugging Face (sample)",
+            "blurb": "Describes images and reads charts in about 4 GB of memory.",
+            "published": "2026-11-21T15:00:00+00:00"
+          },
+          {
+            "title": "demo-lab/code-embed-small — code search embeddings",
+            "url": "https://example.com/models/code-embed-small",
+            "source": "Hugging Face (sample)",
+            "blurb": "Finds functions from plain-English questions.",
+            "published": "2026-11-21T11:00:00+00:00"
+          },
+          {
+            "title": "example-org/reranker-mini — search reranker",
+            "url": "https://example.com/models/reranker-mini",
+            "source": "Hugging Face (sample)",
+            "blurb": "Re-orders search results and runs fine on a CPU.",
+            "published": "2026-11-21T08:00:00+00:00"
+          }
+        ]
+      }
+    }
+  ]
+}

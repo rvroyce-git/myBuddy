@@ -1,0 +1,328 @@
+{
+  "generated_at": "2026-11-28T09:45:07+05:30",
+  "topics": [
+    {
+      "id": "ai_news",
+      "title": "AI news",
+      "emoji": "🧠",
+      "description": "The day's AI news in plain words — models, labs, funding, policy and open source.",
+      "schedule": "Daily · 06:30 IST",
+      "bit": 0,
+      "report": {
+        "created_at": "2026-11-28T06:30:43+05:30",
+        "headline": "Study warns AI chatbots could amplify government speech restrictions",
+        "summary": "A new study flags chatbots spreading government speech limits, while AI now simulates electron hops far longer than before. Unions demand safeguards, drones get AI guidance for palm pollination, and Meta’s moderation…",
+        "items": [
+          {
+            "title": "AI chatbots are at risk of spreading government restrictions on online speech, a new study says",
+            "url": "https://news.google.com/rss/articles/CBMi0gFBVV95cUxNVjFuOFg0OGc1Q2h0QU00eks0ckNYclRuaXJsS0d3WThkNWlkS2VhNnhuVzZXbmdCWlJJS1dvWGdBWEJhM3pGVklJZm4tSnNHVTJJQWdyLS1HcGtCclp5dDJRM0pqQVNqaXpTam96MUFmMDRSWUhYdnJ6NmlWNzJtUmdkTTYwZ3hxQVY5ZU5sVnlock5kOFItSFlGaG1vcFd1RVpNWjBGRkNXSldZSUR0ZFZMWnhiWnloS3JQTkFRZkVEQzlyVllJTmFrcHdDOGVVV3c?oc=5",
+            "source": "Genocide Watch",
+            "blurb": "Study finds chatbots may spread government-imposed speech restrictions, raising free‑speech concerns.",
+            "published": "2026-11-28T00:36:51+00:00"
+          },
+          {
+            "title": "AI simulates electron hops over far longer times than conventional quantum calculations",
+            "url": "https://news.google.com/rss/articles/CBMiggFBVV95cUxPekhZSHFNRGZyV0hnQnFadmpWanZFVmZrV1MwdFhuM3BTb1lCN215TDNBNld3RWF0WEZkd0ItdTlzMWkwc3JUNXFYakx6cFR2LWIwUmxZa0UzcVdXalEtNlQ3dGRMWThxLXNkODYyOFl6VVFsZTh0VkhNQkxXaGl1aUVR?oc=5",
+            "source": "Phys.org",
+            "blurb": "AI simulates electron hops over much longer times than traditional quantum calculations, boosting research speed.",
+            "published": "2026-11-27T23:40:05+00:00"
+          },
+          {
+            "title": "AITUC meet in Bengaluru calls for safeguards against AI-driven worker exploitation",
+            "url": "https://news.google.com/rss/articles/CBMi3gFBVV95cUxPeVh1SUtxb2E5SmpHa21KOExSY0YxQ1VZb0d4R1VfbTVPaGVINTZzcXI0MHg3cW5CUWVuNmZ6dVZCZk5xaUNjaE50X25JdlFwYkwxZUhubUVNSjNHYjBQemhHWWRERWcyR3Y0RERhd2Znd2U5Z3I3VkZieFhNLXVjZXNabGNkTVBFRFJoZWhrZ1pCc2lNQXpyZ3dZZGpVTk1HeDNScW9kV1J2YUhuVzNnVDhfc1dOTzRBOGZ4bUFLYzRadWdWclFJTXBKSjRNWWtwN0FjcE9lQ2pKTkJ3OGc?oc=5",
+            "source": "Deccan Herald",
+            "blurb": "AITUC meeting in Bengaluru urges safeguards against AI‑driven worker exploitation.",
+            "published": "2026-11-27T23:35:38+00:00"
+          },
+          {
+            "title": "Offboard Artificial Intelligence Guides Low Cost Drone for Oil Palm Pollination",
+            "url": "https://news.google.com/rss/articles/CBMipwFBVV95cUxQNUxDd3BjV05wQ3VERnFscjN4Q1lJQTY4MGVTZEFkSjdob1FxOUtybV9aWDN4VDhvWFNMcGQ4VlN3dG5UVFk1aC1MVHZrVGcxTDdBc20wZVpRWjl2Ym1WZEZJVHR2dnN2bGxXaWZnVzhGeDNoTjZ6aGVxc21OSTFySGM1OUpEUEhvNGxBQzdyR0tlTFZmdFBLR29STlR1UXc2YUs2UlBtNA?oc=5",
+            "source": "Bioengineer.org",
+            "blurb": "Offboard AI guides low‑cost drone for oil palm pollination, showing agricultural use.",
+            "published": "2026-11-27T21:12:46+00:00"
+          },
+          {
+            "title": "Meta's Content Moderation Said to Be Severely Broken After Moving to Human Reviewers to AI",
+            "url": "https://news.google.com/rss/articles/CBMihAFBVV95cUxPczY1UEsxblVVakRQbk5hNU9TSXU1NjdCS0tSZDllbGs2VjJ3di1WTWZld29aVnYwM3p3c2JtcElmWWhrM1RuWnVTMThlZmZYQkRtWFE5dWZ5RWs4d2t5R2djdEZBM1NBWXl2VXR3Z3dSRWw2QzZsRFFZbm80dV83SnczRkg?oc=5",
+            "source": "Futurism",
+            "blurb": "Meta’s shift to AI‑assisted moderation leaves system broken, according to reports.",
+            "published": "2026-11-27T19:51:00+00:00"
+          }
+        ]
+      }
+    },
+    {
+      "id": "security",
+      "title": "Cybersecurity alerts",
+      "emoji": "🛡️",
+      "description": "Fresh security advisories and breaches, with what they mean and what to do.",
+      "schedule": "Daily · 07:00 IST",
+      "bit": 1,
+      "report": {
+        "created_at": "2026-11-28T07:00:06+05:30",
+        "headline": "Multiple active exploits target popular software and services, urging immediate updates and vigilance.",
+        "summary": "CISA flags three actively exploited GeoServer flaws, while zero‑day bugs hit Cacti, a malicious Microsoft Store app spreads a RAT, and pCloud’s password manager was breached. Update, patch, and monitor accounts.",
+        "items": [
+          {
+            "title": "CISA Adds Three Known Exploited Vulnerabilities to Catalog",
+            "url": "https://www.cisa.gov/news-events/alerts/2026/11/27/cisa-adds-three-known-exploited-vulnerabilities-catalog",
+            "source": "CISA Advisories",
+            "blurb": "CISA adds three actively exploited GeoServer CVEs (2026‑120705, 2026‑129243, 2026‑136…) – patch immediately.",
+            "published": "2026-11-27T12:00:00+00:00"
+          },
+          {
+            "title": "Unpatched Cacti zero-day with public PoC gives remote code execution",
+            "url": "https://www.bleepingcomputer.com/news/security/unpatched-cacti-zero-day-with-public-poc-gives-remote-code-execution/",
+            "source": "BleepingComputer",
+            "blurb": "Zero‑day in Cacti network monitor allows unauthenticated remote code execution – apply fixes or block access.",
+            "published": "2026-11-27T17:06:13+00:00"
+          },
+          {
+            "title": "Microsoft Store App Found Delivering Vinci RAT Capable of Remote System Control",
+            "url": "https://thehackernews.com/2026/11/microsoft-store-app-found-delivering.html",
+            "source": "The Hacker News",
+            "blurb": "Malicious Microsoft Store app delivers Vinci RAT for remote control – uninstall and avoid unknown apps.",
+            "published": "2026-11-27T11:49:34+00:00"
+          },
+          {
+            "title": "pCloud confirms password manager hack after suspicious login alerts",
+            "url": "https://www.bleepingcomputer.com/news/security/pcloud-confirms-password-manager-hack-after-suspicious-login-alerts/",
+            "source": "BleepingComputer",
+            "blurb": "pCloud Pass password manager breached; unknown devices logged in despite 2FA – change passwords, monitor activity.",
+            "published": "2026-11-27T19:26:04+00:00"
+          },
+          {
+            "title": "Hackers Trojanize Official Q-Dir and DesktopOK Downloads to Deliver Remote Access Malware",
+            "url": "https://thehackernews.com/2026/11/hackers-trojanize-official-q-dir-and.html",
+            "source": "The Hacker News",
+            "blurb": "Q-Dir and DesktopOK installers tampered on official site – download from trusted sources only.",
+            "published": "2026-11-27T09:29:30+00:00"
+          }
+        ]
+      }
+    },
+    {
+      "id": "github_trending",
+      "title": "Trending GitHub repos",
+      "emoji": "⭐",
+      "description": "AI projects on GitHub that are picking up stars fastest right now.",
+      "schedule": "Daily · 07:15 IST",
+      "bit": 2,
+      "report": {
+        "created_at": "2026-11-27T07:15:18+05:30",
+        "headline": "AI engineering tutorial repo surges with 486 new stars",
+        "summary": "Rohitg00's Python guide teaches AI engineering end‑to‑end, attracting many learners. Its recent 486‑star jump shows strong community interest.",
+        "items": [
+          {
+            "title": "rohitg00/ai-engineering-from-scratch",
+            "url": "https://github.com/rohitg00/ai-engineering-from-scratch",
+            "source": "GitHub Trending",
+            "blurb": "Python AI engineering tutorial, useful for beginners, gained 486 stars, total 80,621",
+            "published": "2026-11-25T15:31:09+00:00"
+          }
+        ]
+      }
+    },
+    {
+      "id": "deep_dive",
+      "title": "Deep dive",
+      "emoji": "🔬",
+      "description": "One AI subject a weekday, explained simply with the latest papers.",
+      "schedule": "Mon–Fri · 07:30 IST",
+      "bit": 3,
+      "report": {
+        "created_at": "2026-11-27T07:30:04+05:30",
+        "headline": "New benchmarks aim to test AI more realistically across diverse tasks",
+        "summary": "Today's items show fresh benchmarks for math reasoning, wearable fall detection, marine robotics, legal reasoning, AI performance, and time‑series tasks, each targeting more realistic evaluation.",
+        "items": [
+          {
+            "title": "Diverse Alternative Reasoning Traces for Hard Math Problems",
+            "url": "https://arxiv.org/abs/2611.34928v1",
+            "source": "arXiv evaluation",
+            "blurb": "Diverse reasoning traces help evaluate LLMs on hard math where standard solutions are rare.",
+            "published": "2026-11-25T18:59:11+00:00"
+          },
+          {
+            "title": "Standardized Deep Learning Benchmark Tests Wearable AI Models for Fall Detection",
+            "url": "https://news.google.com/rss/articles/CBMiqAFBVV95cUxPRnlONXNjTTFNUFRicUVNekZ1N3l2N0dfbmliUmVGWDJTZHZpZ3BDS25rS1lKQjIxNWpVdG1yd3dLY1RGa2pOYkJOejBXQjhuLThIZzFVNllmeUpvZDlySlpockZ6X0YxVlBZUzlPUUVuSUlOcHp6Z1FKNTVjN2dUNkdiclItcWJjTTVrYkpMd0V2czloOG5aODkwR0xyUGNzZS1fdk1mOGY?oc=5",
+            "source": "Bioengineer.org",
+            "blurb": "Standardized benchmark tests wearable AI models' ability to detect falls accurately.",
+            "published": "2026-11-26T11:26:38+00:00"
+          },
+          {
+            "title": "One Ocean, Many Tasks: A Data-Grounded Simulation Suite and Benchmark for Marine Robotics",
+            "url": "https://arxiv.org/abs/2611.34925v1",
+            "source": "arXiv evaluation",
+            "blurb": "OneOcean provides a data‑grounded simulation suite and benchmark for marine robotics tasks.",
+            "published": "2026-11-25T18:58:56+00:00"
+          },
+          {
+            "title": "IMDA and Scale Advance AI Evaluation with New Legal Reasoning Benchmark",
+            "url": "https://news.google.com/rss/articles/CBMiwgFBVV95cUxPTzB0a2tsVWh1ODJOZ2tZR0J2dlpFWkluOGhsb2VGa1B3cW9MYVhaYjBTeVhxbWVHSWFuNi1sR29GRHR4TEFfZkVqZHN4ajJkSkhkbEZxSGJtUndIMVBhREkwVUp0N20zWDN5T205cVdKZmlGRFFhUDJRX1NFY0pRSFhLZHUtVkhERXR4Z3BYN0xKaktvdkE4V1RaN0lZa0NtSmRPRWswQ1ZxZEpWOFFDOW1DVTgxMEVaQWd6M0VMZTBDUQ?oc=5",
+            "source": "IMDA",
+            "blurb": "New legal reasoning benchmark released by IMDA and Scale Advance to evaluate AI.",
+            "published": "2026-11-26T02:53:17+00:00"
+          },
+          {
+            "title": "OpenClaw launches an AI performance benchmark that it argues is more realistic than others",
+            "url": "https://news.google.com/rss/articles/CBMi2AFBVV95cUxNdWlCRUt4Mk9ncUFRenYzbWtSbU5IZUpWLS1jVkp0MHBaWlI5NldkT09GTUY5ZlZZWHNqeVJyeHRnYVREWkVWTzVQMjdlRmt2WlhlclZwS2FyV05WMGl0UnZvV18tMWZvd1QyZmRrUkxHdDZYaGZEZEV4LUlPdkdpLTlfM183eGE1X2lWc19ZTXBVc1lFRHlqZndBLWZVOGRDLW1MNXhPbGZUNmlTaWhDMkFoakZXbVJqQU4xZHdxSzNaM1NaTVlrY0FLX0tmd3VSSnlkM3hCc2k?oc=5",
+            "source": "Computerworld",
+            "blurb": "OpenClaw's AI performance benchmark claims greater realism than existing tests.",
+            "published": "2026-11-25T02:35:40+00:00"
+          },
+          {
+            "title": "Put the World Back: Timestamps Matter in Time Series Reasoning",
+            "url": "https://arxiv.org/abs/2611.34848v1",
+            "source": "arXiv evaluation",
+            "blurb": "Timestamp‑aware evaluation highlights whether models truly link events to time series data.",
+            "published": "2026-11-25T18:23:07+00:00"
+          }
+        ]
+      }
+    },
+    {
+      "id": "research_papers",
+      "title": "AI research papers",
+      "emoji": "📄",
+      "description": "Today's notable AI papers, each boiled down to its key idea.",
+      "schedule": "Daily · 07:45 IST",
+      "bit": 4,
+      "report": {
+        "created_at": "2026-11-28T07:45:04+05:30",
+        "headline": "New benchmarks and models aim to make AI agents more versatile and responsive",
+        "summary": "Researchers introduce methods to improve long‑sequence stability, broaden agent benchmarks, and boost visual and interactive AI performance, while scaling in‑context learning for robotics.",
+        "items": [
+          {
+            "title": "Stable Gated DeltaNet-2: Understanding and Mitigating Recurrent State Instability",
+            "url": "https://huggingface.co/papers/2611.34051",
+            "source": "Hugging Face Daily Papers",
+            "blurb": "Gated DeltaNet‑2 adds channel‑wise erase/write control, helping stable long‑sequence modeling.",
+            "published": "2026-11-24T19:00:00+00:00"
+          },
+          {
+            "title": "OS-Omni: Benchmarking Generalist Computer-Using Agents on Long-Horizon Workflows Across Platforms",
+            "url": "https://huggingface.co/papers/2611.34232",
+            "source": "Hugging Face Daily Papers",
+            "blurb": "OS‑Omni benchmark tests a single agent across web, mobile, and desktop long‑term tasks.",
+            "published": "2026-11-24T19:00:00+00:00"
+          },
+          {
+            "title": "Solve Vision with Code: Coding Agents Are Stronger Visual Reasoners Than Video Models",
+            "url": "https://huggingface.co/papers/2611.34813",
+            "source": "Hugging Face Daily Papers",
+            "blurb": "Coding agents outperform video models at visual reasoning, using code generation to solve vision tasks.",
+            "published": "2026-11-24T19:00:00+00:00"
+          },
+          {
+            "title": "Entangle: Scaling Human-Video In-Context World-Action Models across Unseen Tasks and Contexts",
+            "url": "https://huggingface.co/papers/2611.28732",
+            "source": "Hugging Face Daily Papers",
+            "blurb": "Entangle scales human‑video in‑context learning for robot manipulation on unseen tasks, authors report.",
+            "published": "2026-11-24T19:00:00+00:00"
+          },
+          {
+            "title": "ShowNow: Fine-Grained Speculative Streaming for Responsive World Models",
+            "url": "https://huggingface.co/papers/2611.34693",
+            "source": "Hugging Face Daily Papers",
+            "blurb": "ShowNow introduces fine‑grained speculative streaming to cut latency in interactive world‑model video generation.",
+            "published": "2026-11-24T19:00:00+00:00"
+          },
+          {
+            "title": "DRBench Pro: A Knowledge-Centric Benchmark for Professional Deep Research Agents",
+            "url": "https://huggingface.co/papers/2611.34852",
+            "source": "Hugging Face Daily Papers",
+            "blurb": "DRBench Pro provides a knowledge‑centric test for deep research agents, measuring direction‑finding ability.",
+            "published": "2026-11-24T19:00:00+00:00"
+          }
+        ]
+      }
+    },
+    {
+      "id": "startups",
+      "title": "Startup & product launches",
+      "emoji": "🚀",
+      "description": "New products and startup funding news — what it is and who it's for.",
+      "schedule": "Daily · 08:00 IST",
+      "bit": 5,
+      "report": {
+        "created_at": "2026-11-28T08:00:04+05:30",
+        "headline": "AI startups secure major funding while unveiling new tools",
+        "summary": "European AI firms raised over €20 million across seed and follow‑on rounds, and several new AI‑powered products launched to help creators, marketers, and healthcare teams.",
+        "items": [
+          {
+            "title": "Nextesy, Swiss AI Startup with Balkan Roots, Raises €9M Seed Led by Swisscom Ventures",
+            "url": "https://news.google.com/rss/articles/CBMitgFBVV95cUxNdjFmSDBka0x5Zm1KYzJWd0hCb3BRVHhJR01CZk83b1I4TWNOVlBQS3VjWWVKdkJpTDEwWTJQd0pEcU0wZm9ZdWVPenpLcE1IVlZoSXFDTnhyVU1nNWdaalVOazFhQ1VnNjhZbEZkWi0wbjIydzdwZm5tMUlDLVJmZDF0ME03ZTltb3Rpdlc0X25fM0NCRHM1cFFBVmRXQXFCWmxQVHlZUngwdkhobWlBZHhBVXpEQQ?oc=5",
+            "source": "The Recursive",
+            "blurb": "Nextesy secured €9 M seed funding, boosting its AI solutions for businesses.",
+            "published": "2026-11-27T13:06:13+00:00"
+          },
+          {
+            "title": "Dunzo founder Kabeer Biswas' AI startup M raises $9 million in follow-on round led by RTP",
+            "url": "https://news.google.com/rss/articles/CBMi5wFBVV95cUxQb01fX3dUN2t3VXhNbzJCUy1uY250T1d6cGtWQjVBSDhtbU9UeW1HQUZGZ2dUT1huS2FieEt0VWxxRFdHcWxHWHNOV2ZaaDgtRkRCQkxWZkhMRU9TWU5JbUNPaXFUT2NWN0hTZER5TFhYT05mVFJRMm9qdjl5WGlNRXM5alBMV3FHQmhKMnFYd3U1bHFpam1RMVNfeFBabTNSdDFQRHBZTFZfQ2NDQ0lhOHpnZzNaMENrZXJ4Sk1hMWN1TFJvZkxsdl9NWUVUVkNqNVl5YTI0N3AzTGpqRUt3NTdJVzN1dUE?oc=5",
+            "source": "Moneycontrol.com",
+            "blurb": "M raised $9 M in a follow‑on round, expanding its AI platform for brands.",
+            "published": "2026-11-27T09:13:00+00:00"
+          },
+          {
+            "title": "Dutch startup SPCTR raises €2.8 million to bring real-time tumour margin assessment to cancer surgery",
+            "url": "https://news.google.com/rss/articles/CBMi1AFBVV95cUxPamk4dkVsX1pjV3hKLVZNdS1sNnJJNEw0SmRfeGtYSG9USENMODVzTkRRTWJCZWxGdWxiMzNVM1pNNmd5bTlOVS1uV0Z1NVZhUDJtajdoWm9aYmR2alp0TFRmR08yRXpSanFTb19Qay1qOHlJa3JDSnplOU50MVptVFdYVVBqTjBmdVBHWFVCQzdlUHE3bEdFdVJObkg4S0F4OHY4UnEwdVFLQnRrRUlHcGFBb0VxeG9VRk1STzFienpFUC1HUW1WZDNINHBGNzZYTVNCRg?oc=5",
+            "source": "EU-Startups",
+            "blurb": "SPCTR obtained €2.8 M to develop real‑time tumour margin tools for surgeons.",
+            "published": "2026-11-27T08:31:52+00:00"
+          },
+          {
+            "title": "Belgian cyber insurance startup Inqase raises €1M",
+            "url": "https://news.google.com/rss/articles/CBMihgFBVV95cUxQZDlkbzA0Nlk1TXR4Tm1SLUxxZWhkNzd5NzRJUjBCVkVETFByQ0k2Yzl0RkIyNVpsd1hjS2hmV21sbG5QdHNMMHFfRE1zZWxxSzF5U2JqMFNlUzhCS05RNnlCYWdSQjFVWUFpZS00aTlXLVlwOFlLNTMtamQ2REVaOHo0NUU4UQ?oc=5",
+            "source": "Tech.eu",
+            "blurb": "Inqase lifted €1 M to grow its Belgian cyber‑insurance offering.",
+            "published": "2026-11-27T15:25:13+00:00"
+          },
+          {
+            "title": "Woomool",
+            "url": "https://www.producthunt.com/products/woomool",
+            "source": "Product Hunt",
+            "blurb": "Woomool launches an AI Canvas that turns ideas into visual drafts.",
+            "published": "2026-11-27T05:09:46+00:00"
+          },
+          {
+            "title": "Depost AI",
+            "url": "https://www.producthunt.com/products/depost-ai",
+            "source": "Product Hunt",
+            "blurb": "Depost AI introduces a LinkedIn agent that learns brand‑specific content strategies.",
+            "published": "2026-11-27T03:17:55+00:00"
+          }
+        ]
+      }
+    },
+    {
+      "id": "ai_models",
+      "title": "New open-source AI models",
+      "emoji": "🤖",
+      "description": "Open models trending on Hugging Face, with what they're good for.",
+      "schedule": "Daily · 08:15 IST",
+      "bit": 6,
+      "report": {
+        "created_at": "2026-11-28T08:15:03+05:30",
+        "headline": "New open-source models debut for video creation and text generation",
+        "summary": "LTX-2.5 targets video generation, announced on Hugging Face Blog. Inkling-2-Mini, a text‑generation model from ISTA‑DASLab, is gaining traction with thousands of downloads.",
+        "items": [
+          {
+            "title": "Taking Trainium3 to the Track: Generating Videos with LTX-2.5",
+            "url": "https://huggingface.co/blog/video-trainium3",
+            "source": "Hugging Face Blog",
+            "blurb": "LTX-2.5 is a new model for generating videos, announced on Hugging Face Blog.",
+            "published": "2026-11-27T00:00:00+00:00"
+          },
+          {
+            "title": "ISTA-DASLab/Inkling-2-Mini-GSQ-RCO-GGUF",
+            "url": "https://huggingface.co/ISTA-DASLab/Inkling-2-Mini-GSQ-RCO-GGUF",
+            "source": "Hugging Face Trending",
+            "blurb": "Inkling-2-Mini is a text‑generation model from ISTA‑DASLab, already downloaded over 24k times.",
+            "published": "2026-11-26T13:01:01+00:00"
+          }
+        ]
+      }
+    }
+  ],
+  "signup": "open"
+}
