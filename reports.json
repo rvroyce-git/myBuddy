@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-11-28T07:00:07+05:30",
+  "generated_at": "2026-11-28T07:45:06+05:30",
   "topics": [
     {
       "id": "ai_news",
@@ -188,15 +188,50 @@
       "schedule": "Daily · 07:45 IST",
       "bit": 4,
       "report": {
-        "created_at": "2026-11-27T07:45:05+05:30",
-        "headline": "New AI tools aim to bridge real-world data, medical insight, and multimedia tasks",
-        "summary": "Researchers release platforms to turn videos into simulations, scale medical AI, and improve visual and video editing with generated images, while highlighting evaluation pitfalls and better multi-page document handling.",
+        "created_at": "2026-11-28T07:45:04+05:30",
+        "headline": "New benchmarks and models aim to make AI agents more versatile and responsive",
+        "summary": "Researchers introduce methods to improve long‑sequence stability, broaden agent benchmarks, and boost visual and interactive AI performance, while scaling in‑context learning for robotics.",
         "items": [
           {
-            "title": "Real2SimLab: A Unified Platform for Real-to-Simulation Transfer",
-            "url": "https://huggingface.co/papers/2611.34849",
+            "title": "Stable Gated DeltaNet-2: Understanding and Mitigating Recurrent State Instability",
+            "url": "https://huggingface.co/papers/2611.34051",
             "source": "Hugging Face Daily Papers",
-            "blurb": "Unified platform lets AI turn video recordings into simulation code, easing real‑to‑simulation transfer.",
+            "blurb": "Gated DeltaNet‑2 adds channel‑wise erase/write control, helping stable long‑sequence modeling.",
+            "published": "2026-11-24T19:00:00+00:00"
+          },
+          {
+            "title": "OS-Omni: Benchmarking Generalist Computer-Using Agents on Long-Horizon Workflows Across Platforms",
+            "url": "https://huggingface.co/papers/2611.34232",
+            "source": "Hugging Face Daily Papers",
+            "blurb": "OS‑Omni benchmark tests a single agent across web, mobile, and desktop long‑term tasks.",
+            "published": "2026-11-24T19:00:00+00:00"
+          },
+          {
+            "title": "Solve Vision with Code: Coding Agents Are Stronger Visual Reasoners Than Video Models",
+            "url": "https://huggingface.co/papers/2611.34813",
+            "source": "Hugging Face Daily Papers",
+            "blurb": "Coding agents outperform video models at visual reasoning, using code generation to solve vision tasks.",
+            "published": "2026-11-24T19:00:00+00:00"
+          },
+          {
+            "title": "Entangle: Scaling Human-Video In-Context World-Action Models across Unseen Tasks and Contexts",
+            "url": "https://huggingface.co/papers/2611.28732",
+            "source": "Hugging Face Daily Papers",
+            "blurb": "Entangle scales human‑video in‑context learning for robot manipulation on unseen tasks, authors report.",
+            "published": "2026-11-24T19:00:00+00:00"
+          },
+          {
+            "title": "ShowNow: Fine-Grained Speculative Streaming for Responsive World Models",
+            "url": "https://huggingface.co/papers/2611.34693",
+            "source": "Hugging Face Daily Papers",
+            "blurb": "ShowNow introduces fine‑grained speculative streaming to cut latency in interactive world‑model video generation.",
+            "published": "2026-11-24T19:00:00+00:00"
+          },
+          {
+            "title": "DRBench Pro: A Knowledge-Centric Benchmark for Professional Deep Research Agents",
+            "url": "https://huggingface.co/papers/2611.34852",
+            "source": "Hugging Face Daily Papers",
+            "blurb": "DRBench Pro provides a knowledge‑centric test for deep research agents, measuring direction‑finding ability.",
             "published": "2026-11-24T19:00:00+00:00"
           }
         ]
