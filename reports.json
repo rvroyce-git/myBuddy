@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-11-28T06:30:44+05:30",
+  "generated_at": "2026-11-28T07:00:07+05:30",
   "topics": [
     {
       "id": "ai_news",
@@ -59,51 +59,44 @@
       "schedule": "Daily · 07:00 IST",
       "bit": 1,
       "report": {
-        "created_at": "2026-11-27T07:00:06+05:30",
-        "headline": "Critical Drupal flaw and major 1Password breach top this week’s cyber alerts",
-        "summary": "Drupal’s new CVE is being exploited, and 1Password’s backend was breached. Also watch for malicious extensions and phishing campaigns targeting Gmail and corporate accounts.",
+        "created_at": "2026-11-28T07:00:06+05:30",
+        "headline": "Multiple active exploits target popular software and services, urging immediate updates and vigilance.",
+        "summary": "CISA flags three actively exploited GeoServer flaws, while zero‑day bugs hit Cacti, a malicious Microsoft Store app spreads a RAT, and pCloud’s password manager was breached. Update, patch, and monitor accounts.",
         "items": [
           {
-            "title": "Drupal Warns of New Highly Critical Site Takeover Vulnerability Under Active Exploitation",
-            "url": "https://thehackernews.com/2026/11/drupal-warns-of-new-highly-critical.html",
-            "source": "The Hacker News",
-            "blurb": "Drupal core CVE-2026-136716, highly critical, actively exploited; patch immediately.",
-            "published": "2026-11-26T07:02:34+00:00"
+            "title": "CISA Adds Three Known Exploited Vulnerabilities to Catalog",
+            "url": "https://www.cisa.gov/news-events/alerts/2026/11/27/cisa-adds-three-known-exploited-vulnerabilities-catalog",
+            "source": "CISA Advisories",
+            "blurb": "CISA adds three actively exploited GeoServer CVEs (2026‑120705, 2026‑129243, 2026‑136…) – patch immediately.",
+            "published": "2026-11-27T12:00:00+00:00"
           },
           {
-            "title": "1Password Hacked, Customer Data and Source Code Stolen in GitHub Account Breach",
-            "url": "https://thehackernews.com/2026/11/1password-hacked-customer-data-and.html",
-            "source": "The Hacker News",
-            "blurb": "1Password backend breach exposed customer data and source code; monitor accounts, change master passwords.",
-            "published": "2026-11-26T10:57:25+00:00"
-          },
-          {
-            "title": "Remus malware steals Gmail messages via fake Google Sheets extension",
-            "url": "https://www.bleepingcomputer.com/news/security/remus-malware-steals-gmail-messages-via-fake-google-sheets-extension/",
+            "title": "Unpatched Cacti zero-day with public PoC gives remote code execution",
+            "url": "https://www.bleepingcomputer.com/news/security/unpatched-cacti-zero-day-with-public-poc-gives-remote-code-execution/",
             "source": "BleepingComputer",
-            "blurb": "Malicious Chrome extension steals Gmail via fake Google Sheets; remove extension, avoid unknown installs.",
-            "published": "2026-11-26T15:23:28+00:00"
+            "blurb": "Zero‑day in Cacti network monitor allows unauthenticated remote code execution – apply fixes or block access.",
+            "published": "2026-11-27T17:06:13+00:00"
           },
           {
-            "title": "SYS010 malware abuses browser management to spy on Gmail, Outlook",
-            "url": "https://www.bleepingcomputer.com/news/security/sys010-malware-abuses-browser-management-to-spy-on-gmail-outlook/",
-            "source": "BleepingComputer",
-            "blurb": "SYS010 infostealer forces browser management to steal Gmail and Outlook; block suspicious Meta ads.",
-            "published": "2026-11-26T11:50:17+00:00"
-          },
-          {
-            "title": "North Korea-Linked PolinRider Poisons Over 7,600 GitHub Repositories to Spread Malware",
-            "url": "https://thehackernews.com/2026/11/north-korea-linked-polinrider-poisons.html",
+            "title": "Microsoft Store App Found Delivering Vinci RAT Capable of Remote System Control",
+            "url": "https://thehackernews.com/2026/11/microsoft-store-app-found-delivering.html",
             "source": "The Hacker News",
-            "blurb": "PolinRider injects Python loader into GitHub repos, spreading malware; avoid using unknown repo code.",
-            "published": "2026-11-26T15:13:41+00:00"
+            "blurb": "Malicious Microsoft Store app delivers Vinci RAT for remote control – uninstall and avoid unknown apps.",
+            "published": "2026-11-27T11:49:34+00:00"
           },
           {
-            "title": "Fake paid expert interviews impersonate brands to steal Google logins",
-            "url": "https://www.bleepingcomputer.com/news/apple/fake-paid-expert-interviews-impersonate-brands-to-steal-google-logins/",
+            "title": "pCloud confirms password manager hack after suspicious login alerts",
+            "url": "https://www.bleepingcomputer.com/news/security/pcloud-confirms-password-manager-hack-after-suspicious-login-alerts/",
             "source": "BleepingComputer",
-            "blurb": "GoodGuys phishing pretends brand webinars to steal Google and Okta logins; verify invitations before clicking.",
-            "published": "2026-11-26T17:15:27+00:00"
+            "blurb": "pCloud Pass password manager breached; unknown devices logged in despite 2FA – change passwords, monitor activity.",
+            "published": "2026-11-27T19:26:04+00:00"
+          },
+          {
+            "title": "Hackers Trojanize Official Q-Dir and DesktopOK Downloads to Deliver Remote Access Malware",
+            "url": "https://thehackernews.com/2026/11/hackers-trojanize-official-q-dir-and.html",
+            "source": "The Hacker News",
+            "blurb": "Q-Dir and DesktopOK installers tampered on official site – download from trusted sources only.",
+            "published": "2026-11-27T09:29:30+00:00"
           }
         ]
       }
